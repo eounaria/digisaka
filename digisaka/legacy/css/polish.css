@@ -1,0 +1,72 @@
+/* Layer on top of app.css: consistent gutters, phone layout, keyboard focus, dashboard extras. */
+
+/* ---- One gutter for every farmer screen ---- */
+.screen{ padding-inline:28px; }
+/* Hidden screens are absolutely positioned; without this their overflow stretches every page with blank scroll. */
+.screen:not(.active){ max-height:0; overflow:hidden; pointer-events:none; }
+.screen > .home-hero, .screen > .quick-actions-row, .screen > .dashboard-overview, .screen > .upload-zone,
+.screen > .field-header, .screen > .sched-hier-card, .screen > .profile-head, .screen > .settings-group,
+.screen > .bulk-id-card, .screen > .recent-panel{ margin-inline:0; }
+.screen > .topbar, .screen > .page-title, .screen > .page-sub, .screen > .stepper, .screen > .cam-hint,
+.screen > .section-label, .screen > .px, .screen > .dash-page-head, .screen > div:not([class]){ margin-inline:0; padding-inline:0; }
+
+/* Desktop already has the sidebar and header, so page headers become plain titles */
+.screen > .topbar{ background:none; border:0; height:auto; padding-block:22px 12px; }
+.screen > .topbar .brand{ font:800 28px var(--font-display) !important; color:var(--forest); }
+.screen:not(#screen-notifications) > .topbar .bell-btn{ display:none; }
+.dash-page-head{ display:none; }   /* title now sits in the header; the pills repeated the sidebar links */
+.screen#screen-home{ padding-top:24px; }
+.screen#screen-notifications .px{ max-width:720px; }
+.screen#screen-notifications .bulk-action-empty{ padding:40px 0; }
+
+/* Equal-height quick actions */
+.quick-actions-row{ align-items:stretch; }
+.quick-action-card{ min-height:96px; align-items:center; }
+
+/* ---- Recent assessments on the dashboard ---- */
+.recent-panel{ margin-top:22px; padding-bottom:28px; }
+.recent-panel h4{ font:800 18px var(--font-display); color:var(--forest); margin-bottom:12px; }
+.recent-row{ display:flex; align-items:center; gap:14px; width:100%; text-align:left; background:#fff; border:1px solid var(--line);
+  border-radius:var(--radius-md); padding:14px 16px; margin-bottom:10px; cursor:pointer; font:inherit; color:inherit; }
+.recent-row:hover{ border-color:var(--leaf); }
+.recent-row b{ display:block; font:700 16px var(--font-display); }
+.recent-row small{ color:var(--ink-soft); font-size:13.5px; }
+.recent-row .grow{ flex:1; min-width:0; }
+.recent-chip{ font-weight:800; font-size:13px; padding:5px 11px; border-radius:20px; white-space:nowrap; }
+.recent-chip.ok{ background:var(--tint); color:var(--forest); }
+.recent-chip.warn{ background:#FDEBE5; color:#B4432A; }
+.recent-empty{ background:#fff; border:1.4px dashed var(--line); border-radius:var(--radius-md); padding:26px; text-align:center; color:var(--ink-soft); }
+.recent-empty button{ margin-top:14px; border:0; border-radius:14px; background:var(--forest); color:#fff; font:800 15px var(--font-display); padding:11px 22px; cursor:pointer; }
+
+/* ---- Keyboard focus and motion ---- */
+:focus-visible{ outline:3px solid var(--leaf); outline-offset:2px; }
+.sidebar :focus-visible{ outline-color:#fff; }
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{ animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+
+/* ---- Phones and small tablets: sidebar becomes a bottom tab bar ---- */
+@media (max-width:900px){
+  .screen{ padding-inline:16px; }
+  .app-content{ padding-bottom:84px; }
+  .sidebar{ position:fixed; inset:auto 0 0 0; top:auto; width:100%; height:66px; flex-direction:row; align-items:stretch;
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px)); z-index:30; overflow:visible; box-shadow:0 -4px 16px rgba(6,40,20,.2); }
+  .sidebar-brand, .sidebar-section-label, .sidebar-spacer, .sidebar-foot, .sidebar-link[data-signout]{ display:none; }
+  .sidebar-nav{ display:contents; }
+  .sidebar-link{ flex:1; min-width:0; flex-direction:column; justify-content:center; gap:3px; padding:4px 2px;
+    font-size:11px; line-height:1.1; text-align:center; }
+  .app-header{ padding:0 14px; height:60px; }
+  .app-header-left{ min-width:0; font-size:17px; }
+  .app-header-left span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #header-new-scan-btn, .global-usecase-wrap > span, .global-usecase-wrap > label{ display:none; }
+  .app-header-right{ gap:8px; flex:none; }
+  #header-brand-label{ display:none; }
+  .home-hero{ flex-direction:column; align-items:stretch; gap:14px; padding:20px; }
+  .home-hero h2{ font-size:26px; line-height:1.25; }
+  .home-hero-side{ align-items:flex-start; text-align:left; }
+  .home-hero-time, .home-hero-date{ display:none; }
+  .quick-actions-row{ display:grid; grid-template-columns:1fr; gap:12px; }
+  .screen > .topbar .brand{ font-size:24px !important; }
+}
+
+/* Scan screen: the selected-leaves strip carried its own 22px inset, misaligning it with the upload zone. */
+.screen .bulk-strip{ padding-inline:0; }
+.screen .bulk-strip + *, .screen #bulk-assess-btn, .screen .bulk-assess-btn{ margin-inline:0; }

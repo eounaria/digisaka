@@ -1,0 +1,58 @@
+[
+ {
+  "last": "Reyes",
+  "first": "Miguel",
+  "middle": "Santos",
+  "email": "mreyes12@gmail.com",
+  "contact": "0917.234.5678"
+ },
+ {
+  "last": "Cruz",
+  "first": "Antonio",
+  "middle": "Dela Pena",
+  "email": "acruz@leadsagri.com",
+  "contact": "09173138139"
+ },
+ {
+  "last": "Bautista",
+  "first": "Ramon",
+  "middle": "Villanueva",
+  "email": "rbautista@leadsagri.com",
+  "contact": "0939-6307175"
+ },
+ {
+  "last": "Mendoza",
+  "first": "Ferdinand",
+  "middle": "Aquino",
+  "email": "fmendoza@leadsagri.com",
+  "contact": "09103706569"
+ },
+ {
+  "last": "Garcia",
+  "first": "Ernesto",
+  "middle": "Ramos",
+  "email": "egarcia@leadsagri.com",
+  "contact": "09171876404"
+ },
+ {
+  "last": "Torres",
+  "first": "Ronaldo",
+  "middle": "Salazar",
+  "email": "rtorres@leadsagri.com",
+  "contact": "09497168851"
+ },
+ {
+  "last": "Ramirez",
+  "first": "Bernardo",
+  "middle": "Fajardo",
+  "email": "bramirez@leadsagri.com",
+  "contact": "09187612581"
+ },
+ {
+  "last": "Flores",
+  "first": "Kevin",
+  "middle": "Manalo",
+  "email": "kflores@leadsagri.com",
+  "contact": "09380914220"
+ }
+]

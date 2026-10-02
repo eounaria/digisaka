@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digisaka AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div class="device">
+  <div class="notch"></div>
+  <div class="statusbar"><span>9:41</span><span>Digisaka Field App</span></div>
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="leaf-dot">🍌</div>Digisaka</div>
+    <div class="sidebar-section-label">Menu</div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-link active" id="nav-home" onclick="go('home')">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Dashboard
+      </div>
+      <div class="sidebar-link" id="nav-scan" onclick="go('scan')">
+        <svg viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M20 8V6a2 2 0 00-2-2h-2M20 16v2a2 2 0 01-2 2h-2"/><circle cx="12" cy="12" r="3.4"/></svg>Disease Detection
+      </div>
+      <div class="sidebar-link" id="nav-history" onclick="go('history')">
+        <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Diagnosis History
+      </div>
+      <div class="sidebar-link" onclick="go('scheduled-treatments')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>Treatment Schedule
+      </div>
+    </nav>
+    <div class="sidebar-section-label">Account</div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-link" id="nav-profile" onclick="go('profile')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.5-4 5-5.5 7-5.5S17.5 16 19 20"/></svg>Settings
+      </div>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-foot"><b>Black Sigatoka AI</b>On-device leaf analysis for early disease detection.
+    </div>
+  </aside>
+
+
+
+  <div class="app-main">
+    <!-- ============ TOP HEADER ============ -->
+    <header class="app-header">
+      <div class="app-header-left"><div class="leaf-dot" id="header-leaf-dot">🍌</div><span id="header-brand-label">Digisaka</span></div>
+      <div class="app-header-right">
+        <div class="app-header-btn" id="header-new-scan-btn" onclick="go('scan')">
+          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M20 8V6a2 2 0 00-2-2h-2M20 16v2a2 2 0 01-2 2h-2"/><circle cx="12" cy="12" r="3.4"/></svg>
+          New Scan
+        </div>
+        <div class="app-header-icon" id="header-bell-btn" onclick="go('notifications')" title="Notifications">
+          <svg viewBox="0 0 24 24"><path d="M6 10a6 6 0 1112 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"/><path d="M10 20a2 2 0 004 0"/></svg>
+        </div>
+        <div class="app-header-avatar" id="header-avatar-btn" onclick="go('profile')" title="My Profile">JD</div>
+      </div>
+    </header>
+
+  <div class="app-content"><div class="screens">
+
+    <!-- ============ HOME ============ -->
+    <section class="screen active" id="screen-home">
+      <div class="dash-page-head">
+        <h1 class="page-title dash-title">Dashboard</h1>
+        <div class="dash-pills">
+          <span class="dash-pill active">Overview</span>
+          <span class="dash-pill" onclick="go('scan')">Detection</span>
+          <span class="dash-pill" onclick="go('history')">Assessments</span>
+          <span class="dash-pill" onclick="go('scheduled-treatments')">Schedule</span>
+        </div>
+      </div>
+
+      <div class="home-hero">
+        <div class="home-hero-copy">
+          <div class="home-hero-eyebrow" id="hero-greeting-eyebrow">GOOD AFTERNOON, JUAN</div>
+          <h2>Welcome back to <span>Digisaka</span></h2>
+          <p>Monitor banana plant health and detect Black Sigatoka disease — Sitio Malabo, Balayan, Batangas.</p>
+          <div class="home-hero-updated">Last updated: <b>just now</b></div>
+        </div>
+        <div class="home-hero-side">
+          <div class="home-hero-time" id="hero-clock">--:-- --</div>
+          <div class="home-hero-date" id="hero-date">—</div>
+          <button class="home-hero-refresh" onclick="updateDashboardOverview(); this.classList.add('spin'); setTimeout(()=>this.classList.remove('spin'),500);">
+            <svg viewBox="0 0 24 24"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M5.5 15a7 7 0 0012.9 2.5M18.5 9A7 7 0 005.6 6.5"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="quick-actions-row">
+        <div class="quick-action-card primary" onclick="go('scan')">
+          <div class="qa-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M20 8V6a2 2 0 00-2-2h-2M20 16v2a2 2 0 01-2 2h-2"/><circle cx="12" cy="12" r="3.4"/></svg>
+          </div>
+          <div class="qa-text"><h5>Disease Detection</h5><p>Scan banana leaves for Black Sigatoka</p></div>
+          <div class="qa-chev">›</div>
+        </div>
+        <div class="quick-action-card" onclick="go('history')">
+          <div class="qa-icon alt">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+          </div>
+          <div class="qa-text"><h5>Diagnosis History</h5><p>Review past bulk assessments</p></div>
+          <div class="qa-chev">›</div>
+        </div>
+        <div class="quick-action-card" onclick="go('scheduled-treatments')">
+          <div class="qa-icon alt2">🗓️</div>
+          <div class="qa-text"><h5>Smart Schedule</h5><p id="home-next-treatment-wrap">Next: <b id="home-next-treatment">Leaf Monitoring</b> · Tomorrow</p></div>
+          <div class="qa-chev">›</div>
+        </div>
+      </div>
+
+      <div class="dashboard-overview dashboard-overview-bottom">
+        <div class="dashboard-section-title">
+          <h4>Farm Overview</h4>
+          <span class="dash-link" onclick="go('history')">View Bulks →</span>
+        </div>
+        <div class="dashboard-stats">
+          <div class="dashboard-stat"><div class="stat-icon blue"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/></svg></div><div class="stat-num" id="dash-leaves">24</div><div class="stat-label">Leaves Scanned</div></div>
+          <div class="dashboard-stat"><div class="stat-icon purple"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></div><div class="stat-num" id="dash-bulks">8</div><div class="stat-label">Bulks Assessed</div></div>
+          <div class="dashboard-stat"><div class="stat-icon orange"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></div><div class="stat-num" id="dash-treatment">3</div><div class="stat-label">Need Treatment</div></div>
+        </div>
+
+        <div class="dashboard-spacer"></div>
+      </div>
+
+    </section>
+
+    <!-- ============ SCAN ============ -->
+    <section class="screen" id="screen-scan">
+      <h1 class="page-title">Leaf Scan</h1>
+      <p class="page-sub" style="padding-top:0;">Scan or select banana leaves to check for signs of Black Sigatoka</p>
+      <div class="bulk-id-card leaf-scan-info-card">
+        <div class="bic-row"><span class="bic-lab">Plant</span><span class="bic-val bulk-plant-value">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Assessment Date</span><span class="bic-val bulk-date-value">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Bulk ID</span><span class="bic-val bic-mono bulk-id-value">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Status</span><span class="bic-status bulk-status-value">Validation Pending</span></div>
+      </div>
+      <div class="stepper">
+        <div class="step now"><div class="dot">1</div><div class="lab">Select Leaves</div><div class="bar"></div></div>
+        <div class="step"><div class="dot">2</div><div class="lab">Bulk Assess</div><div class="bar"></div></div>
+        <div class="step"><div class="dot">3</div><div class="lab">Results</div></div>
+      </div>
+
+      <div class="upload-zone" id="leaf-upload-zone"
+           onclick="document.getElementById('leaf-file-input').click()"
+           ondragover="handleLeafDragOver(event)"
+           ondragleave="handleLeafDragLeave(event)"
+           ondrop="handleLeafDrop(event)">
+        <input type="file" accept="image/*" id="leaf-file-input" class="hide" onchange="handleLeafFileSelected(event)">
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 16V4M12 4l-4.5 4.5M12 4l4.5 4.5"/><path d="M4 16v2.5A2.5 2.5 0 006.5 21h11a2.5 2.5 0 002.5-2.5V16"/></svg>
+        </div>
+        <h3>Upload a banana leaf photo</h3>
+        <p>Drag &amp; drop an image here, or <span class="upload-browse">browse files</span></p>
+        <div class="upload-meta">JPG or PNG · clear, well-lit leaf · up to 10MB</div>
+      </div>
+      <div class="cam-hint">Good lighting  •  Clear leaf  •  Symptoms visible</div>
+
+      <div class="bulk-strip">
+        <div class="bulk-strip-head">
+          <span id="bulk-count-label">0 leaves selected</span>
+          <span class="link" id="bulk-clear-link" style="display:none;" onclick="resetBulkFlow()">Clear all</span>
+        </div>
+        <div class="bulk-thumbs" id="bulk-thumbs">
+          <div class="bulk-thumb add-tile" onclick="addMockLeaf()">＋</div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" id="bulk-assess-btn" onclick="startBulkAssessment()" disabled>Assess All Leaves</button>
+      </div>
+    </section>
+
+    <!-- ============ BULK PROCESSING ============ -->
+    <section class="screen" id="screen-bulk-processing">
+      <h1 class="page-title" style="padding-bottom:0;">Black Sigatoka Validation</h1>
+      <div class="bulk-id-card">
+        <div class="bic-row"><span class="bic-lab">Plant</span><span class="bic-val bulk-plant-value">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Bulk ID</span><span class="bic-val bic-mono bulk-id-value">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Status</span><span class="bic-status bulk-status-value">Validation Pending</span></div>
+      </div>
+      <div class="bulk-pipeline" id="bulk-pipeline-processing"></div>
+      <div class="processing-wrap" style="padding-top:0;">
+        <div class="orbit">
+          <div class="ring"></div><div class="ring2"></div>
+          <div class="core">🍃</div>
+        </div>
+        <div class="proc-title" id="bulk-proc-title">Assessing 0 Leaves...</div>
+        <div class="agent-trace" id="bulk-agent-trace"></div>
+      </div>
+    </section>
+
+    <!-- ============ BULK SUMMARY (overall suspected assessment) ============ -->
+    <section class="screen" id="screen-bulk-summary">
+      <h1 class="page-title">Bulk Assessment Result</h1>
+      <p class="page-sub" style="padding-top:0;">Confirm — or reassign — each leaf's AI-suggested stage below before continuing.</p>
+      <div class="bulk-id-card">
+        <div class="bic-row"><span class="bic-lab">Plant</span><span class="bic-val bulk-plant-value">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Assessment Date</span><span class="bic-val bulk-date-value">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Bulk ID</span><span class="bic-val bic-mono bulk-id-value">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Status</span><span class="bic-status bulk-status-value">Validation Pending</span></div>
+      </div>
+      <div class="bulk-pipeline" id="bulk-pipeline-summary"></div>
+      <div class="bulk-summary-hero">
+        <div class="num" id="bulk-summary-count">0</div>
+        <div class="lab">Leaves in this Bulk</div>
+      </div>
+      <div id="bulk-multigroup-note-wrap"></div>
+      <div id="bulk-allhealthy-banner-wrap"></div>
+      <div id="verify-progress-banner"></div>
+      <div id="bulk-summary-rows"></div>
+      <div id="bulk-treatment-section"></div>
+      <div class="btnrow" style="flex-direction:column;">
+        <button class="btn btn-primary" style="width:100%;" id="bulk-continue-btn" onclick="go('bulk-actions')">Review Black Sigatoka Groups →</button>
+      </div>
+      <p class="disclaimer">This is an AI-assisted assessment and not a confirmed diagnosis. Results should be verified by an agricultural specialist before treatment decisions.</p>
+    </section>
+
+    <!-- ============ BLACK SIGATOKA STAGE GROUPS + TREATMENT RECOMMENDATION ============ -->
+    <section class="screen" id="screen-bulk-actions">
+      <h1 class="page-title">Treatment Recommendation</h1>
+      <p class="page-sub" style="padding-top:0;">Each group below reflects only leaves validated — and reviewer-confirmed — at that stage. The bulk itself has no single stage — treatment is never applied because the bulk contains a severe case elsewhere.</p>
+      <div class="bulk-id-card">
+        <div class="bic-row"><span class="bic-lab">Plant</span><span class="bic-val bulk-plant-value">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Bulk ID</span><span class="bic-val bic-mono bulk-id-value">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Status</span><span class="bic-status bulk-status-value">Validation Pending</span></div>
+      </div>
+      <div class="bulk-pipeline" id="bulk-pipeline-actions"></div>
+      <div id="bulk-actions-list"></div>
+      <div class="btnrow" style="flex-direction:column;">
+        <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" id="bulk-schedule-btn" onclick="startBulkTreatmentHistory()" disabled>Continue to Bulk Treatment Schedule →</button>
+        <button class="btn btn-secondary" style="width:100%; margin-bottom:10px;" onclick="go('bulk-summary')">Back to Summary</button>
+        <button class="btn btn-secondary" style="width:100%;" onclick="go('home')">Done — Back to Home</button>
+      </div>
+    </section>
+
+    <!-- ============ BULK TREATMENT SCHEDULE — REVIEW (confirmation gate) ============ -->
+    <section class="screen" id="screen-bulk-schedule-review">
+      <h1 class="page-title">Bulk Treatment Schedule</h1>
+      <p class="page-sub" style="padding-top:0;">View the recommended treatment windows for this bulk assessment. Confirm when you are ready to schedule.</p>
+      <div class="bulk-id-card">
+        <div class="bic-row"><span class="bic-lab">Bulk</span><span class="bic-val bic-mono" id="bsr-bulk-id">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Plant</span><span class="bic-val" id="bsr-plant">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Status</span><span class="bic-status bulk-status-value">Schedule Pending Confirmation</span></div>
+      </div>
+      <div class="bulk-pipeline" id="bulk-pipeline-review"></div>
+      <div class="section-label" style="padding:2px 22px 8px;">Eligible Groups</div>
+      <div id="bsr-groups"></div>
+      <div class="btnrow">
+        <button class="btn btn-secondary" onclick="cancelBulkSchedule()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmBulkSchedule()">Confirm &amp; Schedule</button>
+      </div>
+      <p class="disclaimer">Healthy and Unvalidated leaves are never scheduled; Stages 1–4 have their own stage-specific treatment schedules.</p>
+    </section>
+
+    <!-- ============ BULK TREATMENT SCHEDULE — CONFIRMED (calendar status) ============ -->
+    <section class="screen" id="screen-bulk-schedule-confirmed">
+      <h1 class="page-title">Bulk Treatment Schedule</h1>
+      <div class="bsc-confirm-banner">
+        <div class="icon">✅</div>
+        <div class="txt"><h5>Schedule Confirmed</h5><p>Eligible stage groups are scheduled automatically — calendar events have been created below.</p></div>
+      </div>
+      <div class="bulk-id-card">
+        <div class="bic-row"><span class="bic-lab">Bulk</span><span class="bic-val bic-mono" id="bsc-bulk-id">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Plant</span><span class="bic-val" id="bsc-plant">—</span></div>
+        <div class="bic-row"><span class="bic-lab">Status</span><span class="bic-status bulk-status-value">Scheduled</span></div>
+      </div>
+      <div class="bulk-pipeline" id="bulk-pipeline-confirmed"></div>
+      <div class="section-label" style="padding:2px 22px 8px;">Bulk/Stage-Group Calendar Events</div>
+      <div id="bsc-groups"></div>
+      <div class="btnrow" style="flex-direction:column;">
+        <button class="btn btn-primary" style="width:100%;" onclick="go('home')">Done — Back to Home</button>
+      </div>
+      <p class="disclaimer">This is an AI-assisted assessment and not a confirmed diagnosis. Results should be verified by an agricultural specialist before treatment decisions.</p>
+    </section>
+
+    <!-- ============ PREVIEW ============ -->
+    <section class="screen" id="screen-preview">
+      <h1 class="page-title">Leaf Scan</h1>
+      <div class="stepper">
+        <div class="step now"><div class="dot">1</div><div class="lab">Leaf Scan</div><div class="bar"></div></div>
+        <div class="step"><div class="dot">2</div><div class="lab">Validate</div><div class="bar"></div></div>
+        <div class="step"><div class="dot">3</div><div class="lab">Assess</div></div>
+      </div>
+      <p class="page-sub">Make sure the leaf and symptoms are clearly visible.</p>
+      <div class="preview-photo">
+        <div class="leafmask" style="height:100%">
+          <svg width="220" height="280" viewBox="0 0 180 220">
+            <path d="M90 10 C 30 40, 15 110, 90 210 C 165 110, 150 40, 90 10 Z" fill="#3f7350" stroke="#c9e6b0" stroke-width="2"/>
+            <path d="M90 20 L90 200 M90 60 L55 90 M90 60 L125 90 M90 110 L55 140 M90 110 L125 140" stroke="#c9e6b0" stroke-width="1.4" fill="none"/>
+            <ellipse cx="70" cy="80" rx="9" ry="5" fill="#8a5a2b" opacity=".8"/>
+            <ellipse cx="112" cy="130" rx="10" ry="6" fill="#7a4a20" opacity=".8"/>
+            <ellipse cx="60" cy="150" rx="7" ry="4" fill="#c9a227" opacity=".7"/>
+          </svg>
+        </div>
+        <div class="quality-chip">✓ Image quality good</div>
+      </div>
+      <div class="btnrow">
+        <button class="btn btn-secondary" onclick="go('scan')">Retake</button>
+        <button class="btn btn-primary" onclick="startProcessing()">Use This Image</button>
+      </div>
+    </section>
+
+    <!-- ============ PROCESSING ============ -->
+    <section class="screen" id="screen-processing">
+      <div class="processing-wrap">
+        <div class="orbit">
+          <div class="ring"></div><div class="ring2"></div>
+          <div class="core">🍃</div>
+        </div>
+        <div class="proc-title">Checking Image...</div>
+        <div class="proc-steps" id="proc-steps">
+          <div class="proc-step" data-i="0"><div class="mark">✓</div>Image uploaded</div>
+          <div class="proc-step" data-i="1"><div class="mark">●</div>Checking image quality</div>
+          <div class="proc-step" data-i="2"><div class="mark">○</div>Validating banana leaf</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LEAF VALIDATION ============ -->
+    <section class="screen" id="screen-validation">
+      <h1 class="page-title">Leaf Validation</h1>
+      <div class="stepper">
+        <div class="step done"><div class="dot">✓</div><div class="lab">Leaf Scan</div><div class="bar"></div></div>
+        <div class="step now"><div class="dot">2</div><div class="lab">Validate</div><div class="bar"></div></div>
+        <div class="step"><div class="dot">3</div><div class="lab">Assess</div></div>
+      </div>
+      <p class="page-sub">Is this a banana leaf?</p>
+
+      <div class="preview-photo">
+        <div class="leafmask" style="height:100%">
+          <svg width="220" height="280" viewBox="0 0 180 220">
+            <path d="M90 10 C 30 40, 15 110, 90 210 C 165 110, 150 40, 90 10 Z" fill="#3f7350" stroke="#c9e6b0" stroke-width="2"/>
+            <path d="M90 20 L90 200 M90 60 L55 90 M90 60 L125 90 M90 110 L55 140 M90 110 L125 140" stroke="#c9e6b0" stroke-width="1.4" fill="none"/>
+            <ellipse cx="70" cy="80" rx="9" ry="5" fill="#8a5a2b" opacity=".8"/>
+            <ellipse cx="112" cy="130" rx="10" ry="6" fill="#7a4a20" opacity=".8"/>
+            <ellipse cx="60" cy="150" rx="7" ry="4" fill="#c9a227" opacity=".7"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="validation-result good" id="validation-result">
+        <div class="vr-icon">✓</div>
+        <div class="vr-text">
+          <h4>Banana Leaf Detected</h4>
+          <p>Image quality is good. Ready to check for Black Sigatoka symptoms.</p>
+        </div>
+      </div>
+
+      <div class="px" style="margin-top:6px;">
+        <button class="btn btn-primary" style="width:100%" id="validation-btn" onclick="go('final')">Continue to Assessment →</button>
+      </div>
+
+      <p class="validation-demo-link" id="validation-hint" onclick="toggleValidationDemo()">Show example: image not recognized</p>
+    </section>
+
+
+
+    <section class="screen" id="screen-final">
+      <h1 class="page-title">Full Assessment</h1>
+
+      <div class="result-hero">
+        <div class="icon">🍃</div>
+        <h2 id="final-assessment">Assessment: Possible Early Stage Black Sigatoka</h2>
+        <div class="status-tag">🟠 Needs Monitoring</div>
+      </div>
+
+      <div class="stage-demo-row">
+        <span>Demo: set suspected stage</span>
+        <div class="stage-demo-btns" id="stage-demo-btns">
+          <button data-stage="1" onclick="setStage(1)">1</button>
+          <button data-stage="2" onclick="setStage(2)">2</button>
+          <button data-stage="3" onclick="setStage(3)">3</button>
+          <button data-stage="4" onclick="setStage(4)">4</button>
+        </div>
+      </div>
+
+      <div class="why-section-title">Disease Details</div>
+      <div class="why-item">
+        <div class="ic">🍌</div>
+        <div class="txt"><p>This assessment suggests possible Black Sigatoka symptoms. Black Sigatoka is a fungal disease that can affect banana leaves and reduce the plant's ability to produce healthy fruit if symptoms progress. Early monitoring helps farmers track and manage the affected plant.</p></div>
+      </div>
+
+      <div class="why-section-title">Suspected Stage</div>
+      <div class="why-item">
+        <div class="ic">📋</div>
+        <div class="txt">
+          <h5 id="final-stage-title">Suspected Black Sigatoka — Stage 1</h5>
+          <p id="final-stage-desc">This assessment suggests possible early-stage symptoms. Small streaks are just beginning to appear on the leaf surface.</p>
+        </div>
+      </div>
+
+      <div class="symptom-list" style="margin-top:-4px;">
+        <div class="stitle">Suspected Common Symptoms</div>
+        <div id="final-common-symptoms">
+          <div class="symptom-pill"><span class="sq"></span>Light reddish-brown streaks</div>
+          <div class="symptom-pill"><span class="sq"></span>Faint yellow halo forming</div>
+          <div class="symptom-pill"><span class="sq"></span>No significant leaf damage yet</div>
+        </div>
+      </div>
+
+      <div class="activity-head" style="padding:20px 22px 8px;">
+        <div class="why-section-title" style="padding:0;">August 2026 — Detailed Timeline</div>
+        <div class="activity-progress" id="final-timeline-progress">0 / 3 done</div>
+      </div>
+      <div class="sched-timeline">
+        <div class="sched-item done">
+          <div class="sched-dot">✓</div>
+          <div class="sched-date">Aug 10</div>
+          <div class="sched-card">
+            <div class="sched-title">Suspected Disease Logged</div>
+            <div class="sched-sub" id="rec-step-assessment">Suspected Black Sigatoka — Stage 1</div>
+          </div>
+        </div>
+        <div class="sched-item upcoming" id="final-timeline-item-oil">
+          <div class="sched-dot" id="final-timeline-dot-oil">🟡</div>
+          <div class="sched-date">Aug 15</div>
+          <div class="sched-card">
+            <div class="sched-title">Oil Application</div>
+            <label class="timeline-check"><input type="checkbox" id="final-timeline-checkbox-oil" onclick="handleTreatmentCheckbox(event,'final','oil')">Mark as done</label>
+            <div class="proof-note" style="margin-top:5px;"><span>📷</span><span>Photo proof required</span></div>
+          </div>
+        </div>
+        <div class="sched-item scheduled" id="final-timeline-item-fungicide">
+          <div class="sched-dot" id="final-timeline-dot-fungicide">🔵</div>
+          <div class="sched-date">Aug 29</div>
+          <div class="sched-card">
+            <div class="sched-title">Fungicide / Chemical</div>
+            <label class="timeline-check"><input type="checkbox" id="final-timeline-checkbox-fungicide" onclick="handleTreatmentCheckbox(event,'final','fungicide')">Mark as done</label>
+            <div class="proof-note" style="margin-top:5px;"><span>📷</span><span>Photo proof required</span></div>
+          </div>
+        </div>
+        <div class="sched-item monitor" id="final-timeline-item-monitor">
+          <div class="sched-dot" id="final-timeline-dot-monitor">⚪</div>
+          <div class="sched-date">Sep 12</div>
+          <div class="sched-card">
+            <div class="sched-title">Monitoring / Reassessment</div>
+            <div class="sched-sub">Follow-up leaf check</div>
+            <label class="timeline-check"><input type="checkbox" id="final-timeline-checkbox-monitor" onclick="toggleFinalTimelineItem('monitor')">Mark as done</label>
+          </div>
+        </div>
+      </div>
+      <div style="margin:14px 22px 0;">
+        <button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById('review-card').scrollIntoView({behavior:'smooth', block:'start'})">Review This Assessment ↓</button>
+      </div>
+
+      <div class="why-section-title">Review Assessment</div>
+      <div class="review-card card" id="review-card">
+        <h4>🔍 Review Assessment</h4>
+        <div class="review-row"><div class="lab">Suspected Condition</div><div class="val">Black Sigatoka</div></div>
+        <div class="review-row"><div class="lab">Suspected Stage</div><div class="val" id="review-stage">Stage 1</div></div>
+        <p class="disclaimer" style="margin:12px 0 0; padding:0; text-align:left;">This is an AI-assisted assessment and not a confirmed diagnosis.</p>
+        <div class="review-btnrow">
+          <button class="btn btn-secondary" onclick="go('validation')">Review Again</button>
+          <button class="btn btn-primary" onclick="confirmAssessment()">Confirm Assessment</button>
+        </div>
+      </div>
+
+      <div class="btnrow" style="flex-direction:column;">
+        <button class="btn btn-secondary" style="width:100%; margin-bottom:10px;" onclick="go('home')">Save Assessment</button>
+        <button class="btn btn-secondary" style="width:100%" onclick="go('scan')">Scan Another Leaf</button>
+      </div>
+
+      <p class="disclaimer">This is an AI-assisted assessment and not a confirmed diagnosis. Results should be verified by an agricultural specialist before treatment decisions.</p>
+    </section>
+
+    <!-- ============ TREATMENT HISTORY ============ -->
+    <section class="screen" id="screen-treatmenthistory">
+      <div class="topbar"><div class="brand" style="font-size:19px;">Treatment History</div><div class="bell-btn" onclick="closeTreatmentHistory()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></div></div>
+      <p class="page-sub" style="padding-top:14px;">Have you treated this plant recently?</p>
+
+      <div class="form-block" style="margin-top:10px;">
+        <div class="radio-row" style="flex-direction:column; gap:10px;">
+          <div class="radio-option" id="th-btn-APPLIED" onclick="selectTreatmentHistory('APPLIED')"><span class="rc"></span>Yes, I have treated it</div>
+          <div class="radio-option" id="th-btn-NOT_APPLIED" onclick="selectTreatmentHistory('NOT_APPLIED')"><span class="rc"></span>No, I have not treated it</div>
+          <div class="radio-option" id="th-btn-UNKNOWN" onclick="selectTreatmentHistory('UNKNOWN')"><span class="rc"></span>I'm not sure</div>
+        </div>
+      </div>
+
+      <div class="form-block hide" id="th-applied-block">
+        <div class="form-label">What type of treatment was last used?</div>
+        <select class="select-input" id="th-type-select" onchange="selectLastTreatmentType(this.value)">
+          <option value="oil">Oil</option>
+          <option value="fungicide">Fungicide / Chemical</option>
+        </select>
+
+        <div class="form-label" style="margin-top:16px;">Approximate Date of Previous Treatment</div>
+        <input type="date" class="text-input" id="th-applied-date">
+      </div>
+
+      <div class="note-strip hide" id="th-unknown-note">
+        <div class="ic">ℹ️</div>
+        <div><strong>Treatment history unknown</strong><br>We won't assume that a previous treatment was applied.</div>
+      </div>
+
+      <div class="note-strip hide" id="th-notapplied-note">
+        <div class="ic">✅</div>
+        <div>Got it — we'll generate your schedule as a first treatment cycle.</div>
+      </div>
+
+      <div class="px hide" id="th-continue-wrap" style="margin-top:8px;">
+        <button class="btn btn-primary" style="width:100%" onclick="proceedFromHistory()">Continue</button>
+      </div>
+    </section>
+
+    <!-- ============ SCHEDULED TREATMENTS (Smart Schedule — Bulk list) ============ -->
+    <section class="screen" id="screen-scheduled-treatments">
+      <div class="topbar"><div class="brand" style="font-size:19px;">Smart Schedule</div><div class="bell-btn" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></div></div>
+      <div class="field-header">
+        <h3>Scheduled Treatments</h3>
+        <p>Grouped by Bulk assessment — tap a bulk to see its stages</p>
+      </div>
+      <div id="scheduled-treatments-list"></div>
+      <div class="section-label" style="padding-top:6px;">Full Calendar</div>
+      <div class="sched-hier-card" onclick="go('treatment')">
+        <div class="shc-top">
+          <span class="shc-icon">🗓️</span>
+          <div class="shc-text"><h5>Smart Schedule Calendar</h5><p>View the month-by-month treatment calendar</p></div>
+          <div class="shc-chev">›</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BULK STAGES (Smart Schedule — Stage list for a selected Bulk) ============ -->
+    <section class="screen" id="screen-bulk-stages">
+      <div class="topbar"><div class="brand" style="font-size:19px;">Smart Schedule</div><div class="bell-btn" onclick="go('scheduled-treatments')"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></div></div>
+      <div class="field-header">
+        <h3 id="bulk-stages-title">Bulk</h3>
+        <p id="bulk-stages-sub">—</p>
+      </div>
+      <p class="page-sub" style="padding-top:0;">Each stage below has its own treatment schedule.</p>
+      <div id="bulk-stages-list"></div>
+    </section>
+
+    <!-- ============ TREATMENT SCHEDULE (Smart Schedule) ============ -->
+    <section class="screen" id="screen-treatment">
+      <div class="topbar"><div class="brand" style="font-size:19px;">Smart Schedule</div><div class="bell-btn" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></div></div>
+
+      <!-- Outcome check: triggered when the final reassessment step is marked done, closing the treatment-cycle loop -->
+      <div class="outcome-overlay" id="outcome-overlay">
+        <div class="outcome-modal" id="outcome-modal-ask">
+          <h4>How does the leaf look now?</h4>
+          <p class="sub">You've completed the full treatment cycle (Oil → Fungicide → Reassessment). Let us know the result so we can update the plan.</p>
+          <div class="outcome-option" onclick="submitOutcome('improved')"><span class="oe-icon">✅</span>Symptoms improved / gone</div>
+          <div class="outcome-option" onclick="submitOutcome('same')"><span class="oe-icon">🟡</span>No visible change</div>
+          <div class="outcome-option" onclick="submitOutcome('worse')"><span class="oe-icon">⚠️</span>Symptoms are the same or worse</div>
+        </div>
+        <div class="outcome-modal" id="outcome-modal-result" style="display:none;">
+          <div class="outcome-result">
+            <div class="or-icon" id="outcome-result-icon">✅</div>
+            <h5 id="outcome-result-title">Cycle Complete</h5>
+            <p id="outcome-result-desc">Nice work — the plant is looking healthy. We'll close this cycle and keep it on routine monitoring.</p>
+          </div>
+          <button class="btn btn-primary" style="width:100%;" id="outcome-result-btn" onclick="closeOutcomeModal()">Done</button>
+        </div>
+      </div>
+
+      <div class="field-header">
+        <h3 id="schedule-stage-heading">Black Sigatoka</h3>
+        <p id="schedule-stage-sub">Field A · 2.4 ha</p>
+      </div>
+      <p class="page-sub" style="padding-top:0;">Your schedule is automatically generated based on the AI-assisted assessment and available treatment information.</p>
+
+      <div class="sched-status" id="sched-status-badge">✅ Schedule Generated</div>
+
+      <div class="cal-card card">
+        <div class="cal-head"><h4>August 2026</h4><span style="font-size:11px; font-weight:700; color:var(--teal);">Plant #001</span></div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <div class="section-label" style="padding:2px 22px 8px;">Up Next</div>
+      <div class="upnext-card" id="upnext-card"></div>
+
+      <div class="activity-head">
+        <div class="why-section-title" style="padding:0;">August 2026 — Detailed Timeline</div>
+        <div class="activity-progress" id="timeline-progress">0 / 3 done</div>
+      </div>
+      <div class="sched-timeline">
+        <div class="sched-item done">
+          <div class="sched-dot">✓</div>
+          <div class="sched-date">Aug 10</div>
+          <div class="sched-card">
+            <div class="sched-title">Suspected Disease Logged</div>
+            <div class="sched-sub">Suspected Black Sigatoka — Stage 1</div>
+          </div>
+        </div>
+        <div class="sched-item upcoming" id="timeline-item-oil">
+          <div class="sched-dot" id="timeline-dot-oil">🟡</div>
+          <div class="sched-date">Aug 15</div>
+          <div class="sched-card">
+            <div class="sched-title" onclick="viewTreatmentDetail()" style="cursor:pointer;">Oil Application</div>
+            <label class="timeline-check"><input type="checkbox" id="timeline-checkbox-oil" onclick="handleTreatmentCheckbox(event,'timeline','oil')">Mark as done</label>
+            <div class="proof-note" style="margin-top:5px;"><span>📷</span><span>Photo proof required</span></div>
+          </div>
+        </div>
+        <div class="sched-item scheduled" id="timeline-item-fungicide">
+          <div class="sched-dot" id="timeline-dot-fungicide">🔵</div>
+          <div class="sched-date">Aug 29</div>
+          <div class="sched-card">
+            <div class="sched-title">Fungicide / Chemical</div>
+            <label class="timeline-check"><input type="checkbox" id="timeline-checkbox-fungicide" onclick="handleTreatmentCheckbox(event,'timeline','fungicide')">Mark as done</label>
+            <div class="proof-note" style="margin-top:5px;"><span>📷</span><span>Photo proof required</span></div>
+          </div>
+        </div>
+        <div class="sched-item monitor" id="timeline-item-monitor">
+          <div class="sched-dot" id="timeline-dot-monitor">⚪</div>
+          <div class="sched-date">Sep 12</div>
+          <div class="sched-card">
+            <div class="sched-title">Monitoring / Reassessment</div>
+            <div class="sched-sub">Follow-up leaf check</div>
+            <label class="timeline-check"><input type="checkbox" id="timeline-checkbox-monitor" onclick="toggleTimelineItem('monitor')">Mark as done</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="padding-top:8px;">Next Suggested Action</div>
+      <div class="next-treat-card" style="margin-top:0;">
+        <div class="next-treat-badge" id="next-action-badge">🟡 OIL APPLICATION</div>
+        <div class="next-treat-rows">
+          <div class="next-treat-row"><span class="lab" id="next-action-window-lab">Suggested Window</span><span class="val" id="next-action-window-val">Aug 15 – Aug 17</span></div>
+          <div class="next-treat-row"><span class="lab">Status</span><span class="status-chip upcoming" id="next-action-status">🟡 Upcoming</span></div>
+        </div>
+        <button class="btn btn-secondary" style="width:100%; margin-top:16px;" onclick="viewTreatmentDetail()">View Details</button>
+      </div>
+
+      <div class="section-label">Treatment Rotation</div>
+      <div class="rotation-row">
+        <div class="rotation-chip">
+          <div class="rdate" id="rotation-chip1-date">Aug 01</div>
+          <div class="rdot" id="rotation-chip1-dot">🟢</div>
+          <div class="rtitle" id="rotation-chip1-title">Oil</div>
+          <div class="rstat" id="rotation-chip1-stat" style="color:var(--forest);">Completed</div>
+        </div>
+        <div class="rotation-chip">
+          <div class="rdate">Aug 15</div>
+          <div class="rdot">🟡</div>
+          <div class="rtitle" id="rotation-chip2-title">Fungicide</div>
+          <div class="rstat" style="color:#9C6B00;">Upcoming</div>
+        </div>
+        <div class="rotation-chip">
+          <div class="rdate">Aug 29</div>
+          <div class="rdot">🔵</div>
+          <div class="rtitle">Different FRAC Group</div>
+          <div class="rstat" style="color:#2857B0;">Scheduled</div>
+        </div>
+      </div>
+      <div class="rotation-warn">
+        <div class="ic">⚠️</div>
+        <div>
+          <strong>Rotation Check</strong>
+          <p>Review consecutive applications from the same FRAC group.</p>
+        </div>
+      </div>
+
+      <div class="section-label">Treatment History</div>
+      <div class="filter-row">
+        <div class="filter-chip active">All</div>
+        <div class="filter-chip">Oil</div>
+        <div class="filter-chip">Fungicide</div>
+        <div class="filter-chip">Completed</div>
+        <div class="filter-chip">Upcoming</div>
+      </div>
+      <div class="treat-hist-card" onclick="viewTreatmentDetail()">
+        <div class="thumb oil">🛢️</div>
+        <div class="treat-hist-body">
+          <div class="date">Aug 01, 2026</div>
+          <div class="name">Oil Application</div>
+          <div class="field">Field A · <span style="color:var(--forest); font-weight:700;">✓ Completed</span></div>
+        </div>
+      </div>
+      <div class="treat-hist-card" onclick="viewTreatmentDetail()">
+        <div class="thumb fungicide">🧪</div>
+        <div class="treat-hist-body">
+          <div class="date">Aug 15, 2026</div>
+          <div class="name">Fungicide Application</div>
+          <div class="field">Field A · <span style="color:#9C6B00; font-weight:700;">🟡 Upcoming</span></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============ TREATMENT DETAILS ============ -->
+    <section class="screen" id="screen-treatment-detail">
+      <div class="topbar"><div class="brand" style="font-size:19px;">Treatment Details</div><div class="bell-btn" onclick="go('treatment')"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></div></div>
+
+      <div class="field-header">
+        <h3 id="schedule-stage-heading">Black Sigatoka</h3>
+        <p id="schedule-stage-sub">Field A · 2.4 ha</p>
+      </div>
+
+      <div class="card" style="margin:14px 22px; padding:18px;">
+        <div class="next-treat-row"><span class="lab">Treatment</span><span class="val" id="detail-treatment-name">Oil Application</span></div>
+        <div style="height:1px;background:var(--line);margin:12px 0;"></div>
+        <div class="next-treat-row"><span class="lab">Suggested Date</span><span class="val" id="detail-date">Aug 20</span></div>
+        <div style="height:1px;background:var(--line);margin:12px 0;"></div>
+        <div class="next-treat-row"><span class="lab">Status</span><span class="status-chip upcoming" id="detail-status">🟡 Suggested</span></div>
+      </div>
+
+      <p class="section-label" style="padding:4px 22px 6px;">Suggested → Confirmed → Applied → Follow-up. Nothing here is assumed applied until you say so.</p>
+
+      <div class="btnrow" style="padding:0 22px;" id="detail-step-suggested">
+        <button class="btn btn-secondary" style="width:100%" onclick="go('treatment')">Cancel</button>
+        <button class="btn btn-primary" style="width:100%" onclick="confirmTreatmentDetail()">Confirm</button>
+      </div>
+
+      <div class="btnrow" style="padding:0 22px; display:none;" id="detail-step-confirmed">
+        <button class="btn btn-secondary" style="width:100%" onclick="markTreatmentUnknown()">Not Sure Yet</button>
+        <button class="btn btn-primary" style="width:100%" onclick="markTreatmentApplied()">Mark as Applied</button>
+      </div>
+
+      <div class="btnrow" style="padding:0 22px; display:none;" id="detail-step-applied">
+        <button class="btn btn-primary" style="width:100%" onclick="go('treatment')">Done — Follow-up Scheduled</button>
+      </div>
+
+      <p class="disclaimer">AI-assisted scheduling should be verified by an agricultural specialist before treatment decisions.</p>
+    </section>
+
+    <!-- ============ NOTIFICATIONS ============ -->
+    <section class="screen" id="screen-notifications">
+      <div class="topbar"><div class="brand" style="font-size:19px;">Notifications</div><div class="bell-btn" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></div></div>
+
+      <div class="px" style="padding-top:14px;">
+        <div class="notif-item">
+          <div class="ic">🟡</div>
+          <div><p>Oil application scheduled for tomorrow.</p><div class="time">Field A · 2h ago</div></div>
+        </div>
+        <div class="notif-item">
+          <div class="ic">🔔</div>
+          <div><p>Upcoming Black Sigatoka treatment for Field A.</p><div class="time">Yesterday</div></div>
+        </div>
+        <div class="notif-item">
+          <div class="ic">⚠️</div>
+          <div><p>Treatment schedule needs review.</p><div class="time">2 days ago</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BULK RECENT SCANNED ============ -->
+    <section class="screen" id="screen-history">
+      <div class="topbar"><div class="brand" style="font-size:19px;">Bulk Recent Scanned</div><div class="bell-btn" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></div></div>
+      <p class="page-sub" style="padding-top:0;">Recent bulk assessments grouped by plant, bulk ID, date, and Black Sigatoka stage.</p>
+      <div id="bulk-recent-scanned-list"></div>
+    </section>
+
+    <!-- ============ PROFILE ============ -->
+    <section class="screen" id="screen-profile">
+      <div class="topbar"><div class="brand" style="font-size:19px;">My Profile</div><div class="bell-btn"><svg viewBox="0 0 24 24"><path d="M6 10a6 6 0 1112 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"/><path d="M10 20a2 2 0 004 0"/></svg></div></div>
+      <div class="profile-head">
+        <div class="avatar">JD</div>
+        <div class="pname">Juan Dela Cruz</div>
+        <div class="pfarm">Sitio Malabo Banana Farm · Balayan, Batangas</div>
+      </div>
+
+      <div class="settings-group">
+        <div class="glabel">Account</div>
+        <div class="setting-row"><div class="left"><div class="ic">👤</div>User Information</div><div class="chev-r">›</div></div>
+        <div class="setting-row"><div class="left"><div class="ic">🌱</div>Farm Information</div><div class="chev-r">›</div></div>
+      </div>
+
+      <div class="settings-group">
+        <div class="glabel">Preferences</div>
+        <div class="setting-row"><div class="left"><div class="ic">🔔</div>Notifications</div><div class="toggle"></div></div>
+        <div class="setting-row"><div class="left"><div class="ic">🌐</div>Language</div><div class="chev-r">English ›</div></div>
+      </div>
+
+      <div class="settings-group">
+        <div class="glabel">Support</div>
+        <div class="setting-row"><div class="left"><div class="ic">ℹ️</div>About Digisaka</div><div class="chev-r">›</div></div>
+        <div class="setting-row"><div class="left"><div class="ic">❓</div>Help &amp; Support</div><div class="chev-r">›</div></div>
+      </div>
+    </section>
+
+  </div></div>
+  </div><!-- /.app-main -->
+
+  <!-- ============ PHOTO PROOF OF TREATMENT MODAL (global — required before checking off a treatment step) ============ -->
+  <div class="outcome-overlay" id="proof-overlay">
+    <div class="outcome-modal" id="proof-modal">
+      <h4>📸 Proof of Treatment Required</h4>
+      <p class="sub" id="proof-modal-sub">Upload a photo showing the treatment was applied before marking this step as done.</p>
+
+      <label class="proof-upload" id="proof-upload-box" for="proof-file-input">
+        <div class="proof-upload-icon">📷</div>
+        <div class="proof-upload-text" id="proof-upload-text">Tap to upload a photo</div>
+        <div class="proof-upload-hint">JPG or PNG</div>
+      </label>
+      <input type="file" accept="image/*" id="proof-file-input" class="hide" onchange="handleProofFileSelected(event)">
+
+      <div id="proof-preview-wrap" class="hide">
+        <img id="proof-preview-img" style="width:100%; border-radius:14px; margin-top:10px; display:block;" />
+        <div class="proof-preview-name" id="proof-preview-name"></div>
+      </div>
+
+      <div class="proof-note"><span>⚠️</span><span>This step can't be checked off without a photo.</span></div>
+
+      <div class="btnrow" style="margin-top:16px;">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeProofModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1" id="proof-confirm-btn" disabled onclick="confirmProofUpload()">Confirm &amp; Mark Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LEAF PHOTO VIEWER (click a leaf to see its captured image) ============ -->
+  <div class="leaf-photo-overlay" id="leaf-photo-overlay" onclick="if(event.target===this) closeLeafPhoto()">
+    <div class="leaf-photo-modal">
+      <div class="lpm-head">
+        <span class="lpm-title" id="leaf-photo-title">Leaf 01</span>
+        <div class="lpm-close" onclick="closeLeafPhoto()">✕</div>
+      </div>
+      <div class="lpm-photo" id="leaf-photo-svg-wrap"></div>
+      <div class="lpm-meta" id="leaf-photo-meta"></div>
+    </div>
+  </div>
+
+</div><!-- /.device -->
+
+<!-- ============ ADMIN WEB (design from file 1) ============ -->
+
+
+
+<script src="js/api.js"></script>
+<script src="js/core.js"></script>
+<script src="js/usecase.js"></script>
+<script src="js/switcher.js"></script>
+<script src="js/boot.js"></script>
+</body>
+</html>
+
+
+

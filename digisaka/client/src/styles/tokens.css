@@ -1,0 +1,12 @@
+:root {
+  --forest: #08783F; --forest-deep: #06552C; --leaf: #0A9F55; --leaf-soft: #8FD9A8;
+  --tint: #E8F7EF; --beige: #EFE7D6; --teal: #2A9D8F; --banana: #FFC93C;
+  --warn: #E76F51; --warn-tint: #FDEBE5; --danger: #D62828;
+  --ink: #1B2A22; --ink-soft: #6B7A72; --bg: #F7F8F5; --card: #FFFFFF;
+  --line: rgba(8, 120, 63, .14); --shadow: 0 6px 20px rgba(11, 59, 30, .06);
+  --radius-lg: 20px; --radius-md: 16px; --radius-sm: 12px;
+  --stat-blue: #3B82F6; --stat-purple: #8B5CF6; --stat-orange: #F59E0B;
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif; --font-body: 'Nunito', system-ui, sans-serif;
+  --sidebar-w: 264px; --header-h: 76px; --tabbar-h: 0px; --gutter: 28px;
+}
+@media (max-width: 900px) { :root { --header-h: 60px; --tabbar-h: 66px; --gutter: 16px; } }
