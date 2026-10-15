@@ -45,6 +45,13 @@ describe('close', () => {
     expect(s.phase).toBe('review');
     expect(s.cycle.outcome_reason).toBe('gate_e_rejected');
   });
+  it('ends in monitoring, not a proposal, when no treatment is needed', async () => {
+    fetchMock.mockResolvedValueOnce(json(202, cyc())).mockResolvedValueOnce(json(200, done({ outcome: 'continue_monitoring', outcome_reason: 'disease_not_worsening' })));
+    const s = useCycleStore();
+    await s.close('L04', '2026-W24', wait);
+    expect(s.phase).toBe('monitoring');
+    expect(s.cycle.outcome_reason).toBe('disease_not_worsening');
+  });
   it('times out after the poll limit', async () => {
     fetchMock.mockImplementation(async (url, init) => json(init.method === 'POST' ? 202 : 200, cyc()));
     const s = useCycleStore();

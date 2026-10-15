@@ -3,6 +3,7 @@ import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import PageHeader from '../components/PageHeader.vue';
 import { useProposalStore } from '../stores/proposal.js';
+import { outcomeReasonText } from '../helpers/messages.js';
 import { isValidWeek, weekStart } from '../helpers/week.js';
 import { todayIso, today as nowDate } from '../helpers/today.js';
 
@@ -89,7 +90,7 @@ const months = computed(() => {
 
 const BANNER = computed(() => {
   if (applied.value) return { cls: 'ok', icon: '✓', text: `Treatment applied on ${fmt(store.appliedOn)}` };
-  if (rejected.value) return { cls: 'bad', icon: '!', text: `Human Review Required${store.cycle?.outcome_reason ? ` — ${store.cycle.outcome_reason}` : ''}` };
+  if (rejected.value) return { cls: 'bad', icon: '!', text: `Human Review Required${store.cycle?.outcome_reason ? ` — ${outcomeReasonText(store.cycle.outcome_reason)}` : ''}` };
   if (status.value === 'approved') return { cls: 'ok', icon: '✓', text: 'Approved — apply during the treatment window' };
   return { cls: 'wait', icon: '•', text: 'Proposed — awaiting your decision' };
 });

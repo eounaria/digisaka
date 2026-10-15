@@ -8,7 +8,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const base = '/api/v1/scheduler';
 const e = encodeURIComponent;
 
-// Closes a line-week and follows its cycle. phase: idle, closing, running, proposal, review, failed, timeout, error.
+const PHASE_OF_OUTCOME = { human_review_required: 'review', continue_monitoring: 'monitoring' };
+
+// Closes a line-week and follows its cycle. phase: idle, closing, running, proposal, monitoring, review, failed, timeout, error.
 export const useCycleStore = defineStore('cycle', {
   state: () => ({ phase: 'idle', cycle: null, error: '', busy: false, run: 0 }),
   actions: {
@@ -55,7 +57,7 @@ export const useCycleStore = defineStore('cycle', {
           if (run !== this.run) return;
           const c = this.cycle;
           if (c.status === 'failed') { this.phase = 'failed'; return; }
-          if (c.status !== 'running') { this.phase = c.outcome === 'human_review_required' ? 'review' : 'proposal'; return; }
+          if (c.status !== 'running') { this.phase = PHASE_OF_OUTCOME[c.outcome] ?? 'proposal'; return; }
           this.phase = 'running';
           if (i === POLL_LIMIT - 1) break;
           await wait(POLL_MS);

@@ -8,6 +8,7 @@ import { useFarmStore } from '../stores/farm.js';
 import { useCycleStore } from '../stores/cycle.js';
 import { groupLeaves } from '../helpers/groups.js';
 import { previousWeek, nextWeek, isoWeekOf, weekStart, weekEnd } from '../helpers/week.js';
+import { outcomeReasonText } from '../helpers/messages.js';
 import { todayIso, fromIso } from '../helpers/today.js';
 
 const scan = useScanStore(), farm = useFarmStore(), cycle = useCycleStore();
@@ -225,10 +226,15 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
           <h2>A treatment proposal is ready</h2>
           <RouterLink class="btn primary" :to="`/treatment/${encodeURIComponent(scan.line)}/${encodeURIComponent(scan.week)}`">Open proposal</RouterLink>
         </template>
+        <template v-else-if="cycle.phase === 'monitoring'">
+          <h2>No treatment needed yet</h2>
+          <p v-if="cycle.cycle?.outcome_reason">{{ outcomeReasonText(cycle.cycle.outcome_reason) }}</p>
+          <p class="hint">Keep monitoring this line and scan again next week.</p>
+        </template>
         <template v-else-if="cycle.phase === 'review'">
           <h2>Human review required</h2>
           <p>No treatment is proposed for this week. An expert needs to look at this line.</p>
-          <p v-if="cycle.cycle?.outcome_reason">Reason: {{ cycle.cycle.outcome_reason }}</p>
+          <p v-if="cycle.cycle?.outcome_reason">Reason: {{ outcomeReasonText(cycle.cycle.outcome_reason) }}</p>
         </template>
         <template v-else-if="cycle.phase === 'failed'">
           <h2>The cycle failed</h2>
