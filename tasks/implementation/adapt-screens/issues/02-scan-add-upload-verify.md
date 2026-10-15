@@ -4,12 +4,12 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** built, waiting for the user's layout approval and the live check
 
-- [ ] The line list loads from the scheduler and the line and week can be chosen; an invalid week shows a readable message.
-- [ ] Up to eight images can be added, removed or cleared; a ninth is refused with a message.
-- [ ] Assessing uploads each image once, in order, with per-leaf progress, and shows QA's outcome and stage label as given.
-- [ ] The symptom checklist is shown when asked for; Yes and No are submitted and the leaf's result updates; a re-scan request offers a new image for that leaf and reuses its session.
-- [ ] The greyed-out stage override and treatment-history items are visible and do nothing.
-- [ ] Unit tests cover the scan store (upload sequence, confirmation, re-scan, referral and retry cap) with a fake `fetch`, plus the ISO week and image helpers.
+- [x] The line list loads from the scheduler and the line and week can be chosen; an invalid week shows a readable message.
+- [x] Up to eight images can be added, removed or cleared; a ninth is refused with a message.
+- [x] Assessing uploads each image once, in order, with per-leaf progress, and shows QA's outcome and stage label as given.
+- [x] The symptom checklist is shown when asked for; Yes and No are submitted and the leaf's result updates; a re-scan request offers a new image for that leaf and reuses its session.
+- [x] The greyed-out stage override and treatment-history items are visible and do nothing.
+- [x] Unit tests cover the scan store (upload sequence, confirmation, re-scan, referral and retry cap) with a fake `fetch`, plus the ISO week and image helpers.
 - [ ] The user has seen the screen running and approved its layout before ticket 03 starts.
