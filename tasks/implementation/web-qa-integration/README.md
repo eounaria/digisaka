@@ -19,3 +19,7 @@ Linear. Each ticket is demoable against the local stack on its own.
 ## Not ticketed
 
 The legacy scan iframe, the Express stub and its cookie login, existing bulk, schedule and history screens, notifications, admin console, mobile app, and response assessment after an application.
+
+## Known gap
+
+A scan waiting for its symptom confirmation lives only in the screen's memory (the sessions endpoint does not return the checklist). Reloading or changing week mid-confirmation leaves it listed as waiting; a new upload then starts a new session.
