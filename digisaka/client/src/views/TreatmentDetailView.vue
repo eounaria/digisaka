@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import PageHeader from '../components/PageHeader.vue';
 import { useProposalStore } from '../stores/proposal.js';
 import { isValidWeek, weekStart } from '../helpers/week.js';
+import { todayIso, today as nowDate } from '../helpers/today.js';
 
 const route = useRoute(), store = useProposalStore();
 const lineId = computed(() => String(route.params.lineId));
@@ -19,7 +20,7 @@ const parse = (iso) => { const [y, m, d] = iso.split('-').map(Number); return ne
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const fmt = (s) => { const d = parse(s); return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; };
 const short = (s) => { const d = parse(s); return `${MONTHS[d.getMonth()].slice(0, 3)} ${d.getDate()}`; };
-const today = () => iso(new Date());
+const today = () => todayIso();
 
 const p = computed(() => store.proposal);
 const status = computed(() => store.status);
@@ -74,7 +75,7 @@ const months = computed(() => {
     const m = by.get(k); const [y, mo] = k.split('-').map(Number);
     const first = new Date(y, mo - 1, 1), days = new Date(y, mo, 0).getDate();
     const cells = [...Array((first.getDay() + 6) % 7).fill(null), ...Array.from({ length: days }, (_, i) => i + 1)];
-    const t = new Date();
+    const t = nowDate();
     const todayHere = t.getFullYear() === y && t.getMonth() === mo - 1 ? t.getDate() : null;
     const mine = steps.value.filter((s) => s.date.startsWith(k));
     return { ...m, month: MONTHS[mo - 1], year: y, cells, todayHere, steps: mine, done: mine.filter((s) => stateOf(s) === 'done').length };
@@ -195,7 +196,7 @@ async function confirmDate() {
       <div class="sheet" role="dialog" aria-modal="true" aria-label="Date applied">
         <h4>When was it applied?</h4>
         <p class="sub">Pick the date the treatment was applied.</p>
-        <input v-model="dateSheet.value" class="datefield" type="date" aria-label="Date applied" />
+        <input v-model="dateSheet.value" class="datefield" type="date" :max="todayIso()" aria-label="Date applied" />
         <p v-if="store.error" class="error">{{ store.error }}</p>
         <div class="btns"><button class="ghost" type="button" @click="dateSheet = null">Cancel</button><button type="button" :disabled="!dateSheet.value || store.busy" @click="confirmDate">Record</button></div>
       </div>

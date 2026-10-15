@@ -52,3 +52,11 @@ describe('weekStart', () => {
     expect(() => weekStart('nope')).toThrow(RangeError);
   });
 });
+
+describe('weekEnd', () => {
+  it('returns the Sunday of the week', async () => {
+    const { weekEnd } = await import('./week.js');
+    expect(weekEnd('2026-W24')).toBe('2026-06-14');
+    expect(weekEnd('2026-W53')).toBe('2027-01-03');
+  });
+});

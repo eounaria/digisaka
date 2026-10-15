@@ -47,3 +47,10 @@ export function weekStart(key) {
   const monday = new Date(jan4.getTime() + ((week - 1) * 7 - ((jan4.getUTCDay() || 7) - 1)) * 86400000);
   return monday.toISOString().slice(0, 10);
 }
+
+// The Sunday of an ISO week, as YYYY-MM-DD.
+export function weekEnd(key) {
+  const d = new Date(weekStart(key) + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + 6);
+  return d.toISOString().slice(0, 10);
+}

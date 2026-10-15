@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { api } from '../api.js';
 import { fileToPayload } from '../helpers/image.js';
 import { isoWeekOf, isValidWeek } from '../helpers/week.js';
+import { today } from '../helpers/today.js';
 import { messageFor } from '../helpers/messages.js';
 
 export const MAX_LEAVES = 8;
@@ -20,7 +21,7 @@ const path = (line, week) => `/api/v1/scheduler/lines/${encodeURIComponent(line)
 let nextId = 1;
 
 export const useScanStore = defineStore('scan', {
-  state: () => ({ line: '', week: isoWeekOf(new Date()), leaves: [], notice: '', assessing: false, log: [] }),
+  state: () => ({ line: '', week: isoWeekOf(today()), leaves: [], notice: '', assessing: false, log: [] }),
   getters: {
     weekOk: (s) => isValidWeek(s.week),
     canAssess: (s) => isValidWeek(s.week) && !!s.line && !s.assessing && s.leaves.some((l) => l.phase === 'queued' || l.phase === 'failed'),

@@ -7,13 +7,17 @@ import { useScanStore, outcomeLabel, MAX_LEAVES } from '../stores/scan.js';
 import { useFarmStore } from '../stores/farm.js';
 import { useCycleStore } from '../stores/cycle.js';
 import { groupLeaves } from '../helpers/groups.js';
-import { previousWeek, nextWeek } from '../helpers/week.js';
+import { previousWeek, nextWeek, isoWeekOf, weekStart, weekEnd } from '../helpers/week.js';
+import { todayIso, fromIso } from '../helpers/today.js';
 
 const scan = useScanStore(), farm = useFarmStore(), cycle = useCycleStore();
 const step = ref(1); // 1 Select Leaves, 2 Bulk Assess, 3 Results
 const STEPS = ['Select Leaves', 'Bulk Assess', 'Results'];
 const AGENT_STEPS = ['Leaf Images Collected', 'Black Sigatoka Validation', 'Individual Stage Assessment', 'Stage Groups Organized', 'Human Verification', 'Treatment Recommendation', 'Schedule Review'];
-const weekInput = ref(scan.week);
+const maxDate = todayIso();                 // scans can't be added to a future week
+const dateInput = ref(maxDate);
+const weekRange = computed(() => (scan.weekOk ? `${weekStart(scan.week)} to ${weekEnd(scan.week)}` : ''));
+const atLatest = computed(() => scan.week >= isoWeekOf(fromIso(maxDate)));
 const gallery = ref(null), camera = ref(null), rescanInput = ref(null), logBox = ref(null);
 const rescanId = ref(null);
 const previews = new Map();
@@ -29,9 +33,13 @@ const preview = (leaf) => {
   return previews.get(leaf.id);
 };
 const setLine = (e) => scan.select(e.target.value, scan.week);
-const setWeek = (w) => { weekInput.value = w; scan.select(scan.line, w); };
-const submitWeek = () => setWeek(weekInput.value.trim().toUpperCase());
-const stepWeek = (fn) => { try { setWeek(fn(scan.week)); } catch { /* the invalid-week message is already showing */ } };
+const setDate = () => { if (dateInput.value) scan.select(scan.line, isoWeekOf(fromIso(dateInput.value))); };
+const stepWeek = (fn) => {
+  const w = fn(scan.week);
+  const start = weekStart(w);
+  dateInput.value = start > maxDate ? maxDate : start;
+  scan.select(scan.line, w);
+};
 const picked = (e) => { scan.addFiles([...e.target.files]); e.target.value = ''; };
 const startRescan = (id) => { rescanId.value = id; rescanInput.value.click(); };
 const rescanPicked = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) scan.rescan(rescanId.value, f); };
@@ -78,14 +86,13 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
             <option v-for="l in farm.lines" :key="l" :value="l">{{ l }}</option>
           </select>
         </label>
-        <form class="week" novalidate @submit.prevent="submitWeek">
-          <label>Week <input v-model="weekInput" placeholder="2026-W24"></label>
-          <button type="button" :disabled="!scan.weekOk" @click="stepWeek(previousWeek)">Previous</button>
-          <button type="submit">Go</button>
-          <button type="button" :disabled="!scan.weekOk" @click="stepWeek(nextWeek)">Next</button>
-        </form>
+        <div class="week">
+          <label>Date <input v-model="dateInput" type="date" :max="maxDate" @change="setDate"></label>
+          <button type="button" @click="stepWeek(previousWeek)">Previous week</button>
+          <button type="button" :disabled="atLatest" @click="stepWeek(nextWeek)">Next week</button>
+        </div>
+        <p class="hint">Week {{ scan.week }} ({{ weekRange }})</p>
         <p v-if="farm.linesError" class="err" role="alert">{{ farm.linesError }}</p>
-        <p v-if="!scan.weekOk" class="err" role="alert">That is not a valid week. Use the form 2026-W24.</p>
       </section>
 
       <div class="frame" aria-hidden="true">
