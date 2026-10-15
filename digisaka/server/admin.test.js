@@ -1,33 +1,65 @@
 process.env.DB_PATH = ':memory:';
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import bcrypt from 'bcryptjs';
 
 const { createApp } = await import('./app.js');
+const { TECHNICAL_USER_ROLES } = await import('./supabaseAuth.js');
 const { db } = await import('./db.js');
-let server, base, cookie = '';
+let server, base, token = 'tech-token';
+const PEOPLE = {
+  'tech-token': { email: 'adm@x.co', name: 'Ada Min', roles: ['administrator'] },
+  'practitioner-token': { email: 'prac@x.co', name: 'Pra Ctitioner', roles: ['practitioner'] },
+  'down-token': null,
+};
+const verifyToken = async (t) => {
+  if (!(t in PEOPLE)) throw Object.assign(new Error('bad'), { status: 401 });
+  if (PEOPLE[t] === null) throw Object.assign(new Error('down'), { status: 503 });
+  return PEOPLE[t];
+};
 const UC = 'black-sigatoka';
 
-before(() => new Promise((r) => { server = createApp().listen(0, () => { base = `http://localhost:${server.address().port}`; r(); }); }));
+before(() => new Promise((r) => { server = createApp({ verifyToken }).listen(0, () => { base = `http://localhost:${server.address().port}`; r(); }); }));
 after(() => server.close());
 
 const call = async (method, url, body, headers = {}) => {
   const isBuf = Buffer.isBuffer(body);
-  const res = await fetch(base + url, { method, headers: { ...(body && !isBuf ? { 'Content-Type': 'application/json' } : {}), cookie, ...headers }, body: body && (isBuf ? body : JSON.stringify(body)) });
-  const set = res.headers.get('set-cookie'); if (set) cookie = set.split(';')[0];
+  const res = await fetch(base + url, { method, headers: { ...(body && !isBuf ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...headers }, body: body && (isBuf ? body : JSON.stringify(body)) });
   const ct = res.headers.get('content-type') || '';
   return { status: res.status, data: ct.includes('json') ? await res.json() : null, type: ct };
 };
 const A = (path) => `${path}${path.includes('?') ? '&' : '?'}useCase=${UC}`;
 
-test('farmers cannot reach the admin API', async () => {
-  db.prepare("INSERT INTO users (email, name, password_hash, role) VALUES ('f@x.co','Farm Er',?, 'farmer'), ('adm@x.co','Ada Min',?, 'admin')").run(bcrypt.hashSync('longenough1', 4), bcrypt.hashSync('longenough1', 4));
-  await call('POST', '/api/auth/login', { email: 'f@x.co', password: 'longenough1' });
+test('only Technical Users reach the admin API', async () => {
+  token = null;
+  assert.equal((await call('GET', A('/api/admin/documents'))).status, 401);
+  token = 'garbage';
+  assert.equal((await call('GET', A('/api/admin/documents'))).status, 401);
+  token = 'down-token';
+  assert.equal((await call('GET', A('/api/admin/documents'))).status, 503);
+  token = 'practitioner-token';
   assert.equal((await call('GET', A('/api/admin/documents'))).status, 403);
   assert.equal((await call('GET', A('/api/admin/datasets/folders'))).status, 403);
-  await call('POST', '/api/auth/login', { email: 'adm@x.co', password: 'longenough1' });
+  assert.equal(db.prepare("SELECT 1 FROM users WHERE email = 'prac@x.co'").get(), undefined);
+  for (const role of TECHNICAL_USER_ROLES) {
+    PEOPLE['role-token'] = { email: `${role}@x.co`, name: role, roles: [role] };
+    token = 'role-token';
+    assert.equal((await call('GET', '/api/admin/use-cases')).status, 200);
+  }
+  token = 'tech-token';
   assert.equal((await call('GET', '/api/admin/documents')).status, 400);                 // use case is required
   assert.equal((await call('GET', '/api/admin/documents?useCase=nope')).status, 400);
+});
+
+test('first request records the Technical User once', async () => {
+  token = 'tech-token';
+  await call('GET', '/api/admin/use-cases'); await call('GET', '/api/admin/use-cases');
+  const rows = db.prepare("SELECT name, role FROM users WHERE email = 'adm@x.co'").all();
+  assert.deepEqual(rows, [{ name: 'Ada Min', role: 'admin' }]);
+});
+
+test('use cases are served by the admin API', async () => {
+  const r = await call('GET', '/api/admin/use-cases');
+  assert.equal(r.data.useCases.length, 3);
 });
 
 let docId;
@@ -122,7 +154,7 @@ test('dataset folders and image upload', async () => {
   const fake = await call('POST', `${A('/api/admin/datasets/images')}&name=evil.png`, Buffer.from('<svg onload=alert(1)>'), { 'Content-Type': 'image/png' });
   assert.equal(fake.status, 400);   // bytes are checked, not the header
 
-  const file = await fetch(`${base}/api/admin/datasets/images/${id}/file`, { headers: { cookie } });
+  const file = await fetch(`${base}/api/admin/datasets/images/${id}/file`, { headers: { Authorization: `Bearer ${token}` } });
   assert.equal(file.headers.get('content-type'), 'image/png');
   assert.equal((await file.arrayBuffer()).byteLength, png.length);
 

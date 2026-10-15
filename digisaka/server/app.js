@@ -4,19 +4,17 @@ import helmet from 'helmet';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { authRouter, requireAuth } from './auth.js';
-import { dashboardRouter } from './routes/dashboard.js';
-import { bulksRouter } from './routes/bulks.js';
-import { meRouter } from './routes/me.js';
-import { schedulesRouter } from './routes/schedules.js';
-import { notificationsRouter } from './routes/notifications.js';
+import { config } from './config.js';
+import { db } from './db.js';
+import { createSupabaseVerifier } from './supabaseAuth.js';
+import { requireTechnicalUser } from './adminAuth.js';
 import { adminRouter } from './routes/admin.js';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const legacyDir = path.join(root, 'legacy');
 const distDir = path.join(root, 'client', 'dist');
 
-export function createApp() {
+export function createApp({ verifyToken = createSupabaseVerifier({ url: config.supabaseUrl, anonKey: config.supabaseAnonKey }) } = {}) {
   const app = express();
   // The legacy screens use inline handlers, so CSP is relaxed there; tighten before production.
   app.use(helmet({ contentSecurityPolicy: false }));
@@ -24,21 +22,14 @@ export function createApp() {
   app.use(cookieParser());
 
   app.get('/api/health', (_req, res) => res.json({ ok: true }));
-  app.use('/api/auth', authRouter);
-  app.use('/api/dashboard', requireAuth, dashboardRouter);
-  app.use('/api/bulks', requireAuth, bulksRouter);
-  app.use('/api/me', requireAuth, meRouter);
-  app.use('/api/schedules', requireAuth, schedulesRouter);
-  app.use('/api/notifications', requireAuth, notificationsRouter);
-  app.use('/api/admin', requireAuth, adminRouter);
+  app.use('/api/admin', requireTechnicalUser(verifyToken));
+  app.get('/api/admin/use-cases', (_req, res) => res.json({ useCases: db.prepare('SELECT * FROM use_cases ORDER BY rowid').all() }));
+  app.use('/api/admin', adminRouter);
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
-
-  // Screens not yet ported to Vue still run from the original prototype code.
-  app.use('/legacy', express.static(legacyDir, { maxAge: 0, etag: true, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
 
   if (fs.existsSync(distDir)) {
     app.use(express.static(distDir));
-    app.get(/^\/(?!api\/|legacy\/).*/, (_req, res) => res.sendFile(path.join(distDir, 'index.html')));
+    app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile(path.join(distDir, 'index.html')));
   }
   app.use((err, _req, res, _next) => {
     if (err.status && err.status < 500) return res.status(err.status).json({ error: err.message });

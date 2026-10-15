@@ -2,14 +2,12 @@ import { Router } from 'express';
 import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { db } from '../db.js';
-import { requireRole } from '../auth.js';
 import { parseCsv } from '../csv.js';
 import { audit } from '../audit.js';
 import { knowledgeRouter } from './adminKnowledge.js';
 import { datasetsRouter } from './adminDatasets.js';
 
 export const adminRouter = Router();
-adminRouter.use(requireRole('admin'));
 adminRouter.use(knowledgeRouter);
 adminRouter.use(datasetsRouter);
 
