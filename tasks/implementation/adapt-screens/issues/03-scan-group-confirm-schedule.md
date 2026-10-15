@@ -4,10 +4,10 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** built, live check pending
 
-- [ ] Verified leaves are grouped by QA's stage label; healthy and unvalidated leaves are listed apart.
-- [ ] Confirm & Schedule closes the week; a week already closed leads to the existing cycle; a week with no finished session explains why it cannot close.
-- [ ] The cycle is polled while running and stops when the screen is left.
-- [ ] A finished cycle with a proposal links to the treatment detail screen for that line and week; Human Review Required shows its reason; a failed cycle offers a retry.
-- [ ] Unit tests cover close, polling, the three endings and retry with a fake client.
+- [x] Verified leaves are grouped by QA's stage label; healthy and unvalidated leaves are listed apart.
+- [x] Confirm & Schedule closes the week; a week already closed leads to the existing cycle; a week with no finished session explains why it cannot close.
+- [x] The cycle is polled while running and stops when the screen is left.
+- [x] A finished cycle with a proposal links to the treatment detail screen for that line and week; Human Review Required shows its reason; a failed cycle offers a retry.
+- [x] Unit tests cover close, polling, the three endings and retry with a fake client.

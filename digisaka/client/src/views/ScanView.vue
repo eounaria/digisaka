@@ -1,12 +1,15 @@
 <script setup>
+import { RouterLink } from 'vue-router';
 import { computed, onMounted, onBeforeUnmount, ref, nextTick, watch } from 'vue';
 import PageHeader from '../components/PageHeader.vue';
 import Icon from '../components/Icon.vue';
 import { useScanStore, outcomeLabel, MAX_LEAVES } from '../stores/scan.js';
 import { useFarmStore } from '../stores/farm.js';
+import { useCycleStore } from '../stores/cycle.js';
+import { groupLeaves } from '../helpers/groups.js';
 import { previousWeek, nextWeek } from '../helpers/week.js';
 
-const scan = useScanStore(), farm = useFarmStore();
+const scan = useScanStore(), farm = useFarmStore(), cycle = useCycleStore();
 const step = ref(1); // 1 Select Leaves, 2 Bulk Assess, 3 Results
 const STEPS = ['Select Leaves', 'Bulk Assess', 'Results'];
 const AGENT_STEPS = ['Leaf Images Collected', 'Black Sigatoka Validation', 'Individual Stage Assessment', 'Stage Groups Organized', 'Human Verification', 'Treatment Recommendation', 'Schedule Review'];
@@ -19,7 +22,7 @@ onMounted(async () => {
   await farm.loadLines();
   if (!scan.line && farm.lines.length) scan.select(farm.lines[0], scan.week);
 });
-onBeforeUnmount(() => { for (const u of previews.values()) URL.revokeObjectURL(u); });
+onBeforeUnmount(() => { cycle.stop(); for (const u of previews.values()) URL.revokeObjectURL(u); });
 
 const preview = (leaf) => {
   if (!previews.has(leaf.id)) previews.set(leaf.id, URL.createObjectURL(leaf.file));
@@ -37,7 +40,9 @@ async function assess() {
   step.value = 2;
   await scan.assess();
 }
-function startOver() { scan.leaves = []; scan.log = []; step.value = 1; }
+function startOver() { cycle.reset(); scan.leaves = []; scan.log = []; step.value = 1; }
+const groups = computed(() => groupLeaves(scan.leaves));
+function confirmSchedule() { cycle.close(scan.line, scan.week); }
 
 const needsAnswer = computed(() => scan.leaves.filter((l) => l.phase === 'confirm' || l.phase === 'rescan'));
 const failed = computed(() => scan.leaves.filter((l) => l.phase === 'failed'));
@@ -180,16 +185,55 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
       </div>
     </template>
 
-    <!-- Step 3: Results (grouping, human verification and scheduling arrive with the next ticket) -->
+    <!-- Step 3: Results, grouped by stage; Confirm & Schedule closes the week and follows the cycle -->
     <template v-else>
       <section class="card">
         <h2>Leaves in this Bulk</h2>
-        <ul class="results">
-          <li v-for="(l, i) in scan.leaves" :key="l.id"><img :src="preview(l)" :alt="`Leaf ${i + 1}`"><span><b>Leaf {{ i + 1 }}</b> {{ outcomeLabel(l.outcome) }}{{ l.stage ? ` (${l.stage})` : '' }}</span></li>
-        </ul>
-        <p class="hint">Grouping by stage, verification and the treatment schedule are not built yet.</p>
+        <div v-for="g in groups.stages" :key="g.label" class="group">
+          <b>{{ g.label }} <small>({{ g.leaves.length }})</small></b>
+          <ul class="results"><li v-for="l in g.leaves" :key="l.id"><img :src="preview(l)" :alt="`Leaf ${scan.leaves.indexOf(l) + 1}`">Leaf {{ scan.leaves.indexOf(l) + 1 }}</li></ul>
+        </div>
+        <div v-if="groups.healthy.length" class="group">
+          <b>Healthy <small>({{ groups.healthy.length }})</small></b>
+          <ul class="results"><li v-for="l in groups.healthy" :key="l.id"><img :src="preview(l)" :alt="`Leaf ${scan.leaves.indexOf(l) + 1}`">Leaf {{ scan.leaves.indexOf(l) + 1 }}</li></ul>
+        </div>
+        <div v-if="groups.unvalidated.length" class="group">
+          <b>Unvalidated / Review Required <small>({{ groups.unvalidated.length }})</small></b>
+          <ul class="results"><li v-for="l in groups.unvalidated" :key="l.id"><img :src="preview(l)" :alt="`Leaf ${scan.leaves.indexOf(l) + 1}`">Leaf {{ scan.leaves.indexOf(l) + 1 }} — {{ outcomeLabel(l.outcome) }}</li></ul>
+        </div>
+        <p class="hint">This is an AI-assisted assessment and not a confirmed diagnosis. Results should be verified by an agricultural specialist before treatment decisions.</p>
       </section>
-      <div class="nav"><button @click="step = 2">Back</button><button class="primary" @click="startOver">New scan</button></div>
+
+      <section class="card" aria-live="polite">
+        <p v-if="cycle.error" class="err" role="alert">{{ cycle.error }}</p>
+        <template v-if="cycle.phase === 'idle'">
+          <p>Confirm &amp; Schedule closes {{ scan.week }} for line {{ scan.line }} and works out a treatment. No more scans can be added to this week.</p>
+          <button class="primary" :disabled="cycle.busy" @click="confirmSchedule">Confirm &amp; Schedule</button>
+        </template>
+        <template v-else-if="cycle.phase === 'closing' || cycle.phase === 'running'">
+          <h2>Working out a treatment...</h2>
+          <p class="hint">This usually takes under a minute.</p>
+        </template>
+        <template v-else-if="cycle.phase === 'proposal'">
+          <h2>A treatment proposal is ready</h2>
+          <RouterLink class="btn primary" :to="`/treatment/${encodeURIComponent(scan.line)}/${encodeURIComponent(scan.week)}`">Open proposal</RouterLink>
+        </template>
+        <template v-else-if="cycle.phase === 'review'">
+          <h2>Human review required</h2>
+          <p>No treatment is proposed for this week. An expert needs to look at this line.</p>
+          <p v-if="cycle.cycle?.outcome_reason">Reason: {{ cycle.cycle.outcome_reason }}</p>
+        </template>
+        <template v-else-if="cycle.phase === 'failed'">
+          <h2>The cycle failed</h2>
+          <p v-if="cycle.cycle?.failure_reason">Reason: {{ cycle.cycle.failure_reason }}</p>
+          <button class="primary" :disabled="cycle.busy" @click="cycle.retry()">Retry</button>
+        </template>
+        <template v-else>
+          <h2>{{ cycle.phase === 'timeout' ? 'This is taking too long' : 'Could not load the cycle' }}</h2>
+          <button class="primary" @click="cycle.resume()">Check again</button>
+        </template>
+      </section>
+      <div class="nav"><button :disabled="cycle.phase !== 'idle'" @click="step = 2">Back</button><button v-if="cycle.phase !== 'closing' && cycle.phase !== 'running'" @click="startOver">New scan</button></div>
     </template>
   </div>
 </template>
@@ -260,7 +304,9 @@ button.wide { width: 100%; padding: 14px; margin: 20px 0 8px; border-radius: 14p
 .ask > div { display: grid; gap: 6px; justify-items: start; }
 .checks { list-style: disc; padding-left: 20px; }
 .nav { display: flex; gap: 8px; justify-content: space-between; }
-.results { display: grid; gap: 8px; }
+.results { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 6px 0 12px; }
+.btn { display: inline-block; padding: 10px 12px; border-radius: var(--radius-sm); text-align: center; }
+.btn.primary { background: var(--forest); color: #fff; font-weight: 800; }
 .results li { display: flex; gap: 10px; align-items: center; }
 .results img { width: 48px; height: 48px; object-fit: cover; border-radius: 10px; }
 </style>
