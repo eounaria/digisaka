@@ -1,6 +1,6 @@
-// The app's "today". The stub scheduler data ends at 2026-W24, so the app treats a Wednesday of that
+// The app's "today". The stub scheduler data ends at 2026-W24, so the app treats the Monday of that
 // week as the current date instead of the real clock. Set `null` to use the real date again.
-const DEMO_TODAY = new Date(2026, 5, 10);
+const DEMO_TODAY = new Date(2026, 5, 8);
 
 export const today = () => (DEMO_TODAY ? new Date(DEMO_TODAY) : new Date());
 export const todayIso = () => toIso(today());
