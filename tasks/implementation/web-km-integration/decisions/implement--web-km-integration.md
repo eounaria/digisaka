@@ -4,7 +4,7 @@ Developer audit only. Nothing else may link here.
 
 ## Preface
 
-Branch `qa-web/km-integration`, based on `qa-web/adapt-screens`. Tickets 01 and 02 built so far. Rules in force: minor and standard questions follow the recommendation; destructive or breaking ones halt for the user. Test seams were approved by recommendation: the store behind each screen, the API client's error shape and the dev proxy targets, all with a fake `fetch`; no component tests.
+Branch `qa-web/km-integration`, based on `qa-web/adapt-screens`. Tickets 01 to 03 built so far. Rules in force: minor and standard questions follow the recommendation; destructive or breaking ones halt for the user. Test seams were approved by recommendation: the store behind each screen, the API client's error shape and the dev proxy targets, all with a fake `fetch`; no component tests.
 
 ## Decisions
 
