@@ -47,11 +47,27 @@ silicon, and QA needs local CV checkpoints, so they are not containerized.
    Technical User roles (Administrator, Domain Expert, Plant Pathologist). A Technical User is recorded in the local
    `users` table on their first admin request.
 
+### Stop and restart
+Run these from `digisaka/digisaka/`. The services are `api` (Express) and `web` (Vite).
+
+```bash
+docker compose ps                     # what is running
+docker compose stop                   # stop both, keep containers and data
+docker compose start                  # start them again
+docker compose restart api            # after a server edit (Express routes, seed)
+docker compose restart web            # after a change to client/vite.config.js (proxy targets such as KM_URL) or client/.env.local
+docker compose up -d --build          # after a Dockerfile, package.json or docker-compose.yml change (including env such as KM_URL)
+docker compose logs -f api web        # follow the logs
+```
+
+Without Docker (the retired local route), stop with Ctrl+C in each terminal and start again with
+`npm run dev` (Express) and `npm run dev:client` (Vite).
+
 Stop with `docker compose down`. `docker compose down -v` also wipes the database and the installed dependencies;
 run it (then `up --build`) after changing a `package.json`, because the dependency volumes outlive the image.
 
 Limits: dev server only (no production image), the backend is not containerized, and client edits hot reload but
-server edits need `docker compose restart api`. Known limits: knowledge maintenance (the admin console) is not integrated with AI_NeSy and still uses its own SQLite data; the admin Users screen lists local sample farmers, not AI_NeSy accounts. Without a running scheduler, the scan, history and schedule screens fail with a generic "Something went wrong" message (the dev proxy answers 502).
+server edits need `docker compose restart api`. Known limits: Document Extractions talks to the AI_NeSy Knowledge Maintenance API on port 8000 (the main API, through the `KM_URL` proxy), so that API and its workflow runner must be up; Tracing and Knowledge Graph are greyed out until the service can list workflows and facts, and the rest of the admin console (datasets, ontology, audit, users) still uses its own SQLite data; the admin Users screen lists local sample farmers, not AI_NeSy accounts. Without a running scheduler, the scan, history and schedule screens fail with a generic "Something went wrong" message (the dev proxy answers 502).
 
 ## Layout
 ```
