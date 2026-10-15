@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
 import { api } from '../api.js';
-import { useAuthStore } from './auth.js';
+
+const KEY = 'digisaka.activeUseCase';
+const remembered = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
+const remember = (slug) => { try { localStorage.setItem(KEY, slug); } catch { /* the choice just won't survive a reload */ } };
 
 export const useUseCaseStore = defineStore('useCase', {
   state: () => ({ cases: [], slug: 'black-sigatoka' }),
@@ -8,9 +11,10 @@ export const useUseCaseStore = defineStore('useCase', {
   actions: {
     async load() {
       if (this.cases.length) return;
-      this.cases = (await api.get('/api/me/use-cases')).useCases;
-      this.slug = useAuthStore().user?.useCase || this.slug;
+      this.cases = (await api.get('/api/admin/use-cases')).useCases;
+      const saved = remembered();
+      this.slug = this.cases.some((c) => c.slug === saved) ? saved : this.cases[0]?.slug ?? this.slug;
     },
-    async select(slug) { this.slug = slug; await api.put('/api/me/preferences', { useCase: slug }).catch(() => {}); },
+    select(slug) { this.slug = slug; remember(slug); },
   },
 });

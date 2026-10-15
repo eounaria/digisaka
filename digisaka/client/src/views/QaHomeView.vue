@@ -1,12 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter, RouterLink } from 'vue-router';
+import { RouterLink } from 'vue-router';
 import PageHeader from '../components/PageHeader.vue';
-import { scheduler, signOut } from '../scheduler/session.js';
+import { scheduler } from '../scheduler/session.js';
 import { messageFor } from '../scheduler/client.js';
 import { isoWeekOf } from '../scheduler/week.js';
 
-const router = useRouter();
 const lines = ref(null), error = ref('');
 const status = ref({});
 const week = isoWeekOf(new Date());
@@ -28,14 +27,11 @@ async function load() {
     }));
   } catch (e) { error.value = messageFor(e); }
 }
-function leave() { signOut(); router.push('/qa/sign-in'); }
 onMounted(load);
 </script>
 
 <template>
-  <PageHeader title="QA scheduler" subtitle="Pick a line to scan its leaves for a week.">
-    <button @click="leave">Sign out</button>
-  </PageHeader>
+  <PageHeader title="QA scheduler" subtitle="Pick a line to scan its leaves for a week." />
   <div class="err" role="alert">{{ error }}</div>
   <p v-if="!lines && !error">Loading lines...</p>
   <ul v-else-if="lines" class="lines">

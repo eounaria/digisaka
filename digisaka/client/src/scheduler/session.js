@@ -2,6 +2,7 @@
 import { reactive } from 'vue';
 import { createSupabaseAuth } from './supabaseAuth.js';
 import { createSchedulerClient } from './client.js';
+import { profileFromToken, isTechnicalUser } from './roles.js';
 
 const fetchNow = (...args) => globalThis.fetch(...args);
 
@@ -13,10 +14,15 @@ export const supabase = createSupabaseAuth({
 });
 
 // Reactive mirror so screens can react to sign-in and sign-out.
-export const sessionState = reactive({ signedIn: supabase.isSignedIn() });
+export const sessionState = reactive({ signedIn: false, email: '', technicalUser: false });
+const refresh = () => {
+  const { email, roles } = profileFromToken(supabase.getToken());
+  Object.assign(sessionState, { signedIn: supabase.isSignedIn(), email, technicalUser: isTechnicalUser(roles) });
+};
+refresh();
 
-export const signIn = async (email, password) => { await supabase.signIn(email, password); sessionState.signedIn = true; };
-export const signOut = () => { supabase.signOut(); sessionState.signedIn = false; };
+export const signIn = async (email, password) => { await supabase.signIn(email, password); refresh(); };
+export const signOut = () => { supabase.signOut(); refresh(); };
 
 let onSignedOut = () => {};
 export const setSignedOutHandler = (fn) => { onSignedOut = fn; };

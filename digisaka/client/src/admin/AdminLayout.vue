@@ -1,21 +1,23 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter, RouterView } from 'vue-router';
-import { useAuthStore } from '../stores/auth.js';
+import { sessionState, signOut } from '../scheduler/session.js';
 import { useUseCaseStore } from '../stores/useCase.js';
 import Icon from '../components/Icon.vue';
 import { WORKSPACE } from './nav.js';
 import '../styles/admin.css';
 
 const scroller = ref(null);
-const route = useRoute(), router = useRouter(), auth = useAuthStore(), uc = useUseCaseStore();
+const route = useRoute(), router = useRouter(), uc = useUseCaseStore();
+const initial = computed(() => (sessionState.email[0] || '?').toUpperCase());
+function leave() { signOut(); router.push('/sign-in'); }
 const to = (screen) => (screen === 'overview' ? '/admin' : `/admin/${screen}`);
 const active = computed(() => route.path.replace(/^\/admin\/?/, '') || 'overview');
-onMounted(() => uc.load());
+onMounted(() => uc.load().catch(() => {}));
 </script>
 
 <template>
-  <div v-if="auth.user" class="admin">
+  <div class="admin">
     <aside class="side">
       <div class="brand"><span class="mark">🌾</span>DigiSaka</div>
       <p class="group">Workspace</p>
@@ -32,11 +34,12 @@ onMounted(() => uc.load());
       <header class="top">
         <div class="where"><span class="mark small">🌾</span><span>Digisaka AI</span></div>
         <div class="tools">
-          <button type="button" class="exit" @click="router.push('/')">&#8617; Switch to User Web</button>
+          <button type="button" class="exit" @click="router.push('/qa')">&#8617; QA Scheduler</button>
+          <button type="button" class="exit" @click="leave">Sign out</button>
           <label class="uc"><span>Use Case</span>
             <select :value="uc.slug" @change="uc.select($event.target.value)"><option v-for="c in uc.cases" :key="c.slug" :value="c.slug">{{ c.label }}</option></select>
           </label>
-          <span class="avatar">{{ auth.user.initials }}</span>
+          <span class="avatar">{{ initial }}</span>
         </div>
       </header>
       <main ref="scroller" class="content">

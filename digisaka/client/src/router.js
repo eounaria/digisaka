@@ -1,24 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { useAuthStore } from './stores/auth.js';
 import { sessionState } from './scheduler/session.js';
 
+// The earlier Express-cookie shell (dashboard, scan, history, schedule, notifications, settings, login) is unrouted;
+// its files remain in views/ and components/AppLayout.vue.
 const routes = [
-  { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true } },
+  { path: '/sign-in', component: () => import('./views/SignInView.vue'), meta: { guest: true } },
   {
-    path: '/', component: () => import('./components/AppLayout.vue'), meta: { auth: true },
+    path: '/', component: () => import('./components/ShellLayout.vue'), meta: { auth: true },
     children: [
-      { path: '', component: () => import('./views/DashboardView.vue'), meta: { title: 'Dashboard' } },
-      { path: 'scan', component: () => import('./views/LegacyFrame.vue'), props: { screen: 'scan' }, meta: { title: 'Disease Detection' } },
-      { path: 'history', component: () => import('./views/HistoryView.vue'), meta: { title: 'Diagnosis History' } },
-      { path: 'schedule', component: () => import('./views/ScheduleListView.vue'), meta: { title: 'Treatment Schedule' } },
-      { path: 'schedule/:bulkId', component: () => import('./views/BulkStagesView.vue'), meta: { title: 'Treatment Schedule' } },
-      { path: 'schedule/:bulkId/:stage', component: () => import('./views/TreatmentDetailView.vue'), meta: { title: 'Treatment Schedule' } },
-      { path: 'notifications', component: () => import('./views/NotificationsView.vue'), meta: { title: 'Notifications' } },
-      { path: 'qa/sign-in', component: () => import('./views/QaSignInView.vue'), meta: { title: 'QA sign-in' } },
-      { path: 'qa', component: () => import('./views/QaHomeView.vue'), meta: { title: 'QA scheduler', qa: true } },
-      { path: 'qa/lines/:lineId', component: () => import('./views/QaLineWeekView.vue'), meta: { title: 'QA line-week', qa: true } },
-      { path: 'qa/cycles/:cycleId', component: () => import('./views/QaCycleView.vue'), meta: { title: 'QA cycle', qa: true } },
-      { path: 'settings', component: () => import('./views/SettingsView.vue'), meta: { title: 'Settings' } },
+      { path: '', redirect: '/qa' },
+      { path: 'qa', component: () => import('./views/QaHomeView.vue'), meta: { title: 'QA scheduler' } },
+      { path: 'qa/lines/:lineId', component: () => import('./views/QaLineWeekView.vue'), meta: { title: 'QA line-week' } },
+      { path: 'qa/cycles/:cycleId', component: () => import('./views/QaCycleView.vue'), meta: { title: 'QA cycle' } },
     ],
   },
   {
@@ -40,13 +33,10 @@ const routes = [
 
 const router = createRouter({ history: createWebHistory(), routes });
 
-router.beforeEach(async (to) => {
-  const auth = useAuthStore();
-  if (!auth.checked) await auth.fetchMe();
-  if (to.meta.auth && !auth.user) return '/login';
-  if (to.meta.admin && !auth.isAdmin) return '/';
-  if (to.meta.qa && !sessionState.signedIn) return { path: '/qa/sign-in', query: { next: to.fullPath } };
-  if (to.meta.guest && auth.user) return to.query.next === 'admin' && auth.isAdmin ? '/admin' : '/';
+router.beforeEach((to) => {
+  if (to.meta.auth && !sessionState.signedIn) return { path: '/sign-in', query: { next: to.fullPath } };
+  if (to.meta.admin && !sessionState.technicalUser) return '/qa';
+  if (to.meta.guest && sessionState.signedIn) return '/qa';
 });
 
 export default router;
