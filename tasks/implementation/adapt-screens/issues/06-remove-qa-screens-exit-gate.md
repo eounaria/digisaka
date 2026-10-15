@@ -4,7 +4,7 @@
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** built (live exit gate pending)
 
 - [ ] The QA views, both sign-in views, the QA shell and the old scheduler folder with its tests are removed; the build and the full Vitest suite pass; nothing imports the removed files.
 - [ ] The server tests pass in the container.

@@ -58,7 +58,7 @@ server edits need `docker compose restart api`. Known limits: knowledge maintena
 client/                 Vue 3 + Vite + Vue Router + Pinia
   src/router.js          routes and the auth/admin guards
   src/stores/             auth, farm (lines), scan, cycle, lines, proposal, useCase (admin)
-  src/components/         AppLayout (sidebar, header, phone tab bar), UseCaseSwitcher, Icon, PageHeader
+  src/components/         AppLayout (sidebar, header, phone tab bar), Icon, PageHeader
   src/views/              Login, Scan, History, ScheduleList, ScheduleLine, TreatmentDetail
   src/admin/              admin console: layout + the nine admin screens, Modal, Pill, GraphCanvas, util.js
   src/styles/             tokens.css (design tokens) + base.css; every component styles itself
