@@ -15,7 +15,7 @@ const { menuOpen, narrow, account, avatar, toggleMenu, closeMenu } = useAccountM
 function leave() { closeMenu(); auth.signOut(); router.push('/login'); }
 function toApp() { closeMenu(); router.push('/scan'); }
 const to = (screen) => (screen === 'overview' ? '/admin' : `/admin/${screen}`);
-const active = computed(() => route.path.replace(/^\/admin\/?/, '') || 'overview');
+const active = computed(() => route.path.replace(/^\/admin\/?/, '').replace(/^workflows\/.*/, 'extractions') || 'overview');
 onMounted(() => uc.load().catch(() => {}));
 </script>
 

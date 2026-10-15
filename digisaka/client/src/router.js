@@ -23,6 +23,7 @@ const routes = [
       { path: 'processing', component: () => import('./admin/ProcessingView.vue') },
       { path: 'datasets', component: () => import('./admin/DatasetsView.vue') },
       { path: 'extractions', component: () => import('./admin/ExtractionsView.vue') },
+      { path: 'workflows/:id', component: () => import('./admin/WorkflowView.vue') },
       { path: 'tracing', component: () => import('./admin/TracingView.vue') },
       { path: 'history', component: () => import('./admin/AuditView.vue') },
       { path: 'kg', component: () => import('./admin/KnowledgeGraphView.vue') },

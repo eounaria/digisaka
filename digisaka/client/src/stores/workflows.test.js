@@ -85,6 +85,16 @@ describe('the list', () => {
     expect(s.items).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
+  it('updates a remembered workflow when its state moves on', async () => {
+    fetchMock.mockResolvedValue(json(202, created));
+    const s = useWorkflowsStore(); s.load('a@x.org');
+    await s.submitText('t', 'x');
+    s.setState(ID, 'awaiting_extraction_review');
+    const again = useWorkflowsStore(); again.load('a@x.org');
+    expect(again.items[0].state).toBe('awaiting_extraction_review');
+    s.setState('unknown', 'completed');
+    expect(s.items).toHaveLength(1);
+  });
   it('works when storage is unavailable', async () => {
     vi.stubGlobal('localStorage', { getItem() { throw new Error('no'); }, setItem() { throw new Error('no'); } });
     fetchMock.mockResolvedValue(json(202, created));

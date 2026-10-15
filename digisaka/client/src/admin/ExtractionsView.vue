@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import { useWorkflowsStore } from '../stores/workflows.js';
 import Icon from '../components/Icon.vue';
@@ -8,15 +9,16 @@ import SubmitDocModal from './SubmitDocModal.vue';
 import { fmtDateTime } from './util.js';
 import { stateLabel, stateTone } from './workflowState.js';
 
-const auth = useAuthStore(), store = useWorkflowsStore();
+const router = useRouter(), auth = useAuthStore(), store = useWorkflowsStore();
 const submitting = ref(false), openId = ref(''), note = ref('');
 onMounted(() => store.load(auth.email));
 
-const onSubmitted = (w) => { submitting.value = false; note.value = `Submitted “${w.title}”. Its workflow id is ${w.id}.`; };
+const onSubmitted = (w) => { submitting.value = false; router.push(`/admin/workflows/${w.id}`); };
 async function openById() {
   if (!openId.value.trim()) return;
   note.value = '';
-  if (await store.open(openId.value)) openId.value = '';
+  const w = await store.open(openId.value);
+  if (w) router.push(`/admin/workflows/${w.id}`);
 }
 </script>
 
@@ -43,7 +45,7 @@ async function openById() {
             <td><small class="a-muted id">{{ w.id }}</small></td>
             <td><Pill :tone="stateTone(w.state)">{{ stateLabel(w.state) }}</Pill></td>
             <td class="nw">{{ fmtDateTime(w.createdAt.replace('T', ' ').replace(/(\.\d+)?Z$/, '')) }}</td>
-            <td><div class="a-actions nowrap"><button type="button" class="a-mini warn" @click="store.forget(w.id)">Forget</button></div></td>
+            <td><div class="a-actions nowrap"><button type="button" class="a-mini" @click="router.push(`/admin/workflows/${w.id}`)">Open</button><button type="button" class="a-mini warn" @click="store.forget(w.id)">Forget</button></div></td>
           </tr>
         </tbody>
       </table>

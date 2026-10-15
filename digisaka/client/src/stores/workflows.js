@@ -51,6 +51,13 @@ export const useWorkflowsStore = defineStore('workflows', {
         this._add(w); return w;
       });
     },
+    // Keep the list in step with what the status screen has seen.
+    setState(id, state) {
+      const i = this.items.find((x) => x.id === id);
+      if (!i || i.state === state) return;
+      this.items = this.items.map((x) => (x.id === id ? { ...x, state } : x));
+      disk.write(this.owner, this.items);
+    },
     forget(id) { this.items = this.items.filter((i) => i.id !== id); disk.write(this.owner, this.items); },
   },
 });
