@@ -4,12 +4,12 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The client project has a working unit test runner, and a single test command runs the suite.
-- [ ] Sign-in uses the Supabase password grant only; a wrong password shows a clear message, and the token is kept for the session and sent as a bearer token on every scheduler call. No Supabase writes occur.
-- [ ] Requests to the scheduler path are proxied in development to the scheduler on port 8001, ahead of the existing API proxy rule, which keeps working.
-- [ ] A scheduler client module wraps the calls used by the later tickets, maps error responses to the documented error codes, and is unit-tested with a fake fetch (no network).
-- [ ] An ISO week helper produces and validates `YYYY-Www` values (current week, previous and next week), with unit tests including year boundaries.
-- [ ] Signing out clears the token. An expired or rejected token returns the user to sign-in.
-- [ ] The existing screens are unaffected.
+- [x] The client project has a working unit test runner, and a single test command runs the suite.
+- [x] Sign-in uses the Supabase password grant only; a wrong password shows a clear message, and the token is kept for the session and sent as a bearer token on every scheduler call. No Supabase writes occur.
+- [x] Requests to the scheduler path are proxied in development to the scheduler on port 8001, ahead of the existing API proxy rule, which keeps working.
+- [x] A scheduler client module wraps the calls used by the later tickets, maps error responses to the documented error codes, and is unit-tested with a fake fetch (no network).
+- [x] An ISO week helper produces and validates `YYYY-Www` values (current week, previous and next week), with unit tests including year boundaries.
+- [x] Signing out clears the token. An expired or rejected token returns the user to sign-in.
+- [x] The existing screens are unaffected.

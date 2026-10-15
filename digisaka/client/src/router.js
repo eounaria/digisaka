@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from './stores/auth.js';
+import { sessionState } from './scheduler/session.js';
 
 const routes = [
   { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true } },
@@ -13,6 +14,8 @@ const routes = [
       { path: 'schedule/:bulkId', component: () => import('./views/BulkStagesView.vue'), meta: { title: 'Treatment Schedule' } },
       { path: 'schedule/:bulkId/:stage', component: () => import('./views/TreatmentDetailView.vue'), meta: { title: 'Treatment Schedule' } },
       { path: 'notifications', component: () => import('./views/NotificationsView.vue'), meta: { title: 'Notifications' } },
+      { path: 'qa/sign-in', component: () => import('./views/QaSignInView.vue'), meta: { title: 'QA sign-in' } },
+      { path: 'qa', component: () => import('./views/QaHomeView.vue'), meta: { title: 'QA scheduler', qa: true } },
       { path: 'settings', component: () => import('./views/SettingsView.vue'), meta: { title: 'Settings' } },
     ],
   },
@@ -40,6 +43,7 @@ router.beforeEach(async (to) => {
   if (!auth.checked) await auth.fetchMe();
   if (to.meta.auth && !auth.user) return '/login';
   if (to.meta.admin && !auth.isAdmin) return '/';
+  if (to.meta.qa && !sessionState.signedIn) return { path: '/qa/sign-in', query: { next: to.fullPath } };
   if (to.meta.guest && auth.user) return to.query.next === 'admin' && auth.isAdmin ? '/admin' : '/';
 });
 

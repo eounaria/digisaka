@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth.js';
 import { useUseCaseStore } from '../stores/useCase.js';
 import UseCaseSwitcher from './UseCaseSwitcher.vue';
 import Icon from './Icon.vue';
+import { signOut as signOutQa } from '../scheduler/session.js';
 import { useNotificationsStore } from '../stores/notifications.js';
 
 const scroller = ref(null);
@@ -17,9 +18,10 @@ const MENU = [
   { to: '/scan', label: 'Disease Detection', icon: 'scan' },
   { to: '/history', label: 'Diagnosis History', icon: 'history' },
   { to: '/schedule', label: 'Treatment Schedule', icon: 'calendar' },
+  { to: '/qa', label: 'QA Scheduler', icon: 'calendar' },
 ];
 
-async function signOut() { await auth.logout(); router.push('/login'); }
+async function signOut() { signOutQa(); await auth.logout(); router.push('/login'); }
 
 // Screens still running the original prototype code ask the shell to navigate via postMessage.
 const LEGACY_TO_ROUTE = { home: '/', history: '/history', 'scheduled-treatments': '/schedule', profile: '/settings', notifications: '/notifications', scan: '/scan' };
