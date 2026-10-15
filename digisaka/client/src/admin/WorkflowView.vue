@@ -5,6 +5,7 @@ import { useWorkflowRunStore } from '../stores/workflowRun.js';
 import { useWorkflowsStore } from '../stores/workflows.js';
 import { useAuthStore } from '../stores/auth.js';
 import Pill from './Pill.vue';
+import FactReviewPanel from './FactReviewPanel.vue';
 import { fmtDateTime } from './util.js';
 import { stateLabel, stateTone } from './workflowState.js';
 
@@ -68,6 +69,8 @@ const utc = (s) => (s ? fmtDateTime(s.replace('T', ' ').replace(/(\.\d+)?(Z|\+00
       <small class="a-muted">Retry and cancel are not available yet.</small>
     </div>
   </div>
+
+  <FactReviewPanel v-if="wf?.state === 'awaiting_extraction_review'" :key="id" :workflow-id="id" />
 </template>
 
 <style scoped>
