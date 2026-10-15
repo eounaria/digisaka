@@ -40,8 +40,8 @@ silicon, and QA needs local CV checkpoints, so they are not containerized.
 
    | Account | Credentials (variable names in `AI_NeSy_Framework/.env.dev`) | Gets |
    |---|---|---|
-   | Practitioner | `SUPABASE_TEST_PRACTITIONER_*` | QA Scheduler |
-   | Technical User | `SUPABASE_TEST_TECHNICAL_USER_*` | QA Scheduler and the admin console |
+   | Practitioner | `SUPABASE_TEST_PRACTITIONER_*` | Scan, History, Schedule and Treatment screens |
+   | Technical User | `SUPABASE_TEST_TECHNICAL_USER_*` | The same screens, plus the admin console |
 
    The browser sends the Supabase token to the Express admin API, which asks Supabase who it belongs to and admits only
    Technical User roles (Administrator, Domain Expert, Plant Pathologist). A Technical User is recorded in the local
@@ -51,15 +51,15 @@ Stop with `docker compose down`. `docker compose down -v` also wipes the databas
 run it (then `up --build`) after changing a `package.json`, because the dependency volumes outlive the image.
 
 Limits: dev server only (no production image), the backend is not containerized, and client edits hot reload but
-server edits need `docker compose restart api`. Known limits: knowledge maintenance (the admin console) is not integrated with AI_NeSy and still uses its own SQLite data; the admin Users screen lists local sample farmers, not AI_NeSy accounts. Without a running scheduler, QA screens fail with a generic "Something went wrong" message (the dev proxy answers 502).
+server edits need `docker compose restart api`. Known limits: knowledge maintenance (the admin console) is not integrated with AI_NeSy and still uses its own SQLite data; the admin Users screen lists local sample farmers, not AI_NeSy accounts. Without a running scheduler, the scan, history and schedule screens fail with a generic "Something went wrong" message (the dev proxy answers 502).
 
 ## Layout
 ```
 client/                 Vue 3 + Vite + Vue Router + Pinia
   src/router.js          routes and the auth/admin guards
-  src/stores/             auth, useCase, farm (dashboard data)
+  src/stores/             auth, farm (lines), scan, cycle, lines, proposal, useCase (admin)
   src/components/         AppLayout (sidebar, header, phone tab bar), UseCaseSwitcher, Icon, PageHeader
-  src/views/              Login, Dashboard, Settings, LegacyFrame
+  src/views/              Login, Scan, History, ScheduleList, ScheduleLine, TreatmentDetail
   src/admin/              admin console: layout + the nine admin screens, Modal, Pill, GraphCanvas, util.js
   src/styles/             tokens.css (design tokens) + base.css; every component styles itself
                           (admin.css holds the shared `a-` building blocks for the admin screens)
