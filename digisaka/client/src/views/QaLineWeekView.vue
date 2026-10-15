@@ -36,7 +36,14 @@ async function upload() {
     if (!f.state.error) { picked.value = null; if (fileInput.value) fileInput.value.value = ''; }
   } catch (e) { fileError.value = e.message; }
 }
-const canUpload = computed(() => state.value.phase !== 'confirm');
+const canUpload = computed(() => state.value.phase !== 'confirm' && !state.value.cycle);
+const canClose = computed(() => !state.value.cycle && state.value.phase !== 'confirm' && (state.value.sessions ?? []).some((s) => s.finished));
+async function close() {
+  if (!confirm(`Close ${week.value} for line ${line.value}? No more scans can be added.`)) return;
+  const f = flow.value;
+  await f.close();
+  if (f === flow.value && f.state.cycle) router.push(`/qa/cycles/${encodeURIComponent(f.state.cycle.cycle_id)}`);
+}
 
 watch(() => [line.value, week.value], start);
 </script>
@@ -69,6 +76,18 @@ watch(() => [line.value, week.value], start);
       <ul><li v-for="s in state.checklist" :key="s">{{ s }}</li></ul>
       <button class="primary" :disabled="state.busy" @click="flow.value.confirm(true)">Yes</button>
       <button :disabled="state.busy" @click="flow.value.confirm(false)">No</button>
+    </section>
+
+    <section class="card">
+      <h2>Close the week</h2>
+      <template v-if="state.cycle">
+        <p>This week is closed.</p>
+        <RouterLink :to="`/qa/cycles/${encodeURIComponent(state.cycle.cycle_id)}`">View the cycle</RouterLink>
+      </template>
+      <template v-else>
+        <p>Close the week when all leaves are scanned. This starts the treatment cycle.</p>
+        <button class="primary" :disabled="!canClose || state.busy" @click="close">Close week</button>
+      </template>
     </section>
 
     <section class="card">

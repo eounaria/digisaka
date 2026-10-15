@@ -127,6 +127,31 @@ describe('createScanFlow', () => {
   });
 });
 
+describe('close', () => {
+  it('closes the week and keeps the cycle', async () => {
+    const client = fakeClient({ closeWeek: vi.fn(async () => ({ cycle_id: 'c1', status: 'running' })) });
+    const flow = createScanFlow({ client, line: 'L04', week: '2026-W24' });
+    await flow.close();
+    expect(client.closeWeek).toHaveBeenCalledWith('L04', '2026-W24');
+    expect(flow.state.cycle.cycle_id).toBe('c1');
+  });
+
+  it('shows the readable message when no session is finished', async () => {
+    const client = fakeClient({ closeWeek: vi.fn(async () => { throw new SchedulerError(409, 'week_not_verified', 'x'); }) });
+    const flow = createScanFlow({ client, line: 'L04', week: '2026-W24' });
+    await flow.close();
+    expect(flow.state.cycle).toBeNull();
+    expect(flow.state.error).toMatch(/symptom confirmation/i);
+  });
+
+  it('refresh picks up an existing cycle', async () => {
+    const client = fakeClient({ getLineWeek: vi.fn(async () => ({ sessions: [], cycle: { cycle_id: 'c9' } })) });
+    const flow = createScanFlow({ client, line: 'L04', week: '2026-W24' });
+    await flow.refresh();
+    expect(flow.state.cycle.cycle_id).toBe('c9');
+  });
+});
+
 describe('sessionLabel', () => {
   it('describes finished and waiting sessions', () => {
     expect(sessionLabel({ finished: true, outcome: 'healthy', stage: null })).toBe('Healthy');

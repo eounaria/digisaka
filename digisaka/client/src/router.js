@@ -17,6 +17,7 @@ const routes = [
       { path: 'qa/sign-in', component: () => import('./views/QaSignInView.vue'), meta: { title: 'QA sign-in' } },
       { path: 'qa', component: () => import('./views/QaHomeView.vue'), meta: { title: 'QA scheduler', qa: true } },
       { path: 'qa/lines/:lineId', component: () => import('./views/QaLineWeekView.vue'), meta: { title: 'QA line-week', qa: true } },
+      { path: 'qa/cycles/:cycleId', component: () => import('./views/QaCycleView.vue'), meta: { title: 'QA cycle', qa: true } },
       { path: 'settings', component: () => import('./views/SettingsView.vue'), meta: { title: 'Settings' } },
     ],
   },

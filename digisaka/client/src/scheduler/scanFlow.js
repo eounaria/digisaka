@@ -17,7 +17,7 @@ export function sessionLabel(s) {
 }
 
 export function createScanFlow({ client, line, week, state = {} }) {
-  Object.assign(state, { phase: 'idle', qaOutputId: null, stage: null, outcome: null, checklist: [], sessions: [], error: '', busy: false });
+  Object.assign(state, { phase: 'idle', qaOutputId: null, stage: null, outcome: null, checklist: [], sessions: [], cycle: null, error: '', busy: false });
 
   function apply(answer) {
     state.qaOutputId = answer.qa_output_id;
@@ -36,7 +36,7 @@ export function createScanFlow({ client, line, week, state = {} }) {
   }
 
   async function refresh() {
-    try { state.sessions = (await client.getLineWeek(line, week)).sessions; }
+    try { const lw = await client.getLineWeek(line, week); state.sessions = lw.sessions; state.cycle = lw.cycle ?? null; }
     catch (e) { state.error = messageFor(e); }
   }
 
@@ -48,6 +48,7 @@ export function createScanFlow({ client, line, week, state = {} }) {
       apply(await client.upload(line, week, payload, reuse));
       await refresh();
     }),
+    close: () => run(async () => { state.cycle = await client.closeWeek(line, week); }),
     confirm: (confirmed) => run(async () => {
       apply(await client.confirmSymptoms(state.qaOutputId, confirmed));
       await refresh();
