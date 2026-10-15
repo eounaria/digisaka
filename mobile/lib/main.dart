@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'core/theme/app_theme.dart';
-import 'features/auth/presentation/pages/login.dart';
+import 'package:digisaka/core/theme/app_theme.dart';
+import 'package:digisaka/features/auth/presentation/pages/login_screen.dart';
 
 void main() {
   runApp(const DigisakaApp());

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'notification.dart';
-import 'Login.dart';
+import 'package:digisaka/features/notification/presentation/pages/notifications_screen.dart';
+import 'package:digisaka/features/auth/presentation/pages/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -80,7 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 10),
               _buildListItem(
                 icon: Icons.info_outline,
-                label: 'About Digisaka',
+                label: 'About Bogart AI',
                 onTap: () => _showMessage('About Digisaka tapped'),
               ),
               const SizedBox(height: 10),
@@ -141,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryGreen.withOpacity(0.55),
+            AppColors.primaryGreen.withValues(alpha: 0.55),
             AppColors.accentYellow.withOpacity(0.25),
           ],
         ),

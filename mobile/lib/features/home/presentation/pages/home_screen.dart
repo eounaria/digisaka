@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'notification.dart';
+import 'package:digisaka/features/notification/presentation/pages/notifications_screen.dart';
+import 'package:digisaka/features/smart_schedule/presentation/pages/smart_schedule_screen.dart'; // FIX: needed for SmartScheduleScreen
 
 class HomeScreen extends StatefulWidget {
   /// Asks the MainShell to switch tabs (1 = History, 2 = Scan).
@@ -15,10 +16,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final String _userName = 'Juan';
   final String _location = 'Sitio Malabo, Balayan, Batangas';
-
-  void _showMessage(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
 
   void _goToLeafScan() => widget.onTabChange?.call(2);
 
@@ -76,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 10),
           const Text(
-            'Digisaka',
+            'Bogart AI',
             style: TextStyle(
               color: AppColors.primaryGreen,
               fontSize: 20,
@@ -111,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -174,7 +171,11 @@ class _HomeScreenState extends State<HomeScreen> {
   /// "Smart Schedule" row with the yellow calendar icon.
   Widget _buildSmartScheduleRow() {
     return InkWell(
-      onTap: () => _showMessage('Smart Schedule tapped'),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SmartScheduleScreen()),
+        );
+      },
       child: Row(
         children: [
           Container(
@@ -354,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),

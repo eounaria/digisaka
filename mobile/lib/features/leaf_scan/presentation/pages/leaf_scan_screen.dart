@@ -3,6 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/components/app_button.dart';
+import 'validation_screen.dart';
+
+/// One leaf in the grid: either a mock placeholder or a real photo.
+/// (This must live OUTSIDE the State class - Dart doesn't allow a class
+/// to be declared inside another class.)
+class _LeafPhoto {
+  final bool isMock;
+  final File? file; // null for mock leaves
+
+  const _LeafPhoto({required this.isMock, this.file});
+}
 
 class LeafScanScreen extends StatefulWidget {
   const LeafScanScreen({super.key});
@@ -14,29 +25,71 @@ class LeafScanScreen extends StatefulWidget {
 class _LeafScanScreenState extends State<LeafScanScreen> {
   final ImagePicker _picker = ImagePicker();
 
-  final List<File> _selectedLeaves = [];
+  // true  = tapping the green button instantly adds a mock leaf (no camera).
+  // false = use the real camera / gallery.
+  static const bool _useMockCapture = true;
+
+  // Mock mode stops at this many leaves.
+  static const int _maxLeaves = 8;
+
+  final List<_LeafPhoto> _selectedLeaves = [];
 
   void _showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
-  // Opens the camera. Whatever photo is taken gets added to the grid.
+  /// Adds a mock leaf to the grid, respecting the maximum of 8.
+  /// The 8th leaf is the "alert" one, so it also shows a SnackBar.
+  void _addMockLeaf() {
+    if (_selectedLeaves.length >= _maxLeaves) {
+      _showMessage('Maximum of 8 leaves reached');
+      return;
+    }
+
+    final bool isAlertLeaf = _selectedLeaves.length == _maxLeaves - 1;
+
+    setState(() {
+      _selectedLeaves.add(const _LeafPhoto(isMock: true));
+    });
+
+    if (isAlertLeaf) {
+      _showMessage('Leaf 8 looks unclear. Retake the photo.');
+    }
+  }
+
+  /// Opens the camera. Whatever photo is taken gets added to the grid.
   Future<void> _captureFromCamera() async {
+    if (_useMockCapture) {
+      _addMockLeaf();
+      return;
+    }
+
     final XFile? photo = await _picker.pickImage(
       source: ImageSource.camera,
       imageQuality: 85, // keeps file size reasonable without losing much detail
     );
     if (photo == null) return; // user cancelled
 
-    setState(() => _selectedLeaves.add(File(photo.path)));
+    setState(() {
+      _selectedLeaves.add(_LeafPhoto(isMock: false, file: File(photo.path)));
+    });
   }
 
-  // Opens the gallery so the user can pick one or more existing photos.
+  /// Opens the gallery so the user can pick one or more existing photos.
   Future<void> _pickFromGallery() async {
+    if (_useMockCapture) {
+      _addMockLeaf();
+      return;
+    }
+
     final List<XFile> photos = await _picker.pickMultiImage(imageQuality: 85);
     if (photos.isEmpty) return; // user cancelled
 
-    setState(() => _selectedLeaves.addAll(photos.map((x) => File(x.path))));
+    setState(() {
+      _selectedLeaves.addAll(
+        photos.map((x) => _LeafPhoto(isMock: false, file: File(x.path))),
+      );
+    });
   }
 
   void _removeLeaf(int index) {
@@ -47,14 +100,18 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
     setState(() => _selectedLeaves.clear());
   }
 
-  // Placeholder for now — wire this to your assessment/API logic later.
+  // Updated hook: navigate to validation screen when leaves are present.
   void _handleAssessAllLeaves() {
     if (_selectedLeaves.isEmpty) {
       _showMessage('No leaves added yet');
       return;
     }
-    _showMessage('Assessing ${_selectedLeaves.length} leaves...');
-    // TODO: Navigate to the Bulk Assess step or call your model here.
+    // Navigate to the Black Sigatoka Validation screen
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlackSigatokaValidationScreen(leafCount: _selectedLeaves.length),
+      ),
+    );
   }
 
   @override
@@ -82,7 +139,7 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
               _buildLeavesGrid(),
               const SizedBox(height: 28),
               _buildAssessButton(),
-              const SizedBox(height: 10),
+              const SizedBox(height: 24), // bottom padding to avoid nav bar
             ],
           ),
         ),
@@ -166,6 +223,7 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
   }
 
   /// Dark green frame with corner brackets and a faint leaf outline guide.
+  /// Fixed AspectRatio, so it never shrinks when leaves are added.
   Widget _buildScanFrame() {
     return AspectRatio(
       aspectRatio: 1.5,
@@ -185,7 +243,7 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
               child: Icon(
                 Icons.eco_outlined,
                 size: 90,
-                color: AppColors.white.withOpacity(0.15),
+                color: AppColors.white.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -317,38 +375,51 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
         if (index == _selectedLeaves.length) {
           return _buildAddTile();
         }
-        return _buildLeafThumbnail(index);
+        return _buildLeafThumbnail(index, _selectedLeaves[index]);
       },
     );
   }
 
-  Widget _buildLeafThumbnail(int index) {
+  Widget _buildLeafThumbnail(int index, _LeafPhoto leaf) {
+    // The mock leaf sitting in the 8th spot is the alert one.
+    final bool isAlert = leaf.isMock && index == _maxLeaves - 1;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Image.file(
-            _selectedLeaves[index],
-            width: double.infinity,
-            height: double.infinity,
-            fit: BoxFit.cover,
+        // Tile (green mock tile, or the real photo).
+        Positioned.fill(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: _buildLeafImage(leaf, isAlert),
           ),
         ),
+
+        // "Leaf N" pill at the bottom center (grey for the alert tile).
         Positioned(
           bottom: 6,
           left: 0,
           right: 0,
-          child: Text(
-            'Leaf ${index + 1}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: isAlert ? Colors.grey : AppColors.primaryGreen,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Leaf ${index + 1}',
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ),
+
+        // Red remove (x) button at the top-right corner.
         Positioned(
           top: -6,
           right: -6,
@@ -368,6 +439,41 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
     );
   }
 
+  /// Real photo for picked/captured leaves, green tile for mock leaves.
+  Widget _buildLeafImage(_LeafPhoto leaf, bool isAlert) {
+    if (!leaf.isMock && leaf.file != null) {
+      return Image.file(
+        leaf.file!,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        // If the photo can't be read, show the warning tile instead.
+        errorBuilder: (context, error, stackTrace) => _buildMockTile(warning: true),
+      );
+    }
+    return _buildMockTile(warning: isAlert);
+  }
+
+  /// Green gradient tile with a leaf icon, or an orange warning icon.
+  Widget _buildMockTile({required bool warning}) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF3F7A55), Color(0xFF2A5A3C)],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          warning ? Icons.warning_amber_rounded : Icons.eco,
+          size: 30,
+          color: warning ? Colors.orange : const Color(0xFFA8D5B5),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAddTile() {
     return GestureDetector(
       onTap: _pickFromGallery,
@@ -377,16 +483,14 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
     );
   }
 
-  /// Stays clickable even with 0 leaves, as requested.
+  /// Stays clickable even with 0 leaves.
   Widget _buildAssessButton() {
     final String label = _selectedLeaves.isEmpty
         ? 'Assess All Leaves'
         : 'Assess All Leaves (${_selectedLeaves.length})';
 
-    // Lighter green when empty (matches the design), but still tappable —
-    // tapping it while empty just shows the "No leaves added yet" message.
     final Color buttonColor = _selectedLeaves.isEmpty
-        ? AppColors.primaryGreen.withOpacity(0.5)
+        ? AppColors.primaryGreen.withValues(alpha: 0.5)
         : AppColors.primaryGreen;
 
     return AppButton(

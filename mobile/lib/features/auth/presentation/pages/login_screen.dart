@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constant/app_assets.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/components/app_button.dart';
-import 'Main.dart';
+import 'package:digisaka/core/constant/app_assets.dart';
+import 'package:digisaka/core/data/seed_user.dart';
+import 'package:digisaka/core/theme/app_colors.dart';
+import 'package:digisaka/shared/components/app_button.dart';
+import 'package:digisaka/features/shell/presentation/pages/main_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,8 +34,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Runs when the LOGIN button is tapped.
   Future<void> _handleLogin() async {
-    // Stop here if the inputs are not valid.
-    //if (!_formKey.currentState!.validate()) return;
+    // Stop here if the inputs are empty or invalid.
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
@@ -43,8 +44,18 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    // FIX: go to MainShell (which contains Home + the nav bar),
-    // not HomeScreen directly.
+    // Check the typed email/mobile + password against the seed users.
+    final UserModel? user = authenticate(
+      _emailController.text,
+      _passwordController.text,
+    );
+
+    if (user == null) {
+      _showMessage('Incorrect email/mobile number or password');
+      return;
+    }
+
+    // Only reaches here when the login is correct.
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const MainShell()),
     );
@@ -113,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 12),
         const Text(
-          'Digisaka',
+          'Bogart AI',
           style: TextStyle(
             fontSize: 30,
             fontWeight: FontWeight.bold,
