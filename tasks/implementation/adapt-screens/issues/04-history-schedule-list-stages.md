@@ -4,11 +4,11 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** built, live check pending
 
-- [ ] History shows every line with its recent weeks, proposals and applications; a line with no history shows an empty state, not an error.
-- [ ] The schedule list shows only lines with a proposal; opening one shows its proposals by week with status and window.
-- [ ] Choosing a proposal opens its treatment detail route.
-- [ ] The delete action is visible, greyed out and does nothing.
-- [ ] Loading and error states use the existing skeleton and message patterns.
-- [ ] Unit tests cover the line-status store logic with a fake `fetch`.
+- [x] History shows every line with its recent weeks, proposals and applications; a line with no history shows an empty state, not an error.
+- [x] The schedule list shows only lines with a proposal; opening one shows its proposals by week with status and window.
+- [x] Choosing a proposal opens its treatment detail route.
+- [x] The delete action is visible, greyed out and does nothing.
+- [x] Loading and error states use the existing skeleton and message patterns.
+- [x] Unit tests cover the line-status store logic with a fake `fetch`.

@@ -1,30 +1,24 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { api } from '../api.js';
 import PageHeader from '../components/PageHeader.vue';
 import SkeletonList from '../components/SkeletonList.vue';
+import { useLinesStore } from '../stores/lines.js';
 
-const router = useRouter();
-const schedules = ref([]), loading = ref(true), error = ref('');
-
-onMounted(async () => {
-  try { schedules.value = (await api.get('/api/schedules')).schedules; }
-  catch (e) { error.value = e.message; }
-  finally { loading.value = false; }
-});
+const router = useRouter(), lines = useLinesStore();
+onMounted(() => lines.load());
 </script>
 
 <template>
   <div class="page">
-    <PageHeader title="Scheduled Treatments" subtitle="Grouped by bulk assessment — tap a bulk to see its stages." />
-    <SkeletonList v-if="loading && !schedules.length" />
-    <p v-else-if="error" class="error">{{ error }}</p>
-    <p v-else-if="!loading && !schedules.length" class="empty">No treatments have been scheduled yet. Scan and confirm a bulk treatment schedule to see it here.</p>
-    <button v-for="(s, i) in schedules" :key="s.bulkId" class="card" type="button" @click="router.push(`/schedule/${s.bulkId}`)">
-      <span class="thumb">📦</span>
-      <span class="body"><span class="name">{{ s.displayLabel }}</span><span class="sub">{{ s.plant }} · {{ s.bulkId }}</span></span>
-      <span class="count">{{ s.groups.length }} {{ s.groups.length === 1 ? 'scheduled stage' : 'scheduled stages' }}</span>
+    <PageHeader title="Scheduled Treatments" subtitle="Lines with a treatment proposal — tap a line to see its weeks." />
+    <SkeletonList v-if="lines.loading && !lines.statuses.length" />
+    <p v-else-if="lines.error" class="error">{{ lines.error }}</p>
+    <p v-else-if="lines.loaded && !lines.withProposals.length" class="empty">No treatments have been scheduled yet. Scan a line-week and choose Confirm &amp; Schedule to see it here.</p>
+    <button v-for="l in lines.withProposals" :key="l.line_id" class="card" type="button" @click="router.push(`/schedule/${encodeURIComponent(l.line_id)}`)">
+      <span class="thumb">🌱</span>
+      <span class="body"><span class="name">Line {{ l.line_id }}</span><span class="sub">{{ l.human_review_required ? 'Human review required' : 'Treatment proposals' }}</span></span>
+      <span class="count">{{ l.proposals.length }} {{ l.proposals.length === 1 ? 'proposal' : 'proposals' }}</span>
       <span class="chev">›</span>
     </button>
   </div>

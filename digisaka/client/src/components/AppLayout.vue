@@ -10,6 +10,8 @@ const title = computed(() => route.meta.title || 'Digisaka');
 
 const MENU = [
   { to: '/scan', label: 'Disease Detection', icon: 'scan' },
+  { to: '/history', label: 'Diagnosis History', icon: 'history' },
+  { to: '/schedule', label: 'Treatment Schedule', icon: 'calendar' },
 ];
 
 function signOut() { auth.signOut(); router.push('/login'); }
