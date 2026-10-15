@@ -2,6 +2,7 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import PageHeader from '../components/PageHeader.vue';
+import EvidenceCharts from '../components/EvidenceCharts.vue';
 import { useProposalStore } from '../stores/proposal.js';
 import { outcomeReasonText } from '../helpers/messages.js';
 import { isValidWeek, weekStart } from '../helpers/week.js';
@@ -129,6 +130,8 @@ async function confirmDate() {
         </template>
         <p v-else-if="p.decision?.note" class="noted">Note: {{ p.decision.note }}</p>
       </section>
+
+      <EvidenceCharts :cycle-id="store.cycle?.cycle_id ?? ''" />
 
       <section v-for="m in months" :key="'cal' + m.key" class="cal-card">
         <header><h4>{{ m.month }} {{ m.year }}</h4><span class="plant">Line {{ lineId }}</span></header>

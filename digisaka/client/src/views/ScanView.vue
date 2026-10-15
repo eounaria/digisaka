@@ -3,6 +3,7 @@ import { RouterLink } from 'vue-router';
 import { computed, onMounted, onBeforeUnmount, ref, nextTick, watch } from 'vue';
 import PageHeader from '../components/PageHeader.vue';
 import Icon from '../components/Icon.vue';
+import EvidenceCharts from '../components/EvidenceCharts.vue';
 import { useScanStore, outcomeLabel, MAX_LEAVES } from '../stores/scan.js';
 import { useFarmStore } from '../stores/farm.js';
 import { useCycleStore } from '../stores/cycle.js';
@@ -246,6 +247,7 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
           <button class="primary" @click="cycle.resume()">Check again</button>
         </template>
       </section>
+      <EvidenceCharts v-if="['proposal', 'monitoring', 'review'].includes(cycle.phase)" :cycle-id="cycle.cycle?.cycle_id ?? ''" />
       <div class="nav"><button :disabled="cycle.phase !== 'idle'" @click="step = 2">Back</button><button v-if="cycle.phase !== 'closing' && cycle.phase !== 'running'" @click="startOver">New scan</button></div>
     </template>
   </div>
