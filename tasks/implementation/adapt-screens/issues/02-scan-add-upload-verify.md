@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** built, waiting for the user's layout approval and the live check
+**Status:** done
 
 - [x] The line list loads from the scheduler and the line and week can be chosen; an invalid week shows a readable message.
 - [x] Up to eight images can be added, removed or cleared; a ninth is refused with a message.
@@ -12,4 +12,6 @@
 - [x] The symptom checklist is shown when asked for; Yes and No are submitted and the leaf's result updates; a re-scan request offers a new image for that leaf and reuses its session.
 - [x] The greyed-out stage override and treatment-history items are visible and do nothing.
 - [x] Unit tests cover the scan store (upload sequence, confirmation, re-scan, referral and retry cap) with a fake `fetch`, plus the ISO week and image helpers.
-- [ ] The user has seen the screen running and approved its layout before ticket 03 starts.
+- [x] The user has seen the screen running and approved its layout before ticket 03 starts.
+
+Layout approved by the user after the live check; the screen follows the mobile three-step flow (select, assess, results).
