@@ -13,6 +13,8 @@ export default defineConfig({
     proxy: {
       // QA screens talk to the scheduler directly; this rule must stay ahead of '/api'.
       '/api/v1/scheduler': targets.scheduler,
+      // Knowledge Maintenance talks to the main API directly.
+      '/api/v1/knowledge-maintenance': targets.km,
       '/api': targets.api,
       '/legacy': targets.api,
     },

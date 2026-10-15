@@ -24,6 +24,15 @@ describe('admin api client', () => {
     vi.stubGlobal('fetch', reply(500, {}));
     await expect(api.get('/api/admin/x')).rejects.toMatchObject({ message: 'Request failed' });
   });
+  it('reads the nested Knowledge Maintenance error and posts a form without a content type', async () => {
+    vi.stubGlobal('fetch', reply(422, { error: { code: 'VALIDATION_ERROR', message: 'Document has no text', details: {} } }));
+    await expect(api.post('/api/v1/knowledge-maintenance/workflows', {})).rejects.toMatchObject({ status: 422, code: 'VALIDATION_ERROR', message: 'Document has no text' });
+    const f = reply(202, { workflow_id: 'w' }); vi.stubGlobal('fetch', f); setTokenProvider(() => 'TOK');
+    const form = { fake: true };
+    await api.postForm('/api/v1/knowledge-maintenance/workflows', form);
+    expect(f.mock.calls[0][1].body).toBe(form);
+    expect(f.mock.calls[0][1].headers).toEqual({ Authorization: 'Bearer TOK' });
+  });
   it('calls the unauthorized handler on a 401 and still rejects', async () => {
     vi.stubGlobal('fetch', reply(401, { error: 'Sign in to continue.' })); const h = vi.fn(); setUnauthorizedHandler(h);
     await expect(api.get('/api/admin/x')).rejects.toMatchObject({ status: 401 });

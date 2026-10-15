@@ -31,6 +31,7 @@ services:
     environment:
       API_URL: http://api:3000
       SCHEDULER_URL: http://host.docker.internal:8001
+      KM_URL: http://host.docker.internal:8000
       VITE_USE_POLLING: "1"
     depends_on:
       - api
