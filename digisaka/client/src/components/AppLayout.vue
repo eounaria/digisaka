@@ -9,6 +9,7 @@ const route = useRoute(), router = useRouter(), auth = useAuthStore();
 const title = computed(() => route.meta.title || 'Digisaka');
 
 const MENU = [
+  { to: '/', label: 'Dashboard', icon: 'home' },
   { to: '/scan', label: 'Disease Detection', icon: 'scan' },
   { to: '/history', label: 'Diagnosis History', icon: 'history' },
   { to: '/schedule', label: 'Treatment Schedule', icon: 'calendar' },
@@ -23,7 +24,7 @@ function signOut() { auth.signOut(); router.push('/login'); }
       <div class="brand"><span class="mark">🍌</span>Digisaka</div>
       <p class="group">Menu</p>
       <nav>
-        <RouterLink v-for="m in MENU" :key="m.to" :to="m.to" class="link" active-class="active">
+        <RouterLink v-for="m in MENU" :key="m.to" :to="m.to" class="link" :active-class="m.to === '/' ? '' : 'active'" exact-active-class="active">
           <Icon :name="m.icon" :size="18" /><span>{{ m.label }}</span>
         </RouterLink>
       </nav>

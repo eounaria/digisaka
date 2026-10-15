@@ -1,5 +1,5 @@
 // Who may open which route. Display logic only: the servers verify the token and enforce access.
-export const landingFor = (auth) => (auth.technicalUser && !auth.practitioner ? '/admin' : '/scan');
+export const landingFor = (auth) => (auth.technicalUser && !auth.practitioner ? '/admin' : '/');
 
 // Only same-site paths, never the login itself or an external address.
 export const safeNext = (n) => (typeof n === 'string' && /^\/(?!\/)/.test(n) && n !== '/login' ? n : null);

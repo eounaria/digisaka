@@ -8,10 +8,10 @@ const admin = { fullPath: '/admin/users', meta: { auth: true, admin: true } };
 const login = { fullPath: '/login', meta: { guest: true } };
 
 describe('where each kind of user lands', () => {
-  it('sends a Practitioner to the scan screen and a Technical User without that role to the admin console', () => {
-    expect(landingFor(user({ practitioner: true }))).toBe('/scan');
+  it('sends a Practitioner to the dashboard and a Technical User without that role to the admin console', () => {
+    expect(landingFor(user({ practitioner: true }))).toBe('/');
     expect(landingFor(user({ technicalUser: true }))).toBe('/admin');
-    expect(landingFor(user({ technicalUser: true, practitioner: true }))).toBe('/scan');
+    expect(landingFor(user({ technicalUser: true, practitioner: true }))).toBe('/');
   });
 });
 
@@ -23,12 +23,12 @@ describe('route guard', () => {
   });
 
   it('keeps a signed-in user off the login', () => {
-    expect(redirectFor(login, user({ practitioner: true }))).toBe('/scan');
+    expect(redirectFor(login, user({ practitioner: true }))).toBe('/');
     expect(redirectFor(login, user({ technicalUser: true }))).toBe('/admin');
   });
 
   it('sends a Practitioner who types the admin address back to the shell', () => {
-    expect(redirectFor(admin, user({ practitioner: true }))).toBe('/scan');
+    expect(redirectFor(admin, user({ practitioner: true }))).toBe('/');
     expect(redirectFor(admin, user({ technicalUser: true }))).toBeUndefined();
     expect(redirectFor(admin, user({ technicalUser: true, practitioner: true }))).toBeUndefined();
   });

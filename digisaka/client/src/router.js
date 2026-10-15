@@ -2,14 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from './stores/auth.js';
 import { redirectFor } from './routeGuard.js';
 
-// The earlier QA screens and the Express-cookie screens (dashboard, schedule, notifications, settings) are
-// unrouted; their files remain until each is adapted or removed.
 const routes = [
   { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true } },
   {
     path: '/', component: () => import('./components/AppLayout.vue'), meta: { auth: true },
     children: [
-      { path: '', redirect: '/scan' },
+      { path: '', component: () => import('./views/DashboardView.vue'), meta: { title: 'Dashboard' } },
       { path: 'scan', component: () => import('./views/ScanView.vue'), meta: { title: 'Disease Detection' } },
       { path: 'history', component: () => import('./views/HistoryView.vue'), meta: { title: 'Diagnosis History' } },
       { path: 'schedule', component: () => import('./views/ScheduleListView.vue'), meta: { title: 'Treatment Schedule' } },

@@ -34,3 +34,17 @@ export function proposalRows(line) {
     .sort((a, b) => b.week.localeCompare(a.week))
     .map((p) => ({ ...p, appliedOn: applied.get(p.proposal_id) ?? null }));
 }
+
+// Totals and the newest proposals across all lines, for the dashboard.
+export function dashboardSummary(statuses) {
+  const sum = (key) => statuses.reduce((n, l) => n + (l[key] ?? 0), 0);
+  const rows = statuses.flatMap((l) => (l.proposals ?? []).map((p) => ({ lineId: l.line_id, week: p.week, status: p.status })));
+  return {
+    lines: statuses.length,
+    weeksAssessed: sum('weeks_assessed'),
+    leavesScanned: sum('leaves_scanned'),
+    awaitingDecision: rows.filter((r) => r.status === 'proposed').length,
+    humanReview: statuses.filter((l) => l.human_review_required).length,
+    recent: rows.sort((a, b) => b.week.localeCompare(a.week) || a.lineId.localeCompare(b.lineId)).slice(0, 5),
+  };
+}
