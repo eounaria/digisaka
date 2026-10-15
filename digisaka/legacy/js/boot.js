@@ -29,6 +29,24 @@
     api.put('/api/bulks/' + encodeURIComponent(snap.bulkId), snap).then(() => updateDashboardOverview()).catch((e) => console.error('Could not save bulk', e));
   };
 
+  // The prototype only kept confirmed schedules in memory, so nothing reached the Vue Treatment Schedule
+  // screens. Save each confirmation to the server (bulk first, since a schedule needs its bulk).
+  const recordLocal = window.recordConfirmedBulkSchedule;
+  window.recordConfirmedBulkSchedule = function () {
+    recordLocal();
+    const entry = confirmedBulks.find((b) => b.bulkId === currentBulkId);
+    if (!entry) return;
+    const snap = recentBulkAssessments.find((b) => b.bulkId === currentBulkId);
+    const code = encodeURIComponent(entry.bulkId);
+    window.__scheduleSaving = (snap ? api.put('/api/bulks/' + code, snap) : Promise.resolve())
+      .then(() => api.put('/api/schedules/' + code, { groups: entry.groups }))
+      .then(async () => {
+        confirmedBulks = (await api.get('/api/schedules')).schedules;   // pick up server-side labels
+        parent.postMessage({ type: 'schedule-saved' }, location.origin);
+      });
+    window.__scheduleSaving.catch((e) => console.error('Could not save treatment schedule', e));
+  };
+
   try {
     const { bulks } = await api.get('/api/bulks?limit=8');
     recentBulkAssessments = bulks;
@@ -67,6 +85,15 @@
     window.go = function (name) {
       if (SHELL.includes(name) || (TOP.includes(name) && name !== own)) parent.postMessage({ type: 'go', screen: name }, location.origin);
       else goInner(name);
+    };
+    // Tapping a stage card on "Schedule Confirmed" opens that stage in the shell's Treatment Schedule
+    // (real saved data, persistent checkboxes) instead of the prototype's fixed demo screen.
+    window.goToScheduleFromConfirmation = async function (_bulkIndex, groupIndex) {
+      const g = bulkTreatmentGroups[groupIndex];
+      if (!g) return;
+      try { await window.__scheduleSaving; }
+      catch { alert('The treatment schedule could not be saved. Please check your connection and confirm it again.'); return; }
+      parent.postMessage({ type: 'open-schedule', bulkId: currentBulkId, stage: g.stage }, location.origin);
     };
     addEventListener('message', (e) => {
       if (e.origin !== location.origin || e.data?.type !== 'useCase') return;

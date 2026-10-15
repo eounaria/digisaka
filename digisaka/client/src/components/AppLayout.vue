@@ -23,7 +23,8 @@ async function signOut() { await auth.logout(); router.push('/login'); }
 
 // Screens still running the original prototype code ask the shell to navigate via postMessage.
 const LEGACY_TO_ROUTE = { home: '/', history: '/history', 'scheduled-treatments': '/schedule', profile: '/settings', notifications: '/notifications', scan: '/scan' };
-const onMessage = (e) => { if (e.origin === location.origin && e.data?.type === 'go' && LEGACY_TO_ROUTE[e.data.screen]) router.push(LEGACY_TO_ROUTE[e.data.screen]); };
+const onMessage = (e) => { if (e.origin === location.origin && e.data?.type === 'schedule-saved') notes.refresh();
+  if (e.origin === location.origin && e.data?.type === 'open-schedule') router.push(`/schedule/${encodeURIComponent(e.data.bulkId)}/${Number(e.data.stage)}`); if (e.origin === location.origin && e.data?.type === 'go' && LEGACY_TO_ROUTE[e.data.screen]) router.push(LEGACY_TO_ROUTE[e.data.screen]); };
 // Pick up new notifications (e.g. a schedule just confirmed) whenever the user moves between screens.
 watch(() => route.fullPath, () => notes.refresh());
 let timer;

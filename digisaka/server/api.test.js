@@ -36,3 +36,15 @@ test('use case preferences', async () => {
 });
 
 test('bad login rejected', async () => { cookie=''; assert.equal((await call('POST', '/api/auth/login', { email: 'a@b.co', password: 'wrong' })).status, 401); });
+
+test('deleting a bulk removes its schedule and 404s the second time', async () => {
+  await call('POST', '/api/auth/login', { email: 'a@b.co', password: 'longenough1' });
+  const leaves = [{ valid: true, stage: 2, treatmentEligible: true }];
+  await call('PUT', '/api/bulks/BA-DEL', { plant: 'Banana Plant #002', date: 'August 19, 2026', leaves });
+  const groups = [{ stage: 2, leafNums: [1], window: 'x', schedule: [{ label: 'Treatment', day: 20, month: 'August', desc: 'd', status: 'Suggested' }] }];
+  assert.equal((await call('PUT', '/api/schedules/BA-DEL', { groups })).status, 200);
+  assert.equal((await call('DELETE', '/api/bulks/BA-DEL')).status, 200);
+  const s = await call('GET', '/api/schedules');
+  assert.ok(!s.data.schedules.some((x) => x.bulkId === 'BA-DEL'));
+  assert.equal((await call('DELETE', '/api/bulks/BA-DEL')).status, 404);
+});
