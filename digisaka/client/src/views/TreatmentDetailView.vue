@@ -42,13 +42,12 @@ const reassessDate = computed(() => (isValidWeek(p.value?.next_assessment) ? wee
 function stateOf(ev) {
   if (rejected.value) return 'rejected';
   if (ev.kind === 'Treatment') {
-    // On the calendar only the day it was applied is done; the rest of the window stays a plain window day.
-    if (applied.value) return ev.day && ev.day !== store.appliedOn ? 'window' : 'done';
+    if (applied.value) return 'done';
     return ev.end < today() ? 'missed' : 'upcoming';
   }
   return ev.date < today() ? 'due' : 'upcoming';
 }
-const BADGE = { window: 'WINDOW', done: 'DONE', missed: 'MISSED', upcoming: 'UPCOMING', due: 'DUE', rejected: 'NOT GOING AHEAD' };
+const BADGE = { done: 'DONE', missed: 'MISSED', upcoming: 'UPCOMING', due: 'DUE', rejected: 'NOT GOING AHEAD' };
 
 // Steps: the treatment window and the next-assessment week, both from the proposal.
 const steps = computed(() => {
@@ -57,11 +56,12 @@ const steps = computed(() => {
   if (reassessDate.value && !rejected.value) out.push({ kind: 'Re-assessment', label: 'Re-assessment', date: reassessDate.value, end: reassessDate.value, desc: `Scan this line again in the week of ${fmt(reassessDate.value)}.` });
   return out;
 });
-// Every day of the treatment window is an event on the calendar (capped at five weeks).
+// Every day of the treatment window is an event on the calendar (capped at five weeks), until it is applied.
 const events = computed(() => steps.value.flatMap((s) => {
   const days = [];
   for (let d = parse(s.date), n = 0; iso(d) <= s.end && n < 35; d = new Date(d.getTime() + DAY), n++) days.push({ ...s, day: iso(d) });
-  return days;
+  // Once applied, only the day it was done stays on the calendar; the other window days go away.
+  return applied.value && s.kind === 'Treatment' ? days.filter((e) => e.day === store.appliedOn) : days;
 }));
 const nextStep = computed(() => (rejected.value ? null : steps.value.find((s) => stateOf(s) !== 'done')));
 const dayDiff = (s) => Math.round((parse(s) - parse(today())) / DAY);
@@ -236,8 +236,6 @@ async function confirmDate() {
 .cell.ev.upcoming { background: #E3F2F0; border-color: #A8D6D0; color: #1F7C74; }
 .cell.ev.missed { background: #FBE4E2; border-color: #F0A9A3; color: #C4372B; }
 .cell.ev.missed .badge { background: #D8352A; color: #fff; }
-.cell.ev.window { background: #F4F8F5; border-color: #D5E6DA; color: var(--ink-soft); }
-.cell.ev.window .badge { background: #D5E6DA; color: var(--forest); }
 .cell.ev.done { background: #E4F3E8; border-color: #9BD0AB; color: var(--forest); }
 .cell.ev.done .badge { background: #2E8B57; color: #fff; }
 .eyebrow { margin: 22px 0 10px; font: 800 13px 'JetBrains Mono', ui-monospace, monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); }
