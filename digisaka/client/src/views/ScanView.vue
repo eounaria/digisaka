@@ -4,6 +4,7 @@ import { computed, onMounted, onBeforeUnmount, ref, nextTick, watch } from 'vue'
 import PageHeader from '../components/PageHeader.vue';
 import Icon from '../components/Icon.vue';
 import EvidenceCharts from '../components/EvidenceCharts.vue';
+import LineHistory from '../components/LineHistory.vue';
 import { useScanStore, outcomeLabel, MAX_LEAVES } from '../stores/scan.js';
 import { useFarmStore } from '../stores/farm.js';
 import { useCycleStore } from '../stores/cycle.js';
@@ -95,6 +96,7 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
         </div>
         <p class="hint">Week {{ scan.week }} ({{ weekRange }})</p>
         <p v-if="farm.linesError" class="err" role="alert">{{ farm.linesError }}</p>
+        <LineHistory :line="scan.line" :week="scan.week" />
       </section>
 
       <div class="frame" aria-hidden="true">

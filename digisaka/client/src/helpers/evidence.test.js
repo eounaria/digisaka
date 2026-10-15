@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { diseaseCaption, rainfallCaption, verdictText, missingWeeks, linePath, niceMax } from './evidence.js';
+import { diseaseCaption, rainfallCaption, verdictText, missingWeeks, linePath, niceMax, visibleWeeks } from './evidence.js';
 
 const weeks = [
   { week: '2026-W22', yls: 7, yli: 4, rainfall_mm: 10 },
@@ -63,5 +63,16 @@ describe('niceMax', () => {
     expect(niceMax(84)).toBe(100);
     expect(niceMax(7)).toBe(8);
     expect(niceMax(0)).toBe(1);
+  });
+});
+
+describe('visibleWeeks', () => {
+  const many = Array.from({ length: 10 }, (_, i) => ({ week: `2026-W${String(15 + i).padStart(2, '0')}`, yls: i, yli: i, rainfall_mm: i }));
+  it('keeps the last three weeks plus every week the rules compared', () => {
+    const e = ev({ weeks: many, rainfall: { ...ev().rainfall, previous_weeks: ['2026-W20', '2026-W21'], recent_weeks: ['2026-W22', '2026-W23'] }, disease: { ...ev().disease, compared_weeks: ['2026-W21', '2026-W22', '2026-W23'] } });
+    expect(visibleWeeks(e).map((w) => w.week)).toEqual(['2026-W20', '2026-W21', '2026-W22', '2026-W23', '2026-W24']);
+  });
+  it('shows everything when there are three weeks or fewer', () => {
+    expect(visibleWeeks(ev()).map((w) => w.week)).toEqual(['2026-W22', '2026-W23', '2026-W24']);
   });
 });

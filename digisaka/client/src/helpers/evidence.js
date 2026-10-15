@@ -43,3 +43,9 @@ export function niceMax(v) {
   for (const m of [1, 2, 4, 5, 8, 10]) if (m * pow >= v) return m * pow;
   return 10 * pow;
 }
+
+// Last three weeks, plus any earlier week the rules compared, so every caption can be checked against the chart.
+export function visibleWeeks({ weeks, disease, rainfall }) {
+  const used = new Set([...(disease.compared_weeks ?? []), ...(rainfall.recent_weeks ?? []), ...(rainfall.previous_weeks ?? [])]);
+  return weeks.filter((w, i) => i >= weeks.length - 3 || used.has(w.week));
+}

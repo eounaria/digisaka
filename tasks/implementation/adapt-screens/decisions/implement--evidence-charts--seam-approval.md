@@ -17,3 +17,11 @@ Developer audit record. Context: the treatment screen and the scan Results step 
 ## Still open
 
 Live check needs the user's restarted scheduler and a closed cycle with a trend stage.
+
+## Addendum: last three weeks visible when choosing a line
+
+User asked that the last 3 weeks of line data be visible when choosing a line to scan, as well as on the treatment screen. All questions minor or standard; recommendations followed.
+
+1. No cycle exists before a scan, so the evidence route cannot serve the picker. Added one additive scheduler route, `GET /lines/{line_id}/weeks/{week}/history` (AI_NeSy_Framework `17e551a`): the last three weekly values up to the picked week, within the year, missing weeks all null. Standard.
+2. The picker shows the same line and bar charts as the treatment screen (shared `WeekCharts` component), without verdicts or compared-week highlights, which only exist for a cycle. The user asked why it was a table; there was no reason beyond keeping the first cut small. Minor.
+3. The evidence charts now show the last 3 weeks plus any earlier week the rules compared, so each caption can be checked against the chart. Minor.
