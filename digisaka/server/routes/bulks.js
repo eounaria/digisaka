@@ -35,3 +35,10 @@ bulksRouter.put('/:code', (req, res) => {
   });
   res.json({ bulk: bulkOut(save()) });
 });
+
+// Removes the bulk with its leaves and treatment schedule (both cascade).
+bulksRouter.delete('/:code', (req, res) => {
+  const r = db.prepare('DELETE FROM bulks WHERE user_id = ? AND bulk_code = ?').run(req.user.id, req.params.code);
+  if (!r.changes) return res.status(404).json({ error: 'That bulk was not found.' });
+  res.json({ ok: true });
+});

@@ -34,7 +34,7 @@ export function createApp() {
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
 
   // Screens not yet ported to Vue still run from the original prototype code.
-  app.use('/legacy', express.static(legacyDir));
+  app.use('/legacy', express.static(legacyDir, { maxAge: 0, etag: true, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
 
   if (fs.existsSync(distDir)) {
     app.use(express.static(distDir));
