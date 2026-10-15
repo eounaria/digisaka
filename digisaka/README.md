@@ -17,6 +17,34 @@ in another, then open http://localhost:5173. Vite forwards `/api` and `/legacy` 
 
 `npm test` runs the API tests. Copy `.env.example` to `.env` to configure; `JWT_SECRET` is required in production.
 
+## Run it in Docker
+Runs the web app (Express API and Vite dev server) in containers. Needs Docker Desktop only; no local Node.
+The AI_NeSy backend stays on the host. The Claude proxy and the MLX embedder need your Claude login and Apple
+silicon, and QA needs local CV checkpoints, so they are not containerized.
+
+1. **Start the backend on the host.** Follow "Start order" in `AI_NeSy_Framework/scripts/scheduler_acceptance/RUNBOOK.md`
+   (Claude proxy, MLX embedder, QA on 8000, scheduler on 8001). The scheduler on `127.0.0.1:8001` is what the web
+   container calls, through `host.docker.internal`; no backend change is needed.
+2. **Create the env file for the QA screens** (gitignored):
+   ```bash
+   cp client/.env.example client/.env.local   # set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+   ```
+   Optionally `cp .env.example .env` and set `JWT_SECRET`; without it the API uses a temporary secret.
+3. **Start the web stack and seed it:**
+   ```bash
+   docker compose up -d --build
+   docker compose run --rm api npm run seed     # first run only; the database lives in a named volume
+   ```
+4. **Open http://localhost:5173.** Sign in to the shell as `juan@digisaka.test` / `digisaka123`, then open
+   "QA Scheduler". That screen asks for the Supabase Practitioner email and password; it is a separate
+   sign-in from the shell's.
+
+Stop with `docker compose down`. `docker compose down -v` also wipes the database and the installed dependencies;
+run it (then `up --build`) after changing a `package.json`, because the dependency volumes outlive the image.
+
+Limits: dev server only (no production image), the backend is not containerized, and client edits hot reload but
+server edits need `docker compose restart api`. Without a running scheduler, QA screens fail with a generic "Something went wrong" message (the dev proxy answers 502).
+
 ## Layout
 ```
 client/                 Vue 3 + Vite + Vue Router + Pinia
