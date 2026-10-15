@@ -1,0 +1,47 @@
+# Dev stack for the web app. See README.md, "Run it in Docker".
+#   docker compose up --build
+# The AI_NeSy backend (QA, scheduler, Claude proxy) runs on the host; `web` reaches the scheduler at
+# host.docker.internal:8001.
+name: digisaka
+
+services:
+  api:
+    build: .
+    command: node server/index.js
+    environment:
+      PORT: "3000"
+      DB_PATH: /data/digisaka.db
+      NODE_ENV: development
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/app
+      - api-node-modules:/app/node_modules
+      - client-node-modules:/app/client/node_modules
+      - api-data:/data
+
+  web:
+    build: .
+    command: npm --prefix client run dev -- --host 0.0.0.0
+    environment:
+      API_URL: http://api:3000
+      SCHEDULER_URL: http://host.docker.internal:8001
+      VITE_USE_POLLING: "1"
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - .:/app
+      - api-node-modules:/app/node_modules
+      - client-node-modules:/app/client/node_modules
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  api-node-modules:
+  client-node-modules:
+  api-data:
