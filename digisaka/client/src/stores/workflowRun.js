@@ -20,6 +20,15 @@ export const useWorkflowRunStore = defineStore('workflowRun', {
   state: () => ({ phase: 'idle', workflow: null, error: '', run: 0 }),
   actions: {
     stop() { this.run++; },
+    // One look after a review: stay put while facts are waiting, follow the workflow once it moves on.
+    async recheck(id, wait = patientWait) {
+      const run = this.run;
+      let w;
+      try { w = await api.get(`${base}/${encodeURIComponent(id)}`); } catch { return; }
+      if (run !== this.run) return;
+      if (w.state === this.workflow?.state) { this.workflow = w; return; }
+      await this.follow(id, wait);
+    },
     async follow(id, wait = patientWait) {
       this.run++; const run = this.run;
       Object.assign(this, { phase: 'loading', workflow: null, error: '' });

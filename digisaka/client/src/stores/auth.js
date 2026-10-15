@@ -15,14 +15,14 @@ function profileFromToken(token) {
     const part = String(token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     const p = JSON.parse(atob(part.padEnd(Math.ceil(part.length / 4) * 4, '=')));
     const roles = Array.isArray(p.app_metadata?.roles) ? p.app_metadata.roles.filter((r) => typeof r === 'string') : [];
-    return { email: typeof p.email === 'string' ? p.email : '', roles };
-  } catch { return { email: '', roles: [] }; }
+    return { email: typeof p.email === 'string' ? p.email : '', userId: typeof p.sub === 'string' ? p.sub : '', roles };
+  } catch { return { email: '', userId: '', roles: [] }; }
 }
 
 export const useAuthStore = defineStore('auth', {
   state: () => {
     const token = store.get();
-    return { token, ...(token ? profileFromToken(token) : { email: '', roles: [] }) };
+    return { token, ...(token ? profileFromToken(token) : { email: '', userId: '', roles: [] }) };
   },
   getters: {
     signedIn: (s) => !!s.token,
@@ -53,7 +53,7 @@ export const useAuthStore = defineStore('auth', {
     },
     signOut() {
       store.set(null);
-      Object.assign(this, { token: null, email: '', roles: [] });
+      Object.assign(this, { token: null, email: '', userId: '', roles: [] });
     },
   },
 });

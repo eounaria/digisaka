@@ -27,6 +27,11 @@ describe('auth store sign-in', () => {
     expect(auth).toMatchObject({ signedIn: true, email: 'pat@farm.test', practitioner: true, technicalUser: false, initials: 'P' });
   });
 
+  it('reads the user id from the token', async () => {
+    vi.stubGlobal('fetch', grant({ access_token: jwt({ sub: 'u-1', email: 'a@b.c', app_metadata: { roles: ['domain_expert'] } }) }));
+    const s = useAuthStore(); await s.signIn('a@b.c', 'pw');
+    expect(s.userId).toBe('u-1');
+  });
   it('knows a Technical User and someone with both roles', async () => {
     vi.stubGlobal('fetch', grant({ access_token: jwt({ email: 'dom@lab.test', app_metadata: { roles: ['domain_expert', 'practitioner'] } }) }));
     const auth = useAuthStore();

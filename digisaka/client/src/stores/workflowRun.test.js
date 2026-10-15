@@ -79,3 +79,22 @@ describe('following a workflow', () => {
     expect(GATES).toContain('awaiting_final_approval');
   });
 });
+
+describe('after a review', () => {
+  it('stays at the gate while facts are still waiting', async () => {
+    fetchMock.mockResolvedValueOnce(wf('awaiting_extraction_review')).mockResolvedValueOnce(wf('awaiting_extraction_review'));
+    const s = useWorkflowRunStore();
+    await s.follow(ID, wait);
+    await s.recheck(ID, wait);
+    expect(s.phase).toBe('gate');
+    expect(wait).not.toHaveBeenCalled();
+  });
+  it('picks the polling back up once the last fact has moved the workflow on', async () => {
+    fetchMock.mockResolvedValueOnce(wf('awaiting_extraction_review')).mockResolvedValueOnce(wf('canonicalizing')).mockResolvedValueOnce(wf('canonicalizing')).mockResolvedValueOnce(wf('awaiting_final_approval'));
+    const s = useWorkflowRunStore();
+    await s.follow(ID, wait);
+    await s.recheck(ID, wait);
+    expect(s.workflow.state).toBe('awaiting_final_approval');
+    expect(s.phase).toBe('gate');
+  });
+});
