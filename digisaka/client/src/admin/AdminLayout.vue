@@ -1,16 +1,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter, RouterView } from 'vue-router';
-import { sessionState, signOut } from '../scheduler/session.js';
+import { useAuthStore } from '../stores/auth.js';
 import { useUseCaseStore } from '../stores/useCase.js';
 import Icon from '../components/Icon.vue';
 import { WORKSPACE } from './nav.js';
 import '../styles/admin.css';
 
 const scroller = ref(null);
-const route = useRoute(), router = useRouter(), uc = useUseCaseStore();
-const initial = computed(() => (sessionState.email[0] || '?').toUpperCase());
-function leave() { signOut(); router.push('/sign-in'); }
+const route = useRoute(), router = useRouter(), uc = useUseCaseStore(), auth = useAuthStore();
+const initial = computed(() => auth.initials);
+function leave() { auth.signOut(); router.push('/login'); }
 const to = (screen) => (screen === 'overview' ? '/admin' : `/admin/${screen}`);
 const active = computed(() => route.path.replace(/^\/admin\/?/, '') || 'overview');
 onMounted(() => uc.load().catch(() => {}));
@@ -34,7 +34,7 @@ onMounted(() => uc.load().catch(() => {}));
       <header class="top">
         <div class="where"><span class="mark small">🌾</span><span>Digisaka AI</span></div>
         <div class="tools">
-          <button type="button" class="exit" @click="router.push('/qa')">&#8617; QA Scheduler</button>
+          <button v-if="auth.practitioner" type="button" class="exit" @click="router.push('/scan')">&#8617; Digisaka app</button>
           <button type="button" class="exit" @click="leave">Sign out</button>
           <label class="uc"><span>Use Case</span>
             <select :value="uc.slug" @change="uc.select($event.target.value)"><option v-for="c in uc.cases" :key="c.slug" :value="c.slug">{{ c.label }}</option></select>

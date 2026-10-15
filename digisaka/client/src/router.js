@@ -1,17 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { sessionState } from './scheduler/session.js';
+import { useAuthStore } from './stores/auth.js';
+import { redirectFor } from './routeGuard.js';
 
-// The earlier Express-cookie shell (dashboard, scan, history, schedule, notifications, settings, login) is unrouted;
-// its files remain in views/ and components/AppLayout.vue.
+// The earlier QA screens and the Express-cookie screens (dashboard, schedule, notifications, settings) are
+// unrouted; their files remain until each is adapted or removed.
 const routes = [
-  { path: '/sign-in', component: () => import('./views/SignInView.vue'), meta: { guest: true } },
+  { path: '/login', component: () => import('./views/LoginView.vue'), meta: { guest: true } },
   {
-    path: '/', component: () => import('./components/ShellLayout.vue'), meta: { auth: true },
+    path: '/', component: () => import('./components/AppLayout.vue'), meta: { auth: true },
     children: [
-      { path: '', redirect: '/qa' },
-      { path: 'qa', component: () => import('./views/QaHomeView.vue'), meta: { title: 'QA scheduler' } },
-      { path: 'qa/lines/:lineId', component: () => import('./views/QaLineWeekView.vue'), meta: { title: 'QA line-week' } },
-      { path: 'qa/cycles/:cycleId', component: () => import('./views/QaCycleView.vue'), meta: { title: 'QA cycle' } },
+      { path: '', redirect: '/scan' },
+      { path: 'scan', component: () => import('./views/ScanView.vue'), meta: { title: 'Disease Detection' } },
     ],
   },
   {
@@ -32,11 +31,6 @@ const routes = [
 ];
 
 const router = createRouter({ history: createWebHistory(), routes });
-
-router.beforeEach((to) => {
-  if (to.meta.auth && !sessionState.signedIn) return { path: '/sign-in', query: { next: to.fullPath } };
-  if (to.meta.admin && !sessionState.technicalUser) return '/qa';
-  if (to.meta.guest && sessionState.signedIn) return '/qa';
-});
+router.beforeEach((to) => redirectFor(to, useAuthStore()));
 
 export default router;

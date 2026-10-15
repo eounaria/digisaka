@@ -1,69 +1,48 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
-import { useUseCaseStore } from '../stores/useCase.js';
-import UseCaseSwitcher from './UseCaseSwitcher.vue';
 import Icon from './Icon.vue';
-import { signOut as signOutQa } from '../scheduler/session.js';
-import { useNotificationsStore } from '../stores/notifications.js';
 
 const scroller = ref(null);
-const route = useRoute(), router = useRouter();
-const auth = useAuthStore(), uc = useUseCaseStore(), notes = useNotificationsStore();
+const route = useRoute(), router = useRouter(), auth = useAuthStore();
 const title = computed(() => route.meta.title || 'Digisaka');
 
 const MENU = [
-  { to: '/', label: 'Dashboard', icon: 'home', exact: true },
   { to: '/scan', label: 'Disease Detection', icon: 'scan' },
-  { to: '/history', label: 'Diagnosis History', icon: 'history' },
-  { to: '/schedule', label: 'Treatment Schedule', icon: 'calendar' },
-  { to: '/qa', label: 'QA Scheduler', icon: 'calendar' },
 ];
 
-async function signOut() { signOutQa(); await auth.logout(); router.push('/login'); }
-
-// Screens still running the original prototype code ask the shell to navigate via postMessage.
-const LEGACY_TO_ROUTE = { home: '/', history: '/history', 'scheduled-treatments': '/schedule', profile: '/settings', notifications: '/notifications', scan: '/scan' };
-const onMessage = (e) => { if (e.origin === location.origin && e.data?.type === 'schedule-saved') notes.refresh();
-  if (e.origin === location.origin && e.data?.type === 'open-schedule') router.push(`/schedule/${encodeURIComponent(e.data.bulkId)}/${Number(e.data.stage)}`); if (e.origin === location.origin && e.data?.type === 'go' && LEGACY_TO_ROUTE[e.data.screen]) router.push(LEGACY_TO_ROUTE[e.data.screen]); };
-// Pick up new notifications (e.g. a schedule just confirmed) whenever the user moves between screens.
-watch(() => route.fullPath, () => notes.refresh());
-let timer;
-onMounted(() => { uc.load(); notes.refresh(); timer = setInterval(() => notes.refresh(), 60000); addEventListener('message', onMessage); });
-onBeforeUnmount(() => { clearInterval(timer); removeEventListener('message', onMessage); });
+function signOut() { auth.signOut(); router.push('/login'); }
 </script>
 
 <template>
-  <div v-if="auth.user" class="shell">
+  <div class="shell">
     <aside class="sidebar">
       <div class="brand"><span class="mark">🍌</span>Digisaka</div>
       <p class="group">Menu</p>
       <nav>
-        <RouterLink v-for="m in MENU" :key="m.to" :to="m.to" class="link" :active-class="m.exact ? '' : 'active'" :exact-active-class="m.exact ? 'active' : ''">
+        <RouterLink v-for="m in MENU" :key="m.to" :to="m.to" class="link" active-class="active">
           <Icon :name="m.icon" :size="18" /><span>{{ m.label }}</span>
         </RouterLink>
       </nav>
       <p class="group">Account</p>
       <nav>
-        <RouterLink to="/settings" class="link" active-class="active"><Icon name="user" :size="18" /><span>Settings</span></RouterLink>
+        <p class="who">{{ auth.email }}</p>
         <button class="link signout" type="button" @click="signOut"><Icon name="logout" :size="18" /><span>Sign out</span></button>
       </nav>
       <div class="spacer"></div>
       <div class="foot">
         <b>Black Sigatoka AI</b>On-device leaf analysis for early disease detection.
-        <RouterLink v-if="auth.isAdmin" to="/admin" class="admin-link">🛠️ Switch to Admin Web</RouterLink>
+        <RouterLink v-if="auth.technicalUser" to="/admin" class="admin-link">🛠️ Switch to Admin Web</RouterLink>
       </div>
     </aside>
 
     <div class="main">
       <header class="topbar">
-        <div class="where"><span class="mark small">{{ uc.current.icon || '🍌' }}</span><h2>{{ title }}</h2></div>
+        <div class="where"><span class="mark small">🍌</span><h2>{{ title }}</h2></div>
         <div class="tools">
-          <UseCaseSwitcher />
           <RouterLink to="/scan" class="pill"><Icon name="scan" :size="15" />New Scan</RouterLink>
-          <RouterLink to="/notifications" class="round" aria-label="Notifications"><Icon name="bell" :size="18" /><i v-if="notes.unread" class="dot"></i></RouterLink>
-          <RouterLink to="/settings" class="avatar" aria-label="My profile">{{ auth.user.initials }}</RouterLink>
+          <span class="avatar" :title="auth.email">{{ auth.initials }}</span>
         </div>
       </header>
       <main ref="scroller" class="content">
@@ -83,6 +62,7 @@ onBeforeUnmount(() => { clearInterval(timer); removeEventListener('message', onM
 .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px 22px; font: 800 24px var(--font-display); }
 .mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: rgba(255, 255, 255, .14); font-size: 20px; }
 .mark.small { width: 32px; height: 32px; font-size: 17px; background: linear-gradient(135deg, var(--leaf), var(--forest)); box-shadow: 0 4px 10px rgba(8, 120, 63, .25); }
+.who { padding: 4px 14px 8px; font-size: 13px; color: rgba(255, 255, 255, .6); overflow: hidden; text-overflow: ellipsis; }
 .group { padding: 14px 12px 8px; font: 800 12px var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .55); }
 nav { display: grid; gap: 4px; }
 .link { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: 1px solid transparent; border-radius: 14px; background: none; color: rgba(255, 255, 255, .78); font: 700 15px var(--font-body); text-align: left; transition: background .15s; }
@@ -108,7 +88,7 @@ nav { display: grid; gap: 4px; }
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }
   .sidebar { position: fixed; inset: auto 0 0 0; z-index: 30; flex-direction: row; padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); height: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -4px 16px rgba(6, 40, 20, .2); overflow: visible; }
-  .brand, .group, .spacer, .foot, .signout { display: none; }
+  .brand, .group, .spacer, .foot, .signout, .who { display: none; }
   nav { display: contents; }
   .link { flex: 1; min-width: 0; flex-direction: column; justify-content: center; gap: 3px; padding: 4px 2px; font-size: 11px; line-height: 1.1; text-align: center; }
   .pill, .where h2 { display: none; }

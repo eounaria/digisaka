@@ -1,19 +1,18 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
+import { landingFor, safeNext } from '../routeGuard.js';
 
-const router = useRouter(), auth = useAuthStore();
-const register = ref(false), busy = ref(false), error = ref('');
-const f = ref({ name: '', email: '', password: '', location: '' });
-const title = computed(() => (register.value ? 'Create your account' : 'Sign in'));
+const router = useRouter(), route = useRoute(), auth = useAuthStore();
+const busy = ref(false), error = ref('');
+const f = ref({ email: '', password: '' });
 
 async function submit() {
   busy.value = true; error.value = '';
   try {
-    const { name, email, password, location } = f.value;
-    await auth.submit(register.value ? 'register' : 'login', register.value ? { name, email: email.trim(), password, location } : { email: email.trim(), password });
-    router.push('/');
+    await auth.signIn(f.value.email, f.value.password);
+    router.push(safeNext(route.query.next) ?? landingFor(auth));
   } catch (e) { error.value = e.message; }
   finally { busy.value = false; }
 }
@@ -30,15 +29,13 @@ async function submit() {
     </section>
     <section class="form-side">
       <form novalidate @submit.prevent="submit">
-        <h1>{{ title }}</h1>
-        <p class="sub">{{ register ? 'Set up your farm profile to start scanning.' : 'Use the account for your farm.' }}</p>
-        <template v-if="register"><label for="name">Full name</label><input id="name" v-model="f.name" autocomplete="name"></template>
+        <h1>Sign in</h1>
+        <p class="sub">Use your Digisaka account.</p>
         <label for="email">Email</label><input id="email" v-model="f.email" type="email" autocomplete="email" required>
-        <label for="password">Password</label><input id="password" v-model="f.password" type="password" :autocomplete="register ? 'new-password' : 'current-password'" required>
-        <template v-if="register"><label for="location">Farm location</label><input id="location" v-model="f.location" placeholder="Barangay, town, province"></template>
+        <label for="password">Password</label><input id="password" v-model="f.password" type="password" autocomplete="current-password" required>
         <div class="err" role="alert">{{ error }}</div>
-        <button class="primary" :disabled="busy" type="submit">{{ register ? 'Create account' : 'Sign in' }}</button>
-        <button class="link" type="button" @click="register = !register; error = ''">{{ register ? 'I already have an account' : 'Create an account' }}</button>
+        <button class="primary" :disabled="busy" type="submit">Sign in</button>
+        <button class="link" type="button" disabled title="Not available yet. Accounts come from Digisaka.">Create an account (not available yet)</button>
       </form>
     </section>
   </div>
@@ -59,6 +56,7 @@ label { display: block; font-weight: 700; font-size: 14px; margin: 16px 0 6px; }
 input { width: 100%; padding: 13px 14px; border: 1.5px solid var(--line); border-radius: 12px; font: 600 16px var(--font-body); background: #fff; color: var(--ink); }
 button.primary { width: 100%; margin-top: 24px; padding: 14px; border: 0; border-radius: 14px; background: var(--forest); color: #fff; font: 800 16px var(--font-display); cursor: pointer; }
 button.primary:disabled { opacity: .6; cursor: wait; }
+button.link:disabled { opacity: .45; cursor: not-allowed; text-decoration: none; }
 button.link { background: none; border: 0; color: var(--forest); font: 700 15px var(--font-body); cursor: pointer; margin-top: 18px; text-decoration: underline; }
 .err { color: var(--danger); font-weight: 700; font-size: 14px; margin-top: 14px; min-height: 1.3em; }
 @media (max-width: 760px) { .login-page { grid-template-columns: 1fr; } .brand-side { padding: 24px; gap: 24px; } .brand-side h2 { font-size: 24px; } }
