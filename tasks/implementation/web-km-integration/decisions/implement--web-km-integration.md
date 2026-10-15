@@ -4,7 +4,7 @@ Developer audit only. Nothing else may link here.
 
 ## Preface
 
-Branch `qa-web/km-integration`, based on `qa-web/adapt-screens`. Tickets 01 to 04 built so far. Rules in force: minor and standard questions follow the recommendation; destructive or breaking ones halt for the user. Test seams were approved by recommendation: the store behind each screen, the API client's error shape and the dev proxy targets, all with a fake `fetch`; no component tests.
+Branch `qa-web/km-integration`, based on `qa-web/adapt-screens`. Tickets 01 to 05 (removal part) built so far. Rules in force: minor and standard questions follow the recommendation; destructive or breaking ones halt for the user. Test seams were approved by recommendation: the store behind each screen, the API client's error shape and the dev proxy targets, all with a fake `fetch`; no component tests.
 
 ## Decisions
 
@@ -20,3 +20,5 @@ Branch `qa-web/km-integration`, based on `qa-web/adapt-screens`. Tickets 01 to 0
 10. Ticket 04: the workflow response carries no counts or run-graph summary, so the completed summary counts facts per disposition through the facts endpoint (one call each, limit 1) and shows `named_graph_uri` as the run graph identity. Ranked minor. Self-decided.
 11. Ticket 04: the API does not say why a re-run sent the workflow back; the panel counts accepted facts with `requires_action` (up to 500) and says that a check against the knowledge graph changed them, and marks each "Needs a new decision". Ranked standard. Self-decided; backend follow-up: expose the re-run reason.
 12. Ticket 04: the final review reuses the extraction panel with a stage prop; the decidable disposition is `accepted` and decisions carry `review_stage: final_review`. Ranked minor. Self-decided.
+13. Ticket 05: removing the Express document, triple and graph endpoints would break Tracing, Overview and Knowledge Graph, which read them. Ranked breaking; halted and the user chose full removal with those screens greyed out as not available yet. Ticket 05 reworded to match. The SQLite tables stay, so the endpoints can be restored by a revert.
+14. Ticket 05: removed `ProcessingView`, `UploadDocModal`, `TracingView`, `KnowledgeGraphView`, `server/extract.js`, the documents, triples and graph routes, and the seed's demo-knowledge block. Tracing and Knowledge Graph routes show a shared not-available panel and their nav entries are disabled. Overview keeps image, ontology and activity data; its entity, relationship, document and pipeline figures are greyed out. The `/overview` endpoint is unchanged. Server tests for the removed endpoints were dropped; the ontology test now inserts a triple directly. Ranked standard. Self-decided after the user's go-ahead. Follow-up: `API.md` and `FLOW.md` still describe the removed endpoints.

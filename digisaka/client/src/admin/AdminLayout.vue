@@ -25,7 +25,7 @@ onMounted(() => uc.load().catch(() => {}));
       <div class="brand"><span class="mark">🌾</span>DigiSaka</div>
       <p class="group">Workspace</p>
       <nav>
-        <button v-for="n in WORKSPACE" :key="n.screen" type="button" class="link" :class="{ active: active === n.screen }" @click="router.push(to(n.screen))">
+        <button v-for="n in WORKSPACE" :key="n.screen" type="button" class="link" :class="{ active: active === n.screen, off: n.unavailable }" :disabled="n.unavailable" :title="n.unavailable ? 'Not available yet' : undefined" @click="router.push(to(n.screen))">
           <svg viewBox="0 0 24 24" v-html="n.svg"></svg><span>{{ n.label }}</span>
         </button>
       </nav>
@@ -76,6 +76,8 @@ nav { display: grid; gap: 3px; }
 .link svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .link:hover { background: rgba(255, 255, 255, .08); }
 .link.active { background: rgba(255, 255, 255, .16); color: #fff; font-weight: 800; }
+.link.off { opacity: .45; cursor: not-allowed; }
+.link.off:hover { background: none; }
 .link:focus-visible { outline-color: #fff; }
 .spacer { flex: 1; min-height: 16px; }
 .foot { padding: 14px; border-radius: 16px; background: rgba(255, 255, 255, .1); font-size: 13.5px; line-height: 1.4; color: rgba(255, 255, 255, .78); }

@@ -24,7 +24,6 @@ export const confidence = (c) => (c == null ? '—' : `${(c * 100).toFixed(1)}%`
 export const compact = (n) => new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
 
 export const STAGE = { extracted: ['Extracted', 'neutral'], corrected: ['Corrected', 'warn'], confirmed: ['Confirmed', 'good'], rejected: ['Rejected', 'bad'] };
-export const DOC_TONE = { Queued: 'neutral', Extracted: 'good', 'Needs review': 'warn', Confirmed: 'good' };
 export const ACTION = {
   UPLOAD: 'Uploaded', EXTRACT: 'Extraction completed', CORRECT: 'Corrected', CONFIRM: 'Confirmed', UNCONFIRM: 'Un-confirmed', REJECT: 'Rejected', RESTORE: 'Restored',
   CREATE: 'Created', UPDATE: 'Updated', DELETE: 'Deleted', MOVE: 'Moved', IMPORT: 'Imported',

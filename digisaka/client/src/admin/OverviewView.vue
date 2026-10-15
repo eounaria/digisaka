@@ -12,10 +12,12 @@ async function load() { const r = await run(); if (r) { data.value = r; syncedAt
 watch(() => uc.slug, load, { immediate: true });
 
 const k = () => data.value.kpis;
+// Entities, relationships and documents now live in the workflow service, which cannot list them yet.
+const NA = 'Not available yet';
 const cards = () => [
-  { label: 'Knowledge entities', value: compact(k().entities), foot: k().entities ? 'In confirmed relationships' : 'Nothing confirmed yet', icon: '◎', tone: 'green' },
-  { label: 'Relationships', value: compact(k().relationships), foot: k().avgConfidence == null ? 'None confirmed yet' : `${k().avgConfidence}% average confidence`, icon: '↗', tone: 'teal' },
-  { label: 'Documents', value: compact(k().documents), foot: `${k().awaitingExtraction} awaiting extraction`, icon: '▤', tone: 'yellow' },
+  { label: 'Knowledge entities', value: '—', foot: NA, icon: '◎', tone: 'green', off: true },
+  { label: 'Relationships', value: '—', foot: NA, icon: '↗', tone: 'teal', off: true },
+  { label: 'Documents', value: '—', foot: NA, icon: '▤', tone: 'yellow', off: true },
   { label: 'Images labeled', value: k().images ? `${k().imagesLabeledPct}%` : '—', foot: `${compact(k().images)} ${k().images === 1 ? 'asset' : 'assets'} in scope`, icon: '✓', tone: 'purple' },
 ];
 const when = (d) => syncedAt.value && d;
@@ -32,31 +34,31 @@ const when = (d) => syncedAt.value && d;
 
   <template v-if="data">
     <section class="kpis">
-      <article v-for="c in cards()" :key="c.label" class="kpi">
+      <article v-for="c in cards()" :key="c.label" class="kpi" :class="{ off: c.off }">
         <div class="top"><span>{{ c.label }}</span><i :class="c.tone">{{ c.icon }}</i></div>
         <b>{{ c.value }}</b><small>{{ c.foot }}</small>
       </article>
     </section>
 
     <section class="panel">
-      <div class="panel-head"><h3>Pipeline health</h3><a href="#" @click.prevent="router.push('/admin/processing')">View processing</a></div>
-      <div v-for="p in data.pipeline" :key="p.name" class="bar-row">
+      <div class="panel-head"><h3>Pipeline health</h3><a href="#" @click.prevent="router.push('/admin/extractions')">Document Extractions</a></div>
+      <div v-for="p in data.pipeline.filter((x) => x.name === 'Image validation')" :key="p.name" class="bar-row">
         <span class="name">{{ p.name }}</span>
         <div class="bar" role="progressbar" :aria-valuenow="p.pct" aria-valuemin="0" aria-valuemax="100" :aria-label="p.name" :title="p.note"><span :style="{ width: p.pct + '%' }"></span></div>
         <b>{{ p.pct }}%</b>
       </div>
+      <p class="a-muted">Extraction, correction, confirmation and traceability are not available yet.</p>
     </section>
 
     <section class="bottom">
       <article class="scope">
         <div>
           <h3>Selected use case</h3>
-          <p>{{ data.scope.pendingReview ? `${uc.current.label}: ${data.scope.pendingReview} relationship${data.scope.pendingReview === 1 ? '' : 's'} waiting for review.` : `${uc.current.label}: nothing is waiting for review.` }}</p>
+          <p>{{ uc.current.label }}: review of extracted facts now happens under Document Extractions.</p>
         </div>
         <div class="scope-stats">
           <div><b>{{ data.scope.classes }}</b><span>Ontology classes</span></div>
           <div><b>{{ data.scope.relations }}</b><span>Relation types</span></div>
-          <div><b>{{ data.scope.pendingReview }}</b><span>Pending review</span></div>
         </div>
       </article>
       <article class="panel">
@@ -68,13 +70,14 @@ const when = (d) => syncedAt.value && d;
             <span>{{ when(ago(a.createdAt)) }}</span>
           </li>
         </ul>
-        <p v-else class="a-empty">No activity yet. Upload a document to get started.</p>
+        <p v-else class="a-empty">No activity yet.</p>
       </article>
     </section>
   </template>
 </template>
 
 <style scoped>
+.kpi.off { opacity: .55; }
 .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
 h1 { font: 800 30px/1.2 var(--font-display); color: var(--forest); }
 .head p { margin-top: 4px; color: var(--ink-soft); }

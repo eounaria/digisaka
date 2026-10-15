@@ -65,7 +65,6 @@ client/                 Vue 3 + Vite + Vue Router + Pinia
                           (admin.css holds the shared `a-` building blocks for the admin screens)
 legacy/                  the original prototype code, served at /legacy for screens not yet ported
 server/                  Express API: auth, dashboard, bulks, use-case preferences, admin (routes/admin*.js)
-  extract.js              rule-based relationship extractor (swap in an LLM here)
   ontology-defaults.js    starting classes/relations/folders created for every use case
 ```
 
@@ -92,9 +91,8 @@ rebuilt rather than ported.
 
 | Screen | What it does |
 |---|---|
-| Overview | Live KPIs, pipeline progress bars and latest activity computed from the data below |
-| KG Processing | Relationships move **extracted → corrected → confirmed** (or rejected). Edit, confirm, reject, restore, add by hand, confirm all; a temporary graph shows what is pending |
-| Document Extractions | Upload text documents, extract, re-extract, edit metadata, delete; status follows what happens to the document's relationships |
+| Overview | Image KPIs, ontology counts and latest activity. Entity, relationship and document figures are not available yet |
+| Document Extractions | Submit a document to the Knowledge Maintenance workflow (port 8000), follow it, review extracted facts, approve the commit |
 | Tracing | One document's activity log and its four pipeline steps (source → extraction → correction → knowledge graph) |
 | History | Audit log of every admin change, searchable and filterable by action |
 | Knowledge Graph | Confirmed relationships drawn as a graph, with entity/relationship counts and class distribution |
@@ -102,12 +100,7 @@ rebuilt rather than ported.
 | Datasets & Images | Nested folders, multi-image upload (PNG/JPEG/WebP/GIF, 8 MB each), search, validate, move (re-labels), delete |
 | Users | Farmer list and CSV master-list import |
 
-**Extraction is rule-based, not AI.** `server/extract.js` reads structured triples (JSON, CSV with
-`subject,predicate,object` columns, `A | relation | B` lines) and plain sentences that use one of the
-ontology's relationship labels ("Black Sigatoka is caused by Pseudocercospora fijiensis."). Sentence
-matches get ~0.76–0.9 confidence and anything under 0.8 is flagged "Needs correction". It only reads
-text files (.txt, .md, .csv, .json) — PDF and Word extraction is not implemented. To use a language model,
-replace `extractTriples()` and keep its return shape.
+Tracing and Knowledge Graph are greyed out until the workflow service can list workflows and facts.
 
 **Image safety.** Uploads are checked by their bytes, not the header (SVG is refused), stored under
 `data/uploads` (set `UPLOAD_DIR` to move it) with random names, and served only to signed-in admins.
@@ -151,9 +144,7 @@ its old CSS) can be deleted entirely.
 | GET | /dashboard | leaves scanned, bulks assessed, leaves needing treatment |
 | GET | /bulks?limit= | recent bulks |
 | PUT | /bulks/:code | creates or replaces a bulk and its leaves |
-| GET/POST/PUT/DELETE | /admin/documents[/:id], POST /admin/documents/:id/extract, GET /admin/documents/:id/trace | admin only; all `/admin` routes need `?useCase=` |
-| GET/POST/PUT, POST | /admin/triples[/:id], /admin/triples/:id/{confirm,reject,restore,unconfirm}, /admin/triples/confirm-pending | relationship workflow |
-| GET | /admin/graph?scope=confirmed\|pending, /admin/overview, /admin/audit | |
+| GET | /admin/overview, /admin/audit | |
 | GET/POST/PUT/DELETE | /admin/ontology/classes[/:id], /admin/ontology/relations[/:id] | |
 | GET/POST/PUT/DELETE | /admin/datasets/folders[/:id], /admin/datasets/images[/:id], GET .../images/:id/file | image upload is a raw body with `?name=&folderId=` |
 | GET, POST | /admin/users, /admin/users/import | |

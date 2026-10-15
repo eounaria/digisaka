@@ -5,11 +5,6 @@ export const WORKSPACE = [
   "label": "Overview"
  },
  {
-  "screen": "processing",
-  "svg": "<path d=\"M4 18h16\"></path><path d=\"M6 15l2-4 3 2 4-6 3 8\"></path>",
-  "label": "KG Processing"
- },
- {
   "screen": "datasets",
   "svg": "<path d=\"M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z\"></path><path d=\"M8 9h8M8 13h8\"></path>",
   "label": "Datasets & Images"
@@ -21,6 +16,7 @@ export const WORKSPACE = [
  },
  {
   "screen": "tracing",
+  "unavailable": true,
   "svg": "<path d=\"M12 2v8\"></path><path d=\"M9 5h6\"></path><path d=\"M6 18V9.5A2.5 2.5 0 0 1 8.5 7H15.5A2.5 2.5 0 0 1 18 9.5V18\"></path><path d=\"M6 18a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3\"></path>",
   "label": "Tracing"
  },
@@ -31,6 +27,7 @@ export const WORKSPACE = [
  },
  {
   "screen": "kg",
+  "unavailable": true,
   "svg": "<path d=\"M12 3v18\"></path><path d=\"M3 12h18\"></path><circle cx=\"12\" cy=\"12\" r=\"7\"></circle>",
   "label": "Knowledge Graph"
  },
