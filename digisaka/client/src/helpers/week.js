@@ -39,3 +39,11 @@ function parse(key) {
   if (!isValidWeek(key)) throw new RangeError(`Invalid week: ${key}`);
   return [Number(key.slice(0, 4)), Number(key.slice(6))];
 }
+
+// The Monday of an ISO week, as YYYY-MM-DD (UTC arithmetic, so no timezone shift).
+export function weekStart(key) {
+  const [year, week] = parse(key);
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const monday = new Date(jan4.getTime() + ((week - 1) * 7 - ((jan4.getUTCDay() || 7) - 1)) * 86400000);
+  return monday.toISOString().slice(0, 10);
+}

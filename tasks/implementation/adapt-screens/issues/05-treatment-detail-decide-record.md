@@ -4,7 +4,7 @@
 
 **Blocked by:** 03, 04
 
-**Status:** ready-for-agent
+**Status:** built (live check pending)
 
 - [ ] The calendar shows the window and next-assessment week from the proposal; no date is hardcoded.
 - [ ] Approve and reject post the decision with the note; a repeat decision shows the scheduler's message.

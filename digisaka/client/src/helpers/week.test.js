@@ -39,3 +39,16 @@ describe('isValidWeek', () => {
     }
   });
 });
+
+describe('weekStart', () => {
+  it('returns the Monday of the week', async () => {
+    const { weekStart } = await import('./week.js');
+    expect(weekStart('2026-W24')).toBe('2026-06-08');
+    expect(weekStart('2026-W01')).toBe('2025-12-29');
+    expect(weekStart('2026-W53')).toBe('2026-12-28');
+  });
+  it('rejects an invalid week', async () => {
+    const { weekStart } = await import('./week.js');
+    expect(() => weekStart('nope')).toThrow(RangeError);
+  });
+});
