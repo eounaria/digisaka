@@ -34,6 +34,7 @@ const KIND = {
 };
 const treatmentName = computed(() => p.value?.treatment?.name ?? p.value?.treatment?.id ?? 'Treatment');
 const window_ = computed(() => p.value?.window);
+const nextAssessmentText = computed(() => (reassessDate.value ? `week of ${fmt(reassessDate.value)}` : p.value?.next_assessment));
 const reassessDate = computed(() => (isValidWeek(p.value?.next_assessment) ? weekStart(p.value.next_assessment) : null));
 
 function stateOf(ev) {
@@ -47,7 +48,7 @@ const BADGE = { done: 'DONE', missed: 'MISSED', upcoming: 'UPCOMING', due: 'DUE'
 const steps = computed(() => {
   if (!window_.value) return [];
   const out = [{ kind: 'Treatment', label: 'Treatment', date: window_.value.start, end: window_.value.end, desc: `${treatmentName.value}. Apply between ${fmt(window_.value.start)} and ${fmt(window_.value.end)}.` }];
-  if (reassessDate.value && !rejected.value) out.push({ kind: 'Re-assessment', label: 'Re-assessment', date: reassessDate.value, end: reassessDate.value, desc: `Scan this line again in week ${p.value.next_assessment}.` });
+  if (reassessDate.value && !rejected.value) out.push({ kind: 'Re-assessment', label: 'Re-assessment', date: reassessDate.value, end: reassessDate.value, desc: `Scan this line again in the week of ${fmt(reassessDate.value)}.` });
   return out;
 });
 // Every day of the treatment window is an event on the calendar (capped at five weeks).
@@ -111,7 +112,7 @@ async function confirmDate() {
 
       <section class="prop-card">
         <h3>{{ treatmentName }}</h3>
-        <p class="meta">Apply {{ fmt(p.window.start) }} to {{ fmt(p.window.end) }} · next assessment {{ p.next_assessment }}</p>
+        <p class="meta">Apply {{ fmt(p.window.start) }} to {{ fmt(p.window.end) }} · next assessment {{ nextAssessmentText }}</p>
         <p>{{ p.reason }}</p>
         <ul v-if="p.constraints?.length"><li v-for="c in p.constraints" :key="c">{{ c }}</li></ul>
         <template v-if="status === 'proposed'">
