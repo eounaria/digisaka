@@ -4,7 +4,7 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** built (not run live)
 
 - [ ] Gate 3 violations, MEND diffs, entity status and dedup matches show for the facts that have them.
 - [ ] Final approval is offered only when the API allows it, and the API's message shows when it refuses.

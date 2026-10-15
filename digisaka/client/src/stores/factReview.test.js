@@ -100,3 +100,21 @@ describe('claims', () => {
     expect(s.error).toMatch(/Claims need a review gate/);
   });
 });
+
+describe('after the commit and a staleness re-run', () => {
+  it('counts the facts by what became of them', async () => {
+    fetchMock.mockImplementation(async (u) => json(200, { facts: [], total: u.includes('=accepted') ? 7 : u.includes('=rejected') ? 2 : 1, limit: 1, offset: 0 }));
+    expect(await useFactReviewStore().summarize(W)).toEqual({ accepted: 7, rejected: 2, unresolved: 1 });
+  });
+  it('counts accepted facts a re-run changed', async () => {
+    fetchMock.mockResolvedValueOnce(page([fact('a', { disposition: 'accepted', requires_action: true }), fact('b', { disposition: 'accepted', requires_action: false })]));
+    expect(await useFactReviewStore().countChanged(W)).toBe(1);
+  });
+  it('decides an accepted fact at final review with the final_review stage', async () => {
+    fetchMock.mockResolvedValueOnce(page([fact('a', { disposition: 'accepted', lock_version: 3 })]))
+      .mockResolvedValueOnce(json(200, { disposition: 'rejected', lock_version: 4 }));
+    const s = useFactReviewStore(); await s.load(W, { disposition: 'accepted' });
+    await s.review('a', 'reject', 'final_review');
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ lock_version: 3, review_stage: 'final_review', decision: 'reject' });
+  });
+});

@@ -1,20 +1,26 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, watch, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useWorkflowRunStore } from '../stores/workflowRun.js';
 import { useWorkflowsStore } from '../stores/workflows.js';
 import { useAuthStore } from '../stores/auth.js';
 import Pill from './Pill.vue';
 import FactReviewPanel from './FactReviewPanel.vue';
+import { useFactReviewStore } from '../stores/factReview.js';
 import { fmtDateTime } from './util.js';
 import { stateLabel, stateTone } from './workflowState.js';
 
 const route = useRoute(), router = useRouter(), store = useWorkflowRunStore();
-const list = useWorkflowsStore(), auth = useAuthStore();
+const list = useWorkflowsStore(), auth = useAuthStore(), facts = useFactReviewStore();
+const counts = ref(null);
 const id = computed(() => String(route.params.id));
 const wf = computed(() => store.workflow);
 onMounted(() => { list.load(auth.email); store.follow(id.value); });
-watch(() => wf.value?.state, (state) => { if (state) list.setState(id.value, state); });
+watch(() => wf.value?.state, async (state) => {
+  if (!state) return;
+  list.setState(id.value, state);
+  counts.value = state === 'completed' ? await facts.summarize(id.value) : null;
+}, { immediate: true });
 watch(id, () => store.follow(id.value));
 onBeforeUnmount(() => store.stop());
 
@@ -63,6 +69,20 @@ const utc = (s) => (s ? fmtDateTime(s.replace('T', ' ').replace(/(\.\d+)?(Z|\+00
       <dt>Run graph</dt><dd class="id">{{ wf.named_graph_uri }}</dd>
     </dl>
 
+    <div v-if="wf.state === 'completed' && counts" class="a-note" role="status">
+      Committed {{ counts.accepted }} accepted {{ counts.accepted === 1 ? 'fact' : 'facts' }} to the knowledge graph.
+      {{ counts.rejected }} rejected, {{ counts.unresolved }} unresolved.
+      <small class="id">Run graph {{ wf.named_graph_uri }}</small>
+    </div>
+
+    <div v-if="wf.state === 'awaiting_final_approval' || (wf.state === 'commit_failed' && wf.retry_available)" class="a-actions">
+      <button type="button" class="a-btn primary" :disabled="store.approving" @click="store.approve(id)">
+        {{ wf.state === 'commit_failed' ? 'Retry the commit' : 'Approve and commit' }}
+      </button>
+      <small v-if="wf.state === 'awaiting_final_approval'" class="a-muted">Commits every accepted fact in one step.</small>
+    </div>
+    <p v-if="store.approveError" class="a-note err" role="alert">{{ store.approveError }}</p>
+
     <div class="a-actions">
       <button type="button" class="a-btn" disabled title="Not available yet: the service has no retry endpoint">Retry</button>
       <button type="button" class="a-btn" disabled title="Not available yet: the service has no cancel endpoint">Cancel workflow</button>
@@ -70,7 +90,8 @@ const utc = (s) => (s ? fmtDateTime(s.replace('T', ' ').replace(/(\.\d+)?(Z|\+00
     </div>
   </div>
 
-  <FactReviewPanel v-if="wf?.state === 'awaiting_extraction_review'" :key="id" :workflow-id="id" />
+  <FactReviewPanel v-if="wf?.state === 'awaiting_extraction_review'" :key="`${id}-x`" :workflow-id="id" stage="extraction_review" />
+  <FactReviewPanel v-else-if="wf?.state === 'awaiting_final_approval'" :key="`${id}-f`" :workflow-id="id" stage="final_review" />
 </template>
 
 <style scoped>

@@ -19,6 +19,20 @@ export const useFactReviewStore = defineStore('factReview', {
       } catch (err) { if (run === this.run) Object.assign(this, { facts: [], total: 0, error: err.message }); }
       finally { if (run === this.run) this.loading = false; }
     },
+    // What the commit made of the facts, and how many accepted ones a staleness re-run changed.
+    async summarize(workflowId) {
+      const count = async (d) => (await api.get(`${root(workflowId)}/facts?disposition=${d}&limit=1&offset=0`)).total;
+      try {
+        const [accepted, rejected, unresolved] = await Promise.all(['accepted', 'rejected', 'unresolved'].map(count));
+        return { accepted, rejected, unresolved };
+      } catch (err) { this.error = err.message; return null; }
+    },
+    async countChanged(workflowId) {
+      try {
+        const r = await api.get(`${root(workflowId)}/facts?disposition=accepted&limit=500&offset=0`);
+        return r.facts.filter((f) => f.requires_action).length;
+      } catch { return 0; }
+    },
     goTo(offset) { return this.load(this.workflowId, { disposition: this.disposition, offset }); },
     reload() { return this.goTo(this.offset); },
     _patch(id, fields) { this.facts = this.facts.map((f) => (f.id === id ? { ...f, ...fields } : f)); },

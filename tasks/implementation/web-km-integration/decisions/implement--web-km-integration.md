@@ -4,7 +4,7 @@ Developer audit only. Nothing else may link here.
 
 ## Preface
 
-Branch `qa-web/km-integration`, based on `qa-web/adapt-screens`. Tickets 01 to 03 built so far. Rules in force: minor and standard questions follow the recommendation; destructive or breaking ones halt for the user. Test seams were approved by recommendation: the store behind each screen, the API client's error shape and the dev proxy targets, all with a fake `fetch`; no component tests.
+Branch `qa-web/km-integration`, based on `qa-web/adapt-screens`. Tickets 01 to 04 built so far. Rules in force: minor and standard questions follow the recommendation; destructive or breaking ones halt for the user. Test seams were approved by recommendation: the store behind each screen, the API client's error shape and the dev proxy targets, all with a fake `fetch`; no component tests.
 
 ## Decisions
 
@@ -16,3 +16,7 @@ Branch `qa-web/km-integration`, based on `qa-web/adapt-screens`. Tickets 01 to 0
 6. Ticket 03: the panel opens on "Needing review" (`pending`) and pages 25 at a time. The API filters only by disposition, so "facts that still need action" is the pending filter, not a separate one. Ranked minor. Self-decided; ticket wording kept as the screen's behaviour.
 7. Ticket 03: Accept and Reject are enabled only for `pending` facts; Claim is disabled when the fact is already mine, Release unless it is mine. A colleague's claim is shown with its expiry and does not disable Claim or the decisions, since the API lets any reviewer take over. Ranked minor. Self-decided.
 8. Ticket 03: after each accept or reject the panel calls `workflowRun.recheck`, so the page follows the workflow on its own after the last fact. Edit, Rework and Reinstate are shown greyed out. Ranked minor. Self-decided.
+9. Ticket 04: the API has no preflight for approval, so "offered only when the API allows it" is met by offering Approve at final approval and showing the API's 409 message verbatim when it refuses; the retry of a failed commit is offered only while `retry_available` is true. Ranked standard. Self-decided.
+10. Ticket 04: the workflow response carries no counts or run-graph summary, so the completed summary counts facts per disposition through the facts endpoint (one call each, limit 1) and shows `named_graph_uri` as the run graph identity. Ranked minor. Self-decided.
+11. Ticket 04: the API does not say why a re-run sent the workflow back; the panel counts accepted facts with `requires_action` (up to 500) and says that a check against the knowledge graph changed them, and marks each "Needs a new decision". Ranked standard. Self-decided; backend follow-up: expose the re-run reason.
+12. Ticket 04: the final review reuses the extraction panel with a stage prop; the decidable disposition is `accepted` and decisions carry `review_stage: final_review`. Ranked minor. Self-decided.

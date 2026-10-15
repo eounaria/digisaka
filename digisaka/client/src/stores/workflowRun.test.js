@@ -98,3 +98,36 @@ describe('after a review', () => {
     expect(s.phase).toBe('gate');
   });
 });
+
+describe('final approval', () => {
+  it('posts the approval then follows the commit to the end', async () => {
+    fetchMock.mockResolvedValueOnce(json(202, { workflow_id: ID, state: 'committing' })).mockResolvedValueOnce(wf('committing')).mockResolvedValueOnce(wf('completed'));
+    const s = useWorkflowRunStore();
+    expect(await s.approve(ID, wait)).toBe(true);
+    expect(fetchMock.mock.calls[0][0]).toBe(`/api/v1/knowledge-maintenance/workflows/${ID}/approve`);
+    expect(fetchMock.mock.calls[0][1].method).toBe('POST');
+    expect(s.workflow.state).toBe('completed');
+    expect(s.phase).toBe('done');
+  });
+  it('shows the API message when approval is refused and does not follow', async () => {
+    fetchMock.mockResolvedValueOnce(json(409, { error: { code: 'CONFLICT', message: 'A fact is still pending', details: {} } }));
+    const s = useWorkflowRunStore();
+    expect(await s.approve(ID, wait)).toBe(false);
+    expect(s.approveError).toBe('A fact is still pending');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  it('stops at commit_failed so the approval can be retried', async () => {
+    fetchMock.mockResolvedValueOnce(json(202, { workflow_id: ID, state: 'committing' })).mockResolvedValueOnce(wf('commit_failed', { retry_available: true }));
+    const s = useWorkflowRunStore();
+    await s.approve(ID, wait);
+    expect(s.phase).toBe('failed');
+    expect(s.workflow.retry_available).toBe(true);
+  });
+  it('returns to final review, with the changed facts, after a staleness re-run', async () => {
+    fetchMock.mockResolvedValueOnce(json(202, { workflow_id: ID, state: 'committing' })).mockResolvedValueOnce(wf('validating')).mockResolvedValueOnce(wf('awaiting_final_approval'));
+    const s = useWorkflowRunStore();
+    await s.approve(ID, wait);
+    expect(s.phase).toBe('gate');
+    expect(s.workflow.state).toBe('awaiting_final_approval');
+  });
+});

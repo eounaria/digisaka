@@ -17,7 +17,7 @@ async function patientWait(ms) {
 
 // Follows one Knowledge Maintenance workflow. phase: idle, loading, working, gate, done, failed, error.
 export const useWorkflowRunStore = defineStore('workflowRun', {
-  state: () => ({ phase: 'idle', workflow: null, error: '', run: 0 }),
+  state: () => ({ phase: 'idle', workflow: null, error: '', run: 0, approving: false, approveError: '' }),
   actions: {
     stop() { this.run++; },
     // One look after a review: stay put while facts are waiting, follow the workflow once it moves on.
@@ -28,6 +28,16 @@ export const useWorkflowRunStore = defineStore('workflowRun', {
       if (run !== this.run) return;
       if (w.state === this.workflow?.state) { this.workflow = w; return; }
       await this.follow(id, wait);
+    },
+    // Final approval, or the retry of a failed commit (the same call). The API's refusal is shown as it is.
+    async approve(id, wait = patientWait) {
+      if (this.approving) return false;
+      this.approving = true; this.approveError = '';
+      try { await api.post(`${base}/${encodeURIComponent(id)}/approve`); }
+      catch (err) { this.approveError = err.message; return false; }
+      finally { this.approving = false; }
+      await this.follow(id, wait);
+      return true;
     },
     async follow(id, wait = patientWait) {
       this.run++; const run = this.run;
