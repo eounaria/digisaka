@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** built (not run live)
+**Status:** built; exercised live by the seed run
 
 - [ ] The list pages and filters correctly on a workflow with about a hundred facts.
 - [ ] Approve and reject send the fact's current version; a stale version shows the API's message and reloads the fact.

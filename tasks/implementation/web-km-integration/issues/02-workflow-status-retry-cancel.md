@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** built (live check pending)
+**Status:** built; exercised live by the seed run (Retry and Cancel stay greyed out until the API has them)
 
 - [ ] The state shown matches the API's state at every poll, including `failed` with its cause and `commit_failed`.
 - [ ] A retry in progress and a failure's cause are shown when the API sends them.

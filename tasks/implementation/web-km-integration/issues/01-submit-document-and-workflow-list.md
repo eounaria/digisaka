@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** built (live check pending)
+**Status:** built; exercised live by the seed run
 
 - [ ] Submitting text creates a workflow and adds it to the list; submitting a PDF does the same.
 - [ ] Reloading the page keeps the list for the same user and does not show it to another user.
