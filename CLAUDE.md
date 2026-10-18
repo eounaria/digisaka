@@ -91,19 +91,20 @@ State is in-memory only and is lost on restart.
 
 ## Commands: web (`digisaka/`)
 
-Needs Node >= 22.
+Needs Node >= 22. The README's "Run it in Docker" section is the supported way to run the stack; the `api` service is Express on :3000 and the `web` service is Vite on :5173.
 
 ```bash
-npm install && npm run build         # builds client/dist
-npm run seed                         # demo accounts (see README)
-npm start                            # Express on :3000, serves client/dist
-npm run dev                          # server with --watch
-npm run dev:client                   # Vite on :5173 (run alongside `npm run dev`)
-npm test                             # server tests (node --test "server/*.test.js")
-node --test server/api.test.js       # one server test file
-npm --prefix client test             # client tests (vitest)
+docker compose up -d --build                     # api + web
+docker compose run --rm api npm run seed         # first run only
+docker compose restart api                       # after a server edit (client edits hot reload)
+docker compose down -v                           # wipes db and dependency volumes; then `up --build` after a package.json change
+npm test                                         # server tests (node --test "server/*.test.js")
+node --test server/api.test.js                   # one server test file
+npm --prefix client test                         # client tests (vitest)
 npm --prefix client exec vitest run src/scheduler/week.test.js   # one client test file
 ```
+
+Without Docker: `npm install && npm run build`, `npm run seed`, `npm start` (:3000), plus `npm run dev` and `npm run dev:client` for hot reload.
 
 ## Architecture: web
 
@@ -112,7 +113,9 @@ npm --prefix client exec vitest run src/scheduler/week.test.js   # one client te
 - **Express API** (`server/`, `/api/*`): the farmer app and admin console. Auth is a JWT cookie session. Routes are in `server/routes/`.
 - **Scheduler API** (`/api/v1/scheduler/*`): the QA screens (`/qa/*` routes, `Qa*View.vue`) talk to a separate scheduler service from the `AI_NeSy_Framework` repo, not to Express. Auth is a Supabase password-grant bearer token, held in `sessionStorage` (`client/src/scheduler/supabaseAuth.js`). It needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `client/.env.local` (see `client/.env.example`).
 
-In dev, `client/vite.config.js` proxies `/api/v1/scheduler` to `127.0.0.1:8001` and the rest of `/api` to `:3000`. The scheduler rule must stay ahead of the `/api` rule or it is swallowed by it.
+The scheduler runs on the host, not in Docker. The `web` container reaches it at `host.docker.internal:8001`.
+
+Dev proxy targets come from `client/vite.proxy.js` (`SCHEDULER_URL`, `API_URL`; the defaults suit a run outside Docker and compose overrides them). In `client/vite.config.js` the scheduler rule must stay ahead of the `/api` rule or it is swallowed by it.
 
 ### Client structure
 
