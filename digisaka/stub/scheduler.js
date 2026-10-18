@@ -1,39 +1,6 @@
-// Stand-in for the scheduler API under /api/v1/scheduler. Errors are the scheduler's flat {error, detail}.
-import { userForToken } from './supabase.js';
-
-const BASE = '/api/v1/scheduler';
-const fail = (status, error, detail) => ({ status, body: { error, detail } });
-const ok = (body) => ({ status: 200, body });
-
-// The scheduler wants a Practitioner: no token is 401, a Technical User without the role is 403.
-export function authed(handle) {
-  return (req) => {
-    const user = userForToken((req.headers.authorization || '').replace(/^Bearer\s+/i, ''));
-    if (!user) return fail(401, 'unauthenticated', 'Sign in to continue.');
-    if (!user.roles.includes('practitioner')) return fail(403, 'forbidden', 'This account is not a Practitioner.');
-    return handle(req);
-  };
-}
-
-// ISO week keys such as 2026-W24; week 53 only exists in years whose 28 December falls in it.
-function isValidWeek(value) {
-  const m = /^(\d{4})-W(\d{2})$/.exec(value);
-  if (!m) return false;
-  const year = Number(m[1]), week = Number(m[2]);
-  const d = new Date(Date.UTC(year, 11, 28));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const last = Math.ceil(((d - Date.UTC(d.getUTCFullYear(), 0, 1)) / 86400000 + 1) / 7);
-  return week >= 1 && week <= last;
-}
-
-// Monday of the ISO week after `week`, and two days on: the window a new proposal offers.
-function nextWindow(week) {
-  const [y, w] = [Number(week.slice(0, 4)), Number(week.slice(6))];
-  const jan4 = new Date(Date.UTC(y, 0, 4));
-  const monday = new Date(jan4.getTime() + (w * 7 - ((jan4.getUTCDay() || 7) - 1)) * 86400000);
-  const iso = (d) => d.toISOString().slice(0, 10);
-  return { start: iso(monday), end: iso(new Date(monday.getTime() + 2 * 86400000)) };
-}
+// Stand-in for the scheduler API under /api/v1/scheduler: lines, history, evidence, scans and cycles.
+import { BASE, fail, ok, authed, isValidWeek, nextWindow } from './common.js';
+import { proposalRoutes, summaryOf } from './proposals.js';
 
 // The canned answer for an image is chosen by its name; anything unrecognised is a stage 2 leaf.
 const SCENARIOS = ['healthy', 'not_leaf', 'referral', 'rescan', 'unavailable'];
@@ -85,6 +52,7 @@ export function schedulerRoutes(store, { now = Date.now, cycleMs = 4000 } = {}) 
     }
     return run;
   };
+  const settleAll = () => Object.values(store.data.runs).forEach(settle);
   const runView = (r) => ({ cycle_id: r.cycle_id, line_id: r.line_id, week: r.week, status: r.status, outcome: r.outcome, outcome_reason: r.outcome_reason, failure_reason: r.failure_reason });
   const runsOf = (lineId) => Object.values(store.data.runs).filter((r) => r.line_id === lineId).map(settle);
   const verified = (lineId, week) => Object.values(store.data.diagnoses).some((d) => d.line_id === lineId && d.week === week && d.verified);
@@ -100,7 +68,7 @@ export function schedulerRoutes(store, { now = Date.now, cycleMs = 4000 } = {}) 
         const latest = newest(l.cycles);
         return ok({
           line_id: params.id,
-          proposals: l.proposals,
+          proposals: l.proposals.map((p) => summaryOf(store.data, l, p)),
           applications: l.applications,
           latest_cycle: latest && { cycle_id: latest.cycle_id, week: latest.week, status: latest.status, outcome: latest.outcome, outcome_reason: latest.outcome_reason },
           human_review_required: latest?.outcome === 'human_review_required',
@@ -209,5 +177,6 @@ export function schedulerRoutes(store, { now = Date.now, cycleMs = 4000 } = {}) 
         return { status: 202, body: runView(run) };
       }),
     },
+    ...proposalRoutes(store, { settleAll }),
   ];
 }

@@ -6,6 +6,8 @@ const wk = (week, yls, yli, rainfall_mm) => ({ week, yls, yli, rainfall_mm });
 const seed = () => ({
   // Filled while the stub runs: scans (diagnoses), closed-week cycles (runs) and id counters.
   diagnoses: {}, uploads: {}, runs: {}, nextId: 1,
+  // proposal_id -> {decision, note?}. L02's proposal was approved before it was applied.
+  decisions: { 'p-L02-23': { decision: 'approved' } },
   lines: {
     // Nothing recorded yet.
     L01: { weeks: [], cycles: [], proposals: [], applications: [], leaves: 0 },
@@ -53,7 +55,12 @@ const seed = () => ({
     L05: {
       weeks: [wk('2026-W21', 8, 4, 12), wk('2026-W22', null, null, 18), wk('2026-W23', 6, 3, null), wk('2026-W24', 5, 3, null)],
       cycles: [{ cycle_id: 'c-L05-24', week: '2026-W24', status: 'done', outcome: 'human_review_required', outcome_reason: 'missing_feed_value', evidence: null }],
-      proposals: [], applications: [], leaves: 7,
+      proposals: [{
+        proposal_id: 'p-L05-24', cycle_id: 'c-L05-24', option_id: 'opt-protectant', status: 'proposed', week: '2026-W24', window_start: '2026-06-15', window_end: '2026-06-17',
+        reason: 'The scheduler could not check this week against the rules, so a person has to decide.',
+        constraints: ['Weather and scan data for 2026-W22 and 2026-W23 is missing.', 'Check the field before treating.'],
+      }],
+      applications: [], leaves: 7,
     },
     // Monitoring so far; closing its next week fails (ticket 03).
     L06: {

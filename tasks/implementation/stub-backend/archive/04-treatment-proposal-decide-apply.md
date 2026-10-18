@@ -4,7 +4,7 @@
 
 **Blocked by:** 03
 
-**Status:** not started
+**Status:** done
 
 - [ ] From the seed, L03's proposal can be approved or rejected with a note, and L02's shows as applied.
 - [ ] An approved proposal accepts an application date and shows as applied on the calendar and in the Schedule list.
