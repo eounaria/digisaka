@@ -69,6 +69,82 @@ run it (then `up --build`) after changing a `package.json`, because the dependen
 Limits: dev server only (no production image), the backend is not containerized, and client edits hot reload but
 server edits need `docker compose restart api`. Known limits: Document Extractions talks to the AI_NeSy Knowledge Maintenance API on port 8000 (the main API, through the `KM_URL` proxy), so that API and its workflow runner must be up; Tracing and Knowledge Graph are greyed out until the service can list workflows and facts, and the rest of the admin console (datasets, ontology, audit, users) still uses its own SQLite data; the admin Users screen lists local sample farmers, not AI_NeSy accounts. Without a running scheduler, the scan, history and schedule screens fail with a generic "Something went wrong" message (the dev proxy answers 502).
 
+## Run it on the stub
+
+The stub (`stub/`) is one Node server on port 9000 that stands in for Supabase sign-in, the scheduler and Knowledge Maintenance, so the whole app runs with no host services. It is standalone: its data is fixed in the repo and it needs nothing outside it.
+
+Start the stack:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.stub.yml up -d --build
+```
+
+Seed the sample farmers and demo knowledge (first run only):
+
+```bash
+docker compose run --rm api npm run seed
+```
+
+Restart the stub after editing it:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.stub.yml restart stub
+```
+
+Stop the stack. Plain `docker compose stop` does not know the `stub` service, so pass both files:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.stub.yml stop
+```
+
+Reset to the seed (workflows, scans, decisions):
+
+```bash
+curl -X POST 127.0.0.1:9000/__stub/reset
+```
+
+Use `127.0.0.1` for curl if a host Node process holds `[::]:3000`. To go back to the real backends:
+
+```bash
+docker compose up -d --build
+```
+
+After a proxy target change:
+
+```bash
+docker compose restart web
+```
+
+After a compose env change, run `up -d --build` again.
+
+**Sign-in.** Any password works except `wrong` (which is refused).
+
+| User | Roles | Lands on |
+|---|---|---|
+| `farmer@digisaka.test` | practitioner | the farmer app |
+| `admin@digisaka.test` | administrator | `/admin` |
+| `both@digisaka.test` | practitioner, domain_expert | the farmer app, with the admin console too |
+
+**Scenarios are fixed data**, not switches:
+
+- *Lines* (week 2026-W24): `L01` nothing recorded; `L02` an applied proposal; `L03` a proposal waiting for a decision; `L04` ready to scan (the default demo line, with a gap in last week's YLI reading); `L05` the rules could not decide, so human review with no evidence; `L06` closing its next week fails on the first try, then succeeds on retry.
+- *Image names* decide the Scan answer: a name containing `healthy`, `not_leaf`, `referral`, `rescan` or `unavailable` gets that outcome; anything else is a stage 2 leaf. Closing a week takes a few seconds (the cycle runs on a timer).
+- *Document titles* decide a Document Extractions path: containing `fail` ends in `failed` after a visible retry; `commit-fail` reaches `commit_failed`, and approving again retries it to `completed`; `slow` makes every state ten times longer; anything else is the happy path. Each workflow gets 30 facts, a mix that shows every block of the review panel, one of them claimed by a colleague (claiming takes it over; reviewing it without claiming is refused). A workflow moves to final approval once no fact is pending.
+
+**It can drift.** The stub's shapes come from the client code and test fixtures, so a field the client never reads is a guess: the Knowledge Maintenance `workflow_type` value and 202 status codes, fact ids and `graphjudge_result` values, the shape of `retrying`, claim lifetimes (15 minutes), and the scheduler fields no store reads. The manual run against the real backends stays the acceptance gate.
+
+Stub unit tests:
+
+```bash
+node --test "stub/*.test.js"
+```
+
+Client tests, including the contract tests in `client/src/stub-contract/` that drive the real Pinia stores against the in-process stub:
+
+```bash
+npm --prefix client test
+```
+
 ## Layout
 ```
 client/                 Vue 3 + Vite + Vue Router + Pinia

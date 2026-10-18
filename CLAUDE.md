@@ -125,6 +125,8 @@ npm --prefix client test                         # client tests (vitest)
 npm --prefix client exec vitest run src/helpers/week.test.js   # one client test file
 ```
 
+To run with no host services, layer the stub over the base file: `docker compose -f docker-compose.yml -f docker-compose.stub.yml up -d --build`. Plain `docker compose up` keeps using the real backends. Stub tests: `node --test "stub/*.test.js"`; contract tests run with `npm --prefix client test`.
+
 Without Docker: `npm install && npm run build`, `npm run seed`, `npm start` (:3000), plus `npm run dev` and `npm run dev:client` for hot reload.
 
 ## Architecture: web
@@ -137,6 +139,8 @@ Sign-in is a single Supabase password grant, held by the Pinia store `client/src
 - **Express API** (`server/`): only `/api/health` and `/api/admin` are mounted. `server/adminAuth.js` verifies the bearer token with Supabase (`server/supabaseAuth.js`) and admits only Technical User roles (administrator, domain_expert, plant_pathologist), creating a local `users` row on first use. Everything else under `/api` returns 404.
 
 - **Knowledge Maintenance API** (`/api/v1/knowledge-maintenance/*`): the AI_NeSy main API on port 8000. The admin Document Extractions screen submits documents to its workflows, follows them, and drives fact review and the final approve/commit (`stores/workflows.js`, `workflowRun.js`, `factReview.js`; `admin/WorkflowView.vue`). Tracing and Knowledge Graph are placeholders (`NotAvailableView`) until the service can list workflows and facts. The `api` Express role is now only datasets, ontology, audit, users and overview.
+
+- **Stub backend** (`digisaka/stub/`, port 9000): a standalone Node server standing in for Supabase sign-in, the scheduler and Knowledge Maintenance, started by `docker-compose.stub.yml`. It depends on nothing outside the repo, its data is fixed named scenarios (line, image name, document title, sample user) and `POST /__stub/reset` restores the seed. Its shapes come from the client code and test fixtures, so it can drift from the real services; the manual run against the real backends remains the acceptance gate. See the README section "Run it on the stub".
 
 Dev proxy targets come from `client/vite.proxy.js` (`SCHEDULER_URL`, `KM_URL`, `API_URL`); changing one needs `docker compose restart web`, and a compose env change needs `up -d --build`. In `client/vite.config.js` the scheduler and knowledge-maintenance rules must stay ahead of the `/api` rule or they are swallowed by it.
 

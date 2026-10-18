@@ -4,7 +4,7 @@
 
 **Blocked by:** 04, 05
 
-**Status:** not started
+**Status:** done
 
 - [ ] With no host services, each sample user signs in and every Practitioner screen and the Document Extractions flow can be driven, including each named scenario.
 - [ ] The admin screens that use the Express API open for the Technical User.
