@@ -108,18 +108,20 @@ Without Docker: `npm install && npm run build`, `npm run seed`, `npm start` (:30
 
 ## Architecture: web
 
-### Two separate backends and auth systems
+### One sign-in, two backends
 
-- **Express API** (`server/`, `/api/*`): the farmer app and admin console. Auth is a JWT cookie session. Routes are in `server/routes/`.
-- **Scheduler API** (`/api/v1/scheduler/*`): the QA screens (`/qa/*` routes, `Qa*View.vue`) talk to a separate scheduler service from the `AI_NeSy_Framework` repo, not to Express. Auth is a Supabase password-grant bearer token, held in `sessionStorage` (`client/src/scheduler/supabaseAuth.js`). It needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `client/.env.local` (see `client/.env.example`).
+Sign-in is a single Supabase password grant (`views/SignInView.vue`, `client/src/scheduler/supabaseAuth.js`); the token lives in `sessionStorage`. There are no Digisaka-only accounts and no Express cookie session any more: `npm run seed` creates sample farmers and demo knowledge only. It needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `client/.env.local`, which compose also feeds to the `api` service.
 
-The scheduler runs on the host, not in Docker. The `web` container reaches it at `host.docker.internal:8001`.
+- **Scheduler API** (`/api/v1/scheduler/*`): a separate service from the `AI_NeSy_Framework` repo, called with the bearer token. It runs on the host; the `web` container reaches it at `host.docker.internal:8001`.
+- **Express API** (`server/`): only `/api/health` and `/api/admin` are mounted. `server/adminAuth.js` verifies the bearer token with Supabase (`server/supabaseAuth.js`) and admits only Technical User roles (administrator, domain_expert, plant_pathologist), creating a local `users` row on first use. Everything else under `/api` returns 404.
 
-Dev proxy targets come from `client/vite.proxy.js` (`SCHEDULER_URL`, `API_URL`; the defaults suit a run outside Docker and compose overrides them). In `client/vite.config.js` the scheduler rule must stay ahead of the `/api` rule or it is swallowed by it.
+Roles are also decoded from the token in the browser (`client/src/scheduler/roles.js`) for display and routing only; the servers enforce access.
+
+Dev proxy targets come from `client/vite.proxy.js` (`SCHEDULER_URL`, `API_URL`). In `client/vite.config.js` the scheduler rule must stay ahead of the `/api` rule or it is swallowed by it.
 
 ### Client structure
 
-- `client/src/router.js` holds the guards. Routes with `meta.qa` redirect to `/qa/sign-in` unless `sessionState.signedIn` (the Supabase session), independently of the Express session guard on `meta.auth`.
-- `client/src/scheduler/` is plain JS with no Vue dependency in the logic modules (`client.js`, `scanFlow.js`, `cycleFlow.js`, `week.js`). `client.js` maps scheduler error codes to user messages. `session.js` wires the singletons and clears the session on 401. Tests sit next to the modules.
-- Screens not yet ported still run from `digisaka/legacy/` (the original prototype), embedded in the Vue shell by `LegacyFrame.vue` and talking to it over `postMessage` (see the embed block in `legacy/js/boot.js`). Port a screen by pointing its route at a Vue view in place of `LegacyFrame`.
+- `client/src/router.js`: `/sign-in`, then `ShellLayout` with the `/qa` screens, plus `/admin` (`meta.admin` requires `sessionState.technicalUser`). Guards read `sessionState` from `client/src/scheduler/session.js`.
+- `client/src/scheduler/` is plain JS with no Vue dependency in the logic modules (`client.js`, `scanFlow.js`, `cycleFlow.js`, `week.js`). `client.js` maps scheduler error codes to user messages. Tests sit next to the modules.
+- The earlier Express-cookie shell (dashboard, scan, history, notifications, settings, old login, `AppLayout.vue`, `LegacyFrame.vue`, `legacy/`) is unrouted but still on disk, as are the Express routes that served it. Do not extend it, and treat the README's "Run it (retired Express shell)" and farmer-side API tables as historical.
 - Admin screens are under `client/src/admin/` and are scoped by a use case; every `/api/admin` call needs `?useCase=`. Extraction is rule-based (`server/extract.js`), not an LLM.
