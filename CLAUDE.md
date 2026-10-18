@@ -11,6 +11,46 @@ Two apps live here:
 
 The root `README.md` is the unedited Flutter template. `flutter_analyze_baseline.txt` is a saved `flutter analyze` run whose paths predate the current `lib/` layout, so treat it as stale. `tasks/` holds the planning and ticket documents for the web QA integration.
 
+## Branching and workflow
+
+Feature branches are stacked: each is built on the branch below it, ending at the one it was created from.
+
+- **Rebase in stack order.** After changing a branch, rebase each branch above it, lowest first, with `git rebase --onto <new base> <old base> <branch tip>`. Never rebase an upper branch straight onto the stack's base: that gives it its own copies of the lower branches' commits and breaks the stack.
+- **No merge or push without a go signal.** Keep all changes local. Merge or push only when the human developer explicitly says to, for that specific action.
+- **One slice per branch.** Don't mix slices. A change goes on the lowest branch that introduces it, then the branches above are rebased.
+- **One commit per ticket.** Each ticket's implementation is its own commit.
+- **Merge without squashing.** When branches are merged, use a merge or rebase that keeps the individual commits; never squash, so the history is preserved.
+- **CLAUDE.md follows the code.** Update it in the same branch as the change it describes, so each branch's CLAUDE.md matches its own tree.
+
+### Decisions
+
+When a decision comes up while planning or implementing, rank it as minor, standard, or potentially destructive or breaking. For minor and standard ones, follow the recommended option without asking. For destructive or breaking ones (for example, removing screens or endpoints, or changing what a screen does), stop and let the human developer decide.
+
+### Task lifecycle
+
+Planning lives under `tasks/`, which has two subfolders: `wayfinder/` (maps) and `implementation/` (tickets). Each task has a name, used as its folder name in both.
+
+1. **Chart the map.** Start from a rough plan and run the `wayfinder` command. It charts a map in a new `tasks/wayfinder/<task-name>/` folder.
+2. **Clear the fog.** If the map has fog, wayfinder defines tickets for it. Run `wayfinder` on those tickets one at a time, in order, until the fog has cleared or is at an acceptable level.
+3. **Write the tickets.** Run the `to-tickets` command. It writes the implementation tickets into `tasks/implementation/<task-name>/`.
+4. **Implement each ticket.** Run the `implement` command on each ticket in turn. Each ticket is its own commit.
+5. **Review before committing.** Before committing a ticket's implementation, run the `code-review` command. Commit only after the human developer decides the spec and standards issues are resolved to an acceptable state. Do not decide this yourself.
+6. **Archive.** Move each completed ticket into `tasks/implementation/<task-name>/archive/`.
+
+### Planning documents (`tasks/`)
+
+```
+tasks/wayfinder/<plan>/rough-plan.md
+tasks/wayfinder/<plan>/decisions/grill-with-docs--<plan>.md
+tasks/implementation/<plan>/README.md
+tasks/implementation/<plan>/issues/NN-<ticket>.md
+tasks/implementation/<plan>/archive/        (completed tickets)
+tasks/implementation/<plan>/decisions/<command>--<plan>[--<ticket>]--<stage>.md
+```
+
+- Record every answered question, whether asked or self-decided, in a decision record: one file per stage. The filename names the command and the plan, and the file opens with a short preface giving the context.
+- Decision records are for developer audit only. Tickets, READMEs and all other documents must never reference them; rewrite the decision into the relevant ticket instead.
+
 ## Commands: mobile
 
 Run from `mobile/`.
