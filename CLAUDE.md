@@ -115,7 +115,9 @@ Sign-in is a single Supabase password grant, held by the Pinia store `client/src
 - **Scheduler API** (`/api/v1/scheduler/*`): a separate service from the `AI_NeSy_Framework` repo, called with the bearer token. It runs on the host; the `web` container reaches it at `host.docker.internal:8001`. The Scan, History, Schedule and Treatment screens are built on it.
 - **Express API** (`server/`): only `/api/health` and `/api/admin` are mounted. `server/adminAuth.js` verifies the bearer token with Supabase (`server/supabaseAuth.js`) and admits only Technical User roles (administrator, domain_expert, plant_pathologist), creating a local `users` row on first use. Everything else under `/api` returns 404.
 
-Dev proxy targets come from `client/vite.proxy.js` (`SCHEDULER_URL`, `API_URL`). In `client/vite.config.js` the scheduler rule must stay ahead of the `/api` rule or it is swallowed by it.
+- **Knowledge Maintenance API** (`/api/v1/knowledge-maintenance/*`): the AI_NeSy main API on port 8000. The admin Document Extractions screen submits documents to its workflows, follows them, and drives fact review and the final approve/commit (`stores/workflows.js`, `workflowRun.js`, `factReview.js`; `admin/WorkflowView.vue`). Tracing and Knowledge Graph are placeholders (`NotAvailableView`) until the service can list workflows and facts. The `api` Express role is now only datasets, ontology, audit, users and overview.
+
+Dev proxy targets come from `client/vite.proxy.js` (`SCHEDULER_URL`, `KM_URL`, `API_URL`); changing one needs `docker compose restart web`, and a compose env change needs `up -d --build`. In `client/vite.config.js` the scheduler and knowledge-maintenance rules must stay ahead of the `/api` rule or they are swallowed by it.
 
 ### Client structure
 
@@ -123,4 +125,4 @@ Dev proxy targets come from `client/vite.proxy.js` (`SCHEDULER_URL`, `API_URL`).
 - Screens are driven by Pinia stores that call the scheduler (`scan`, `cycle`, `lines`, `lineHistory`, `evidence`, `proposal`). `client/src/helpers/` holds the framework-free logic (`week.js`, `groups.js`, `evidence.js`, `messages.js`); the stores make their calls through the shared `client/src/api.js`. Tests sit next to the modules.
 - The app treats 2026-W24 as "today" for the scan and calendar screens, per the commit history.
 - `legacy/` and the Express routes for the old farmer app (`dashboard`, `bulks`, `schedules`, `notifications`, `me`) are unmounted dead code. Treat the README's "Run it (retired Express shell)" and farmer-side API tables as historical.
-- Admin screens are under `client/src/admin/` and are scoped by a use case; every `/api/admin` call needs `?useCase=`. Extraction is rule-based (`server/extract.js`), not an LLM.
+- Admin screens are under `client/src/admin/` and are scoped by a use case; every `/api/admin` call needs `?useCase=`. Extraction is no longer done in Express (`server/extract.js` and the triples/documents routes were removed); it happens in the Knowledge Maintenance service.
