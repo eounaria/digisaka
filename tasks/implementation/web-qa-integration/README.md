@@ -1,6 +1,6 @@
 # Implementation tickets: Web QA integration prototype
 
-Tracer-bullet tickets for the web side of the QA integration: a Practitioner runs one line-week against the real scheduler API from the demo web app. Local files under `issues/`, numbered in dependency order, status in each ticket's own `**Status:**` line (same conventions as the AI_NeSy_Framework integration prototype tickets).
+Tracer-bullet tickets for the web side of the QA integration: a Practitioner runs one line-week against the real scheduler API from the demo web app. Local files under `issues/` (completed tickets move to `archive/`), numbered in dependency order, status in each ticket's own `**Status:**` line (same conventions as the AI_NeSy_Framework integration prototype tickets).
 
 Branch: `integration/qa-web`, based on `staging` plus the two cherry-picked web commits. Local only; never merged or pushed.
 
