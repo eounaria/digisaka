@@ -1,6 +1,6 @@
 # Implementation tickets: Adapt the original screens to the scheduler
 
-Tracer-bullet tickets for adapting the team's original web screens (the `AppLayout` shell and its scan, history and schedule screens) to the scheduler API, replacing the separate QA screens. Local files under `issues/`, numbered in dependency order, status in each ticket's own `**Status:**` line.
+Tracer-bullet tickets for adapting the team's original web screens (the `AppLayout` shell and its scan, history and schedule screens) to the scheduler API, replacing the separate QA screens. Local files under `issues/` (completed tickets move to `archive/`), numbered in dependency order, status in each ticket's own `**Status:**` line.
 
 Branch: `qa-web/adapt-screens`, based on `auth/supabase-only`. Local only; never merged or pushed.
 
