@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** done, live sign-in exercise pending
+**Status:** done, checked live
 
 - [x] One gitignored env file supplies the Supabase URL and anon key to both the `api` service and the client. No value is committed or baked into an image.
 - [x] The compose stack starts from a fresh volume, seeds without accounts, and the `api` service answers 401 without a token and rejects a token Supabase does not recognise.
