@@ -1,0 +1,32 @@
+# Dev stack against the stub backend (no host services needed). Layer it over the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.stub.yml up -d --build
+# The URL differs by reader: the browser reaches the stub on localhost:9000, the containers on stub:9000.
+# Process env beats client/.env.local in Vite, and the api prefers SUPABASE_URL over the VITE_ one.
+name: digisaka
+
+services:
+  stub:
+    build: .
+    command: node stub/index.js
+    environment:
+      STUB_PORT: "9000"
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - .:/app
+
+  api:
+    depends_on:
+      - stub
+    environment:
+      SUPABASE_URL: http://stub:9000
+      SUPABASE_ANON_KEY: stub-anon-key
+
+  web:
+    depends_on:
+      - stub
+    environment:
+      SCHEDULER_URL: http://stub:9000
+      KM_URL: http://stub:9000
+      VITE_SUPABASE_URL: http://localhost:9000
+      VITE_SUPABASE_ANON_KEY: stub-anon-key

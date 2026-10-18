@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** not started
+**Status:** done
 
 - [ ] `docker compose -f docker-compose.yml -f docker-compose.stub.yml up -d --build` starts `stub`, `api` and `web` with no host services running.
 - [ ] Each sample user signs in through the real login page and lands where `routeGuard` sends them (practitioner shell, `/admin`, or the shell for the dual-role user).
