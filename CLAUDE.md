@@ -54,6 +54,9 @@ Planning lives under `tasks/`, which has two subfolders: `wayfinder/` (maps) and
 5. **Review before committing.** Before committing a ticket's implementation, make sure `code-review` has run on it: if the `implement` command already ran it, do not run it again; otherwise run the `code-review` command yourself. Commit only after the human developer decides the spec and standards issues are resolved to an acceptable state. Do not decide this yourself.
 6. **Archive.** Move each completed ticket into `tasks/implementation/<task-name>/archive/`.
 
+- **Ticket ranking.** `to-tickets` ranks each ticket as minor, standard, or potentially destructive or breaking, and writes the rank as a `Rank:` line at the top of the ticket with a one-line reason. Judge by what the ticket touches. Treat these as destructive or breaking: Fuseki data, or a TBox change that bumps the ontology version; Postgres migrations; `reset` or `bootstrap` behaviour; the frontend/API contract (ADR-0028); deleting or renaming public modules; anything that rewrites git history. `implement` runs minor and standard tickets from start to finish without pausing, apart from stops the project rules already require. For a destructive or breaking ticket it halts before the first edit and lets the user decide. If the rank proves wrong mid-ticket, stop at the next safe point and re-rank.
+- **Code-review ranking.** Rank each `code-review` finding (spec or standards) as minor, standard, or potentially destructive or breaking. Fix minor and standard findings without asking, and halt on destructive or breaking ones for the user to decide. Record every finding in `tasks/**/decisions/code-review--<plan>--<ticket>--review.md`: the finding, its rank, the fix taken or proposed, and whether it was self-decided or asked, as in the decision-record rule below. The commit rule in step 5 of the task lifecycle depends on these ranks.
+
 ### Planning documents (`tasks/`)
 
 ```
