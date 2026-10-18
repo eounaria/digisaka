@@ -4,13 +4,16 @@ import { useRoute, useRouter, RouterView } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import { useUseCaseStore } from '../stores/useCase.js';
 import Icon from '../components/Icon.vue';
+import { useAccountMenu } from '../components/useAccountMenu.js';
 import { WORKSPACE } from './nav.js';
 import '../styles/admin.css';
 
 const scroller = ref(null);
 const route = useRoute(), router = useRouter(), uc = useUseCaseStore(), auth = useAuthStore();
 const initial = computed(() => auth.initials);
-function leave() { auth.signOut(); router.push('/login'); }
+const { menuOpen, narrow, account, avatar, toggleMenu, closeMenu } = useAccountMenu(route);
+function leave() { closeMenu(); auth.signOut(); router.push('/login'); }
+function toApp() { closeMenu(); router.push('/scan'); }
 const to = (screen) => (screen === 'overview' ? '/admin' : `/admin/${screen}`);
 const active = computed(() => route.path.replace(/^\/admin\/?/, '') || 'overview');
 onMounted(() => uc.load().catch(() => {}));
@@ -39,7 +42,15 @@ onMounted(() => uc.load().catch(() => {}));
           <label class="uc"><span>Use Case</span>
             <select :value="uc.slug" @change="uc.select($event.target.value)"><option v-for="c in uc.cases" :key="c.slug" :value="c.slug">{{ c.label }}</option></select>
           </label>
-          <span class="avatar">{{ initial }}</span>
+          <div ref="account" class="account">
+            <button ref="avatar" type="button" class="avatar" :title="auth.email" aria-label="Account" :tabindex="narrow ? 0 : -1"
+                    :aria-expanded="narrow ? menuOpen : undefined" :aria-controls="narrow ? 'admin-account-menu' : undefined" @click="toggleMenu">{{ initial }}</button>
+            <div v-if="menuOpen" id="admin-account-menu" class="menu">
+              <p class="menu-who">{{ auth.email }}</p>
+              <button v-if="auth.practitioner" type="button" class="menu-item" @click="toApp">&#8617; Digisaka app</button>
+              <button type="button" class="menu-item" @click="leave">Sign out</button>
+            </div>
+          </div>
         </div>
       </header>
       <main ref="scroller" class="content">
@@ -78,7 +89,12 @@ nav { display: grid; gap: 3px; }
 .exit:hover { background: var(--tint); }
 .uc { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px 0 16px; border: 1px solid var(--line); border-radius: 999px; font-weight: 800; color: var(--forest); }
 .uc select { border: 0; background: transparent; font-weight: 800; color: var(--forest); cursor: pointer; }
-.avatar { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--leaf); color: #fff; font: 800 14px var(--font-display); }
+.account { position: relative; }
+.menu { display: none; }
+.menu-who { padding: 8px 12px; font-size: 13px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; }
+.menu-item { display: block; width: 100%; padding: 10px 12px; border: 0; border-radius: 10px; background: none; color: var(--forest); font: 800 15px var(--font-body); text-align: left; }
+.menu-item:hover { background: var(--tint); }
+.avatar { border: 0; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--leaf); color: #fff; font: 800 14px var(--font-display); }
 .content { flex: 1; min-height: 0; overflow-y: auto; padding: 26px var(--gutter) 40px; }
 
 @media (max-width: 900px) {
@@ -90,5 +106,7 @@ nav { display: grid; gap: 3px; }
   .main { height: auto; min-height: 0; }
   .where span:last-child, .exit { display: none; }
   .uc span { display: none; }
+  .avatar { cursor: pointer; }
+  .menu { display: block; position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; min-width: 200px; max-width: calc(100vw - 2 * var(--gutter)); padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(6, 40, 20, .18); }
 }
 </style>

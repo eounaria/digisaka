@@ -17,6 +17,7 @@ Source: [rough plan](../../wayfinder/adapt-screens/rough-plan.md).
 | 05 | Treatment detail: decide and record the application | 03, 04 |
 | 06 | Remove the separate QA screens and run the exit gate | 05 |
 | 07 | Sign out on a narrow window | 01 |
+| 08 | Sign out and the way back to the app, on a narrow admin window | 07 |
 
 Tickets 03 and 04 can run in either order once 02 is done. Each ticket is demoable against the local stack on its own, except 06, which is the end-to-end run.
 

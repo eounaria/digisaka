@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import Icon from './Icon.vue';
+import { useAccountMenu } from './useAccountMenu.js';
 
 const scroller = ref(null);
 const route = useRoute(), router = useRouter(), auth = useAuthStore();
@@ -15,29 +16,8 @@ const MENU = [
   { to: '/schedule', label: 'Treatment Schedule', icon: 'calendar' },
 ];
 
-// Below 900px the sidebar becomes a tab bar without the account block, so the avatar opens a small account menu.
-// Above it the avatar is a plain badge: not focusable, no popup semantics, and the menu is closed.
-const NARROW = '(max-width: 900px)';
-const menuOpen = ref(false), narrow = ref(false), account = ref(null), avatar = ref(null);
-let query = null;
-const toggleMenu = () => { if (narrow.value) menuOpen.value = !menuOpen.value; };
-const closeOnOutsideClick = (e) => { if (menuOpen.value && !account.value?.contains(e.target)) menuOpen.value = false; };
-const closeOnEscape = (e) => { if (e.key === 'Escape' && menuOpen.value) { menuOpen.value = false; avatar.value?.focus(); } };
-const followWidth = () => { narrow.value = query.matches; menuOpen.value = false; };
-watch(() => route.path, () => { menuOpen.value = false; });
-onMounted(() => {
-  query = window.matchMedia(NARROW);
-  narrow.value = query.matches;
-  query.addEventListener('change', followWidth);
-  document.addEventListener('click', closeOnOutsideClick);
-  document.addEventListener('keydown', closeOnEscape);
-});
-onBeforeUnmount(() => {
-  query?.removeEventListener('change', followWidth);
-  document.removeEventListener('click', closeOnOutsideClick);
-  document.removeEventListener('keydown', closeOnEscape);
-});
-function signOut() { menuOpen.value = false; auth.signOut(); router.push('/login'); }
+const { menuOpen, narrow, account, avatar, toggleMenu, closeMenu } = useAccountMenu(route);
+function signOut() { closeMenu(); auth.signOut(); router.push('/login'); }
 </script>
 
 <template>
