@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** not started
+**Status:** done
 
 - [ ] Dashboard totals, recent proposals and the Schedule list show the seeded lines.
 - [ ] Choosing a line and week on Scan shows three weeks of history, including a gap.

@@ -58,7 +58,7 @@ test('health and reset exist, and reset runs the registered hooks', async () => 
 });
 
 test('an unmatched path is a 404 in the scheduler error shape', async () => {
-  const res = await fetch(`${base}/api/v1/scheduler/lines`);
+  const res = await fetch(`${base}/nothing/here`);
   assert.equal(res.status, 404);
   const body = await res.json();
   assert.equal(body.error, 'not_found');
