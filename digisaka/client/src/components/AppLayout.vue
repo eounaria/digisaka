@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import Icon from './Icon.vue';
@@ -15,7 +15,29 @@ const MENU = [
   { to: '/schedule', label: 'Treatment Schedule', icon: 'calendar' },
 ];
 
-function signOut() { auth.signOut(); router.push('/login'); }
+// Below 900px the sidebar becomes a tab bar without the account block, so the avatar opens a small account menu.
+// Above it the avatar is a plain badge: not focusable, no popup semantics, and the menu is closed.
+const NARROW = '(max-width: 900px)';
+const menuOpen = ref(false), narrow = ref(false), account = ref(null), avatar = ref(null);
+let query = null;
+const toggleMenu = () => { if (narrow.value) menuOpen.value = !menuOpen.value; };
+const closeOnOutsideClick = (e) => { if (menuOpen.value && !account.value?.contains(e.target)) menuOpen.value = false; };
+const closeOnEscape = (e) => { if (e.key === 'Escape' && menuOpen.value) { menuOpen.value = false; avatar.value?.focus(); } };
+const followWidth = () => { narrow.value = query.matches; menuOpen.value = false; };
+watch(() => route.path, () => { menuOpen.value = false; });
+onMounted(() => {
+  query = window.matchMedia(NARROW);
+  narrow.value = query.matches;
+  query.addEventListener('change', followWidth);
+  document.addEventListener('click', closeOnOutsideClick);
+  document.addEventListener('keydown', closeOnEscape);
+});
+onBeforeUnmount(() => {
+  query?.removeEventListener('change', followWidth);
+  document.removeEventListener('click', closeOnOutsideClick);
+  document.removeEventListener('keydown', closeOnEscape);
+});
+function signOut() { menuOpen.value = false; auth.signOut(); router.push('/login'); }
 </script>
 
 <template>
@@ -45,7 +67,14 @@ function signOut() { auth.signOut(); router.push('/login'); }
         <div class="where"><span class="mark small">🍌</span><h2>{{ title }}</h2></div>
         <div class="tools">
           <RouterLink to="/scan" class="pill"><Icon name="scan" :size="15" />New Scan</RouterLink>
-          <span class="avatar" :title="auth.email">{{ auth.initials }}</span>
+          <div ref="account" class="account">
+            <button ref="avatar" type="button" class="avatar" :title="auth.email" aria-label="Account" :tabindex="narrow ? 0 : -1"
+                    :aria-expanded="narrow ? menuOpen : undefined" :aria-controls="narrow ? 'account-menu' : undefined" @click="toggleMenu">{{ auth.initials }}</button>
+            <div v-if="menuOpen" id="account-menu" class="menu">
+              <p class="menu-who">{{ auth.email }}</p>
+              <button type="button" class="menu-out" @click="signOut"><Icon name="logout" :size="18" /><span>Sign out</span></button>
+            </div>
+          </div>
         </div>
       </header>
       <main ref="scroller" class="content">
@@ -83,9 +112,14 @@ nav { display: grid; gap: 4px; }
 .tools { display: flex; align-items: center; gap: 10px; }
 .pill { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--forest); font: 800 15px var(--font-display); }
 .pill:hover { background: var(--tint); }
-.round, .avatar { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; }
+.round, .avatar { position: relative; border: 0; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; }
 .round { background: var(--tint); color: var(--forest); }
 .avatar { background: var(--leaf); color: #fff; font: 800 14px var(--font-display); }
+.account { position: relative; }
+.menu { display: none; }
+.menu-who { padding: 8px 12px; font-size: 13px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; }
+.menu-out { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 10px; background: none; color: var(--forest); font: 800 15px var(--font-body); }
+.menu-out:hover { background: var(--tint); }
 .dot { position: absolute; top: 8px; right: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--warn); border: 2px solid #fff; }
 .content { flex: 1; min-height: 0; overflow-y: auto; }
 @media (max-width: 900px) {
@@ -95,6 +129,8 @@ nav { display: grid; gap: 4px; }
   nav { display: contents; }
   .link { flex: 1; min-width: 0; flex-direction: column; justify-content: center; gap: 3px; padding: 4px 2px; font-size: 11px; line-height: 1.1; text-align: center; }
   .pill, .where h2 { display: none; }
+  .avatar { cursor: pointer; }
+  .menu { display: block; position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; min-width: 200px; max-width: calc(100vw - 2 * var(--gutter)); padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(6, 40, 20, .18); }
   .tools { gap: 8px; }
 }
 </style>
