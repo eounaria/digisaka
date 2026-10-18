@@ -34,8 +34,6 @@ The stub is standalone: it depends on nothing outside this repo. Its contract is
 ## Fog
 
 - Response fields the client never reads, so the fixtures do not show them: the stub supplies a plausible minimum and records each guess in its README.
-- Exactly which Supabase endpoints `server/supabaseAuth.js` calls.
-- Whether scenarios are selected by a stub-only admin route, a header, or the sign-in email.
 
 ## Out of scope
 
