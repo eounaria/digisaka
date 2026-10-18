@@ -22,9 +22,26 @@ Feature branches are stacked: each is built on the branch below it, ending at th
 - **Merge without squashing.** When branches are merged, use a merge or rebase that keeps the individual commits; never squash, so the history is preserved.
 - **CLAUDE.md follows the code.** Update it in the same branch as the change it describes, so each branch's CLAUDE.md matches its own tree.
 
+### Scope
+
+Work only inside this repository (`mobile/`, `digisaka/`, `tasks/`). Do not read, search or edit sibling folders under `my-projects/` unless the human developer asks. The scheduler and Knowledge Maintenance services are reached over HTTP, not by reading their source.
+
 ### Decisions
 
 When a decision comes up while planning or implementing, rank it as minor, standard, or potentially destructive or breaking. For minor and standard ones, follow the recommended option without asking. For destructive or breaking ones (for example, removing screens or endpoints, or changing what a screen does), stop and let the human developer decide.
+
+Compose every question exactly as the round would normally ask it: the full question text and the full option list with descriptions, recommended option marked. Do this even for questions answered by following the recommendation, so the decision record can hold them verbatim.
+
+### Context handoff
+
+There is no exact context gauge, so estimate from tool output and file reads. Near the context limit, stop at the next clean checkpoint (a ticket boundary or a commit, never mid-edit). The `handoff` skill cannot be invoked by the model, so write the handoff by hand:
+
+- Save it outside the session scratchpad, in a durable location the next session can read, and give the human developer its full path.
+- Include the current branch, the ticket in progress, what is done and next, open decisions, and anything uncommitted.
+- Include a suggested-skills section.
+- Reference repo artifacts by path rather than pasting them.
+- Redact secrets.
+- Tell the human developer to continue in a new conversation.
 
 ### Task lifecycle
 
@@ -32,7 +49,7 @@ Planning lives under `tasks/`, which has two subfolders: `wayfinder/` (maps) and
 
 1. **Chart the map.** Start from a rough plan and run the `wayfinder` command. It charts a map in a new `tasks/wayfinder/<task-name>/` folder.
 2. **Clear the fog.** If the map has fog, wayfinder defines tickets for it. Run `wayfinder` on those tickets one at a time, in order, until the fog has cleared or is at an acceptable level.
-3. **Write the tickets.** Run the `to-tickets` command. It writes the implementation tickets into `tasks/implementation/<task-name>/`.
+3. **Write the tickets.** Run the `to-tickets` command. It writes the implementation tickets into `tasks/implementation/<task-name>/`. Only write ticket files when asked.
 4. **Implement each ticket.** Run the `implement` command on each ticket in turn. Each ticket is its own commit.
 5. **Review before committing.** Before committing a ticket's implementation, make sure `code-review` has run on it: if the `implement` command already ran it, do not run it again; otherwise run the `code-review` command yourself. Commit only after the human developer decides the spec and standards issues are resolved to an acceptable state. Do not decide this yourself.
 6. **Archive.** Move each completed ticket into `tasks/implementation/<task-name>/archive/`.
@@ -49,7 +66,8 @@ tasks/implementation/<plan>/decisions/<command>--<plan>[--<ticket>]--<stage>.md
 ```
 
 - Record every answered question, whether asked or self-decided, in a decision record: one file per stage. The filename names the command and the plan, and the file opens with a short preface giving the context.
-- Decision records are for developer audit only. Tickets, READMEs and all other documents must never reference them; rewrite the decision into the relevant ticket instead.
+- Each entry holds the exact question text, every option with its description, the rank, the recommended option, and the answer given or taken, marked "asked" or "self-decided". The reader should see what the grilling round would have shown.
+- Decision records and `rough-plan.md` files are local and gitignored. They are for developer audit only. Tickets, READMEs and all other documents must never reference them; rewrite the decision into the relevant ticket instead.
 
 ## Commands: mobile
 
@@ -126,3 +144,14 @@ Dev proxy targets come from `client/vite.proxy.js` (`SCHEDULER_URL`, `KM_URL`, `
 - The app treats 2026-W24 as "today" for the scan and calendar screens, per the commit history.
 - `legacy/` and the Express routes for the old farmer app (`dashboard`, `bulks`, `schedules`, `notifications`, `me`) are unmounted dead code. Treat the README's "Run it (retired Express shell)" and farmer-side API tables as historical.
 - Admin screens are under `client/src/admin/` and are scoped by a use case; every `/api/admin` call needs `?useCase=`. Extraction is no longer done in Express (`server/extract.js` and the triples/documents routes were removed); it happens in the Knowledge Maintenance service.
+
+## Things that bite
+
+- `mobile/test/widget_test.dart` is the Flutter counter template and fails until replaced. `flutter_analyze_baseline.txt` is stale.
+- In `client/vite.config.js` the scheduler and knowledge-maintenance proxy rules must stay ahead of the `/api` rule. A proxy target change needs `docker compose restart web`; a compose env change needs `up -d --build`.
+- Sign-in needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `client/.env.local`. Without them nothing works.
+- The scheduler runs on the host (`host.docker.internal:8001`), so the web container can't reach it if it isn't up.
+- The app treats 2026-W24 as "today", so date-dependent screens look stale on the real calendar.
+- `legacy/` and the old Express farmer routes are unmounted dead code. The README's farmer-side sections are historical.
+- Every `/api/admin` call needs `?useCase=`.
+- `ScheduleStore` state is in-memory only and lost on restart.
