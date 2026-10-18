@@ -34,7 +34,7 @@ Planning lives under `tasks/`, which has two subfolders: `wayfinder/` (maps) and
 2. **Clear the fog.** If the map has fog, wayfinder defines tickets for it. Run `wayfinder` on those tickets one at a time, in order, until the fog has cleared or is at an acceptable level.
 3. **Write the tickets.** Run the `to-tickets` command. It writes the implementation tickets into `tasks/implementation/<task-name>/`.
 4. **Implement each ticket.** Run the `implement` command on each ticket in turn. Each ticket is its own commit.
-5. **Review before committing.** Before committing a ticket's implementation, run the `code-review` command. Commit only after the human developer decides the spec and standards issues are resolved to an acceptable state. Do not decide this yourself.
+5. **Review before committing.** Before committing a ticket's implementation, make sure `code-review` has run on it: if the `implement` command already ran it, do not run it again; otherwise run the `code-review` command yourself. Commit only after the human developer decides the spec and standards issues are resolved to an acceptable state. Do not decide this yourself.
 6. **Archive.** Move each completed ticket into `tasks/implementation/<task-name>/archive/`.
 
 ### Planning documents (`tasks/`)
