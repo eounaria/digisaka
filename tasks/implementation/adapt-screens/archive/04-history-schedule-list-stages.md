@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** built, live check pending
+**Status:** done, checked live
 
 - [x] History shows every line with its recent weeks, proposals and applications; a line with no history shows an empty state, not an error.
 - [x] The schedule list shows only lines with a proposal; opening one shows its proposals by week with status and window.

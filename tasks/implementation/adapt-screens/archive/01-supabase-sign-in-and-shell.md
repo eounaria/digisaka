@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** done, live browser check pending
+**Status:** done, checked live
 
 - [x] The original login screen signs in against Supabase; a wrong password shows a readable message; there is no register form action.
 - [x] After sign-in a Practitioner reaches the shell, a Technical User reaches the admin console, and a Practitioner who types the admin address is sent back to the shell.

@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** built, live check pending
+**Status:** done, checked live
 
 - [x] Verified leaves are grouped by QA's stage label; healthy and unvalidated leaves are listed apart.
 - [x] Confirm & Schedule closes the week; a week already closed leads to the existing cycle; a week with no finished session explains why it cannot close.
