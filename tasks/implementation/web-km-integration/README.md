@@ -1,6 +1,6 @@
 # Implementation tickets: Knowledge Maintenance in the web app
 
-Tracer-bullet tickets for replacing the admin console's Express-backed Document Extractions and KG Processing screens with screens on the Knowledge Maintenance API (`/api/v1/knowledge-maintenance`, main API on port 8000). Local files under `issues/`, numbered in dependency order, status in each ticket's own `**Status:**` line.
+Tracer-bullet tickets for replacing the admin console's Express-backed Document Extractions and KG Processing screens with screens on the Knowledge Maintenance API (`/api/v1/knowledge-maintenance`, main API on port 8000). Local files under `issues/` (completed tickets move to `archive/`), numbered in dependency order, status in each ticket's own `**Status:**` line.
 
 Branch: `qa-web/km-integration`, based on `qa-web/adapt-screens`. Local only; never merged or pushed.
 
