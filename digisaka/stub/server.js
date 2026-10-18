@@ -5,6 +5,7 @@ import http from 'node:http';
 import { supabaseRoutes } from './supabase.js';
 import { createSeedStore } from './seed.js';
 import { schedulerRoutes } from './scheduler.js';
+import { createKmStore, kmRoutes } from './km.js';
 
 const notFound = (path) => ({ status: 404, body: { error: 'not_found', detail: `No stub route for ${path}` } });
 
@@ -22,18 +23,20 @@ function match(route, method, path) {
   return params;
 }
 
-async function readJson(req) {
+// The request body as received (`raw`, for multipart) and as JSON when it parses (`body`).
+async function readBody(req) {
   const chunks = [];
   for await (const c of req) chunks.push(c);
-  const text = Buffer.concat(chunks).toString();
-  if (!text) return undefined;
-  try { return JSON.parse(text); } catch { return undefined; }
+  const raw = Buffer.concat(chunks);
+  if (!raw.length) return { raw };
+  try { return { raw, body: JSON.parse(raw.toString()) }; } catch { return { raw }; }
 }
 
-export function createStub({ routes, onReset = [], now = Date.now, cycleMs } = {}) {
+export function createStub({ routes, onReset = [], now = Date.now, cycleMs, stepMs } = {}) {
   const store = createSeedStore();
-  routes ??= [...supabaseRoutes, ...schedulerRoutes(store, { now, cycleMs })];
-  onReset = [store.reset, ...onReset];
+  const km = createKmStore();
+  routes ??= [...supabaseRoutes, ...schedulerRoutes(store, { now, cycleMs }), ...kmRoutes(km, { now, stepMs })];
+  onReset = [store.reset, km.reset, ...onReset];
   const all = [
     { method: 'GET', path: '/__stub/health', handle: () => ({ status: 200, body: { ok: true } }) },
     { method: 'POST', path: '/__stub/reset', handle: () => { onReset.forEach((fn) => fn()); return { status: 200, body: { ok: true } }; } },
@@ -45,7 +48,8 @@ export function createStub({ routes, onReset = [], now = Date.now, cycleMs } = {
     for (const r of all) { params = match(r, req.method, url.pathname); if (params) { route = r; break; } }
     let out;
     try {
-      out = route ? await route.handle({ query: url.searchParams, body: await readJson(req), headers: req.headers, params }) : notFound(url.pathname);
+      const { raw, body } = await readBody(req);
+      out = route ? await route.handle({ query: url.searchParams, body, raw, headers: req.headers, params }) : notFound(url.pathname);
     } catch (e) {
       out = { status: 500, body: { error: 'stub_error', detail: String(e?.message || e) } };
     }

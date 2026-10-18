@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** not started
+**Status:** done
 
 - [ ] Submitting text and a file both create a workflow that appears in the list and can be opened by id.
 - [ ] A happy-path workflow reaches extraction review, takes fact decisions (claim, accept, reject, a stale-version conflict), moves on, reaches final approval, and completes with counts per disposition.

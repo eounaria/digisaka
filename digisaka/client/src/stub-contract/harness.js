@@ -14,7 +14,7 @@ export function useStub({ email = 'farmer@digisaka.test' } = {}) {
   let server;
   const realFetch = globalThis.fetch;
   beforeAll(async () => {
-    server = createStub({ now: () => clock.t, cycleMs: CYCLE_MS });
+    server = createStub({ now: () => clock.t, cycleMs: CYCLE_MS, stepMs: CYCLE_MS });
     await new Promise((r) => server.listen(0, '127.0.0.1', r));
     ctx.base = `http://127.0.0.1:${server.address().port}`;
   });
