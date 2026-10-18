@@ -1,6 +1,6 @@
 # Implementation tickets: Docker for the web frontend
 
-Tracer-bullet tickets for running the digisaka web app in containers so the demo starts from a short series of commands. Local files under `issues/`, numbered in dependency order, status in each ticket's own `**Status:**` line (same conventions as [web-qa-integration](../web-qa-integration/README.md)).
+Tracer-bullet tickets for running the digisaka web app in containers so the demo starts from a short series of commands. Local files under `issues/` (completed tickets move to `archive/`), numbered in dependency order, status in each ticket's own `**Status:**` line (same conventions as [web-qa-integration](../web-qa-integration/README.md)).
 
 Branch: `docker/web-frontend`, based on `integration/qa-web`. Local only; never merged or pushed.
 
