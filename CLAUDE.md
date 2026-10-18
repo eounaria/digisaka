@@ -101,7 +101,7 @@ docker compose down -v                           # wipes db and dependency volum
 npm test                                         # server tests (node --test "server/*.test.js")
 node --test server/api.test.js                   # one server test file
 npm --prefix client test                         # client tests (vitest)
-npm --prefix client exec vitest run src/scheduler/week.test.js   # one client test file
+npm --prefix client exec vitest run src/helpers/week.test.js   # one client test file
 ```
 
 Without Docker: `npm install && npm run build`, `npm run seed`, `npm start` (:3000), plus `npm run dev` and `npm run dev:client` for hot reload.
@@ -120,7 +120,7 @@ Dev proxy targets come from `client/vite.proxy.js` (`SCHEDULER_URL`, `API_URL`).
 ### Client structure
 
 - `client/src/router.js` has `/login`, the practitioner shell (`AppLayout`: dashboard, scan, history, schedule, treatment) and `/admin`. All redirects live in `client/src/routeGuard.js` (`redirectFor`), which is unit tested. A Technical User who is not also a practitioner lands on `/admin`.
-- Screens are driven by Pinia stores that call the scheduler (`scan`, `cycle`, `lines`, `lineHistory`, `evidence`, `proposal`). `client/src/scheduler/` holds the framework-free logic (`client.js` with error-code messages, `scanFlow.js`, `cycleFlow.js`, `week.js`). Tests sit next to the modules.
+- Screens are driven by Pinia stores that call the scheduler (`scan`, `cycle`, `lines`, `lineHistory`, `evidence`, `proposal`). `client/src/helpers/` holds the framework-free logic (`week.js`, `groups.js`, `evidence.js`, `messages.js`); the stores make their calls through the shared `client/src/api.js`. Tests sit next to the modules.
 - The app treats 2026-W24 as "today" for the scan and calendar screens, per the commit history.
 - `legacy/` and the Express routes for the old farmer app (`dashboard`, `bulks`, `schedules`, `notifications`, `me`) are unmounted dead code. Treat the README's "Run it (retired Express shell)" and farmer-side API tables as historical.
 - Admin screens are under `client/src/admin/` and are scoped by a use case; every `/api/admin` call needs `?useCase=`. Extraction is rule-based (`server/extract.js`), not an LLM.
