@@ -25,12 +25,13 @@ Source: [rough plan](../../wayfinder/stub-backend/rough-plan.md).
 | 04 | Treatment proposal: decide and apply | 03 |
 | 05 | Knowledge Maintenance workflows and fact review | 01 |
 | 06 | Documentation and exit gate | 04, 05 |
+| 07 | Sample leaves for the Scan screen on the stub | 03 |
 
 Each ticket is demoable against the stub stack on its own, except 06.
 
 ## Not ticketed
 
-Stubbing the Express admin API (it keeps running for real and only needs to accept stub tokens); a stub for the Scan image model beyond canned outcomes; load or latency realism beyond a timer; any change to client stores, views or `api.js`; the mobile app.
+Stubbing the Express admin API (it keeps running for real and only needs to accept stub tokens); a stub for the Scan image model beyond canned outcomes; load or latency realism beyond a timer; any change to client stores or `api.js` (ticket 07 adds one flag-gated block to the Scan view, only for the stub); the mobile app.
 
 ## Known risks
 

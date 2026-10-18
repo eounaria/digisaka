@@ -4,6 +4,7 @@ import { useStub, CYCLE_MS } from './harness.js';
 import { useScanStore } from '../stores/scan.js';
 import { useCycleStore } from '../stores/cycle.js';
 import { useLinesStore } from '../stores/lines.js';
+import { sampleFile, RETAKE_SAMPLE } from '../helpers/stubSamples.js';
 
 vi.mock('../helpers/image.js', () => ({ fileToPayload: async (f) => ({ img_name: f.name, img: 'AAAA' }) }));
 
@@ -32,6 +33,21 @@ describe('scan store against the stub', () => {
     await s.confirm(s.leaves[5].id, false);
     expect(s.leaves[5].phase).toBe('rescan');
     await s.rescan(s.leaves[5].id, file('g-stage2'));
+    expect(s.leaves[5].phase).toBe('confirm');
+  });
+});
+
+describe('stub sample leaves against the stub', () => {
+  it('each sample produces its scenario outcome', async () => {
+    const s = useScanStore();
+    s.select('L04', '2026-W24');
+    s.addFiles(['healthy', 'not_leaf', 'referral', 'rescan', 'stage2', 'unavailable'].map(sampleFile));
+    await s.assess();
+    expect(s.leaves.map((l) => l.phase)).toEqual(['done', 'done', 'done', 'rescan', 'confirm', 'failed']);
+    expect(s.leaves.slice(0, 3).map((l) => l.outcome)).toEqual(['healthy', 'not_leaf', 'referral']);
+    await s.rescan(s.leaves[3].id, sampleFile(RETAKE_SAMPLE));
+    expect(s.leaves[3].phase).toBe('confirm');
+    await s.assess(); // the QA service is back on the retry
     expect(s.leaves[5].phase).toBe('confirm');
   });
 });

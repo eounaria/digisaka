@@ -12,6 +12,7 @@ import { groupLeaves } from '../helpers/groups.js';
 import { previousWeek, nextWeek, isoWeekOf, weekStart, weekEnd } from '../helpers/week.js';
 import { outcomeReasonText } from '../helpers/messages.js';
 import { todayIso, fromIso } from '../helpers/today.js';
+import { samplesEnabled, addDefaultSamples, sampleFile, SAMPLE_SCENARIOS, RETAKE_SAMPLE } from '../helpers/stubSamples.js';
 
 const scan = useScanStore(), farm = useFarmStore(), cycle = useCycleStore();
 const step = ref(1); // 1 Select Leaves, 2 Bulk Assess, 3 Results
@@ -23,12 +24,15 @@ const weekRange = computed(() => (scan.weekOk ? `${weekStart(scan.week)} to ${we
 const atLatest = computed(() => scan.week >= isoWeekOf(fromIso(maxDate)));
 const gallery = ref(null), camera = ref(null), rescanInput = ref(null), logBox = ref(null);
 const rescanId = ref(null);
+const stubSamples = samplesEnabled(); // only true on the stub stack (docker-compose.stub.yml)
 const previews = new Map();
 
 onMounted(async () => {
   await farm.loadLines();
   if (!scan.line && farm.lines.length) scan.select(farm.lines[0], scan.week);
 });
+// Runs before onMounted picks the first line (a no-op until a line is set), then on every line or week change.
+watch(() => [scan.line, scan.week], () => addDefaultSamples(scan), { immediate: true });
 onBeforeUnmount(() => { cycle.stop(); for (const u of previews.values()) URL.revokeObjectURL(u); });
 
 const preview = (leaf) => {
@@ -51,7 +55,7 @@ async function assess() {
   step.value = 2;
   await scan.assess();
 }
-function startOver() { cycle.reset(); scan.leaves = []; scan.log = []; step.value = 1; }
+function startOver() { cycle.reset(); scan.leaves = []; scan.log = []; step.value = 1; addDefaultSamples(scan); }
 const groups = computed(() => groupLeaves(scan.leaves));
 function confirmSchedule() { cycle.close(scan.line, scan.week); }
 
@@ -109,6 +113,10 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
       <div class="capture">
         <button class="gallery" :disabled="scan.leaves.length >= MAX_LEAVES" @click="gallery.click()"><span class="tile"><Icon name="folder" :size="26" /></span>Gallery</button>
         <button class="shutter" :disabled="scan.leaves.length >= MAX_LEAVES" aria-label="Take photo" @click="camera.click()"><span></span></button>
+      </div>
+      <div v-if="stubSamples" class="samples" aria-label="Sample leaves (stub only)">
+        <span>Sample leaves</span>
+        <button v-for="(label, key) in SAMPLE_SCENARIOS" :key="key" :disabled="scan.leaves.length >= MAX_LEAVES" @click="scan.addFiles([sampleFile(key)])">{{ label }}</button>
       </div>
       <input ref="camera" type="file" accept="image/*" capture="environment" hidden @change="picked">
       <input ref="gallery" type="file" accept="image/*" multiple hidden @change="picked">
@@ -176,6 +184,7 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
             <p>QA could not match the symptoms. Take a new photo of the same leaf.</p>
             <p v-if="l.error" class="err" role="alert">{{ l.error }}</p>
             <button class="primary" @click="startRescan(l.id)">Retake</button>
+            <button v-if="stubSamples" @click="scan.rescan(l.id, sampleFile(RETAKE_SAMPLE))">Use sample</button>
           </div>
         </div>
       </section>
@@ -283,6 +292,9 @@ button.wide { width: 100%; padding: 14px; margin: 20px 0 8px; border-radius: 14p
 .br { position: absolute; width: 28px; height: 28px; border: 0 solid var(--banana); }
 .tl { top: 14px; left: 14px; border-width: 3px 0 0 3px; } .tr { top: 14px; right: 14px; border-width: 3px 3px 0 0; }
 .bl { bottom: 14px; left: 14px; border-width: 0 0 3px 3px; } .bb { bottom: 14px; right: 14px; border-width: 0 3px 3px 0; }
+.samples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 13px; }
+.samples span { color: var(--ink-soft); }
+.samples button { padding: 6px 10px; font-size: 13px; }
 .capture { display: flex; justify-content: center; align-items: center; gap: 40px; margin: 20px 0 24px; }
 .gallery { display: grid; justify-items: center; gap: 6px; border: 0; background: none; font-size: 12px; padding: 0; }
 .tile { width: 56px; height: 56px; border-radius: 16px; background: var(--beige); color: var(--banana); display: grid; place-items: center; }

@@ -30,3 +30,5 @@ services:
       KM_URL: http://stub:9000
       VITE_SUPABASE_URL: http://localhost:9000
       VITE_SUPABASE_ANON_KEY: stub-anon-key
+      # Scan screen adds sample leaves by itself; never set against the real backends.
+      VITE_STUB_SAMPLES: "1"
