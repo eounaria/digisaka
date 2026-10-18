@@ -30,9 +30,9 @@ async function readJson(req) {
   try { return JSON.parse(text); } catch { return undefined; }
 }
 
-export function createStub({ routes, onReset = [] } = {}) {
+export function createStub({ routes, onReset = [], now = Date.now, cycleMs } = {}) {
   const store = createSeedStore();
-  routes ??= [...supabaseRoutes, ...schedulerRoutes(store)];
+  routes ??= [...supabaseRoutes, ...schedulerRoutes(store, { now, cycleMs })];
   onReset = [store.reset, ...onReset];
   const all = [
     { method: 'GET', path: '/__stub/health', handle: () => ({ status: 200, body: { ok: true } }) },

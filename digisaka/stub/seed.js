@@ -4,6 +4,8 @@
 const wk = (week, yls, yli, rainfall_mm) => ({ week, yls, yli, rainfall_mm });
 
 const seed = () => ({
+  // Filled while the stub runs: scans (diagnoses), closed-week cycles (runs) and id counters.
+  diagnoses: {}, uploads: {}, runs: {}, nextId: 1,
   lines: {
     // Nothing recorded yet.
     L01: { weeks: [], cycles: [], proposals: [], applications: [], leaves: 0 },

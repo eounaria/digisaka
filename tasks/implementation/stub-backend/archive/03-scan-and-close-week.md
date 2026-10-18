@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** not started
+**Status:** done
 
 - [ ] Uploading several images with different names reaches every outcome the Scan screen renders, including confirm, re-scan and the 503 with its retry.
 - [ ] Closing L04 after a verified scan polls, then shows the proposal; L01 shows monitoring; L05 shows human review; L06 shows the failure, and Retry then succeeds.

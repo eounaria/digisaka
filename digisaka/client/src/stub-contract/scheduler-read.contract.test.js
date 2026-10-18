@@ -1,36 +1,13 @@
 // Drives the real lines, line-history and evidence stores (and the shared api.js) against the in-process stub.
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
-import { setActivePinia, createPinia } from 'pinia';
-import { createStub } from '../../../stub/server.js';
-import { setTokenProvider } from '../api.js';
+import { describe, it, expect } from 'vitest';
+import { useStub } from './harness.js';
 import { useAuthStore } from '../stores/auth.js';
 import { useLinesStore, dashboardSummary, proposalRows } from '../stores/lines.js';
 import { useLineHistoryStore } from '../stores/lineHistory.js';
 import { useEvidenceStore } from '../stores/evidence.js';
 import { diseaseCaption, rainfallCaption } from '../helpers/evidence.js';
 
-let server, base;
-beforeAll(async () => {
-  server = createStub();
-  await new Promise((r) => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-afterAll(() => server.close());
-
-// The stores call relative URLs; point them at the stub, as the dev proxy does.
-const realFetch = globalThis.fetch;
-beforeEach(async () => {
-  setActivePinia(createPinia());
-  const m = new Map();
-  vi.stubGlobal('sessionStorage', { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) });
-  vi.stubEnv('VITE_SUPABASE_URL', base);
-  vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'stub-anon-key');
-  const auth = useAuthStore();
-  await auth.signIn('farmer@digisaka.test', 'pw');
-  setTokenProvider(() => auth.token);
-  vi.stubGlobal('fetch', (url, init) => realFetch(String(url).startsWith('/') ? base + url : url, init));
-});
-afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); setTokenProvider(() => null); });
+const ctx = useStub();
 
 describe('lines store against the stub', () => {
   it('loads every seed line for the dashboard and schedule list', async () => {
