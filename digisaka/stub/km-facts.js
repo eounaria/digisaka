@@ -1,6 +1,7 @@
 // The facts a stub Knowledge Maintenance workflow extracts: about 30, built the same for every workflow.
 // The mix is chosen so each block the fact review shows (ontology check, correction, resolution, match
-// and conflict warnings, a colleague's claim, a stale accepted fact) appears on some fact.
+// and conflict warnings, a colleague's claim, a stale accepted fact) appears on some fact. The ontology check,
+// correction, resolution and warnings are only served from final approval on (see factView in km.js).
 export const COLLEAGUE = '00000000-0000-4000-8000-0000000000c1';
 
 const SUBJECTS = ['Late blight', 'Phytophthora infestans', 'Metalaxyl', 'Potato leaf', 'Copper fungicide'];

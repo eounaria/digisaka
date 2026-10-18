@@ -91,7 +91,22 @@ test('slow stretches every state', async () => {
   tick(1); assert.equal(await state(id), 'extracting');
 });
 
-test('facts page and filter, and show every block somewhere', async () => {
+const LATER_KEYS = ['gate3', 'mend', 'entity_resolution'];
+
+test('extraction review shows only what extraction produced; the later blocks come with final approval', async () => {
+  const id = await submit('Potato notes'); tick(3);
+  const first = (await facts(id)).facts;
+  assert.ok(first.every((x) => LATER_KEYS.every((k) => x[k] === null) && !x.entity_match_warnings.length && !x.entity_conflict_warnings.length));
+  assert.ok(first.every((x) => x.graphjudge_result && x.restoration_status), 'extraction fields stay');
+  await toFinal(id);
+  assert.equal(await state(id), 'awaiting_final_approval');
+  const f = (await facts(id)).facts;
+  assert.ok(f.some((x) => x.gate3?.status === 'passed') && f.some((x) => x.gate3?.violations.length));
+  assert.ok(f.some((x) => x.mend?.altered) && f.some((x) => x.mend && !x.mend.altered));
+  assert.ok(f.some((x) => x.entity_resolution) && f.some((x) => x.entity_match_warnings.length) && f.some((x) => x.entity_conflict_warnings.length));
+});
+
+test('facts page and filter', async () => {
   const id = await submit('Potato notes'); tick(3);
   const all = await facts(id);
   assert.equal(all.total, 30);
@@ -99,10 +114,6 @@ test('facts page and filter, and show every block somewhere', async () => {
   assert.deepEqual([page.facts.length, page.total, page.limit, page.offset], [5, 30, 10, 25]);
   for (const d of ['pending', 'accepted', 'rejected', 'unresolved']) assert.equal((await facts(id, `&disposition=${d}`)).facts.every((f) => f.disposition === d), true);
   assert.ok((await facts(id, '&disposition=unresolved')).total > 0);
-  const f = all.facts;
-  assert.ok(f.some((x) => x.gate3?.status === 'passed') && f.some((x) => x.gate3?.violations.length));
-  assert.ok(f.some((x) => x.mend?.altered) && f.some((x) => x.mend && !x.mend.altered));
-  assert.ok(f.some((x) => x.entity_resolution) && f.some((x) => x.entity_match_warnings.length) && f.some((x) => x.entity_conflict_warnings.length));
   assert.equal((await call('GET', `/${id}/facts?disposition=bogus`)).status, 422);
   assert.equal((await facts(await submit('early'))).total, 0, 'no facts before extraction finishes');
 });

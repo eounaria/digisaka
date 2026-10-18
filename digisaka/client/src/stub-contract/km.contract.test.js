@@ -89,11 +89,19 @@ describe('Knowledge Maintenance stores against the stub', () => {
     expect(run.workflow.state).toBe('completed');
   });
 
-  it('renders every block for some fact', async () => {
-    const { id, facts } = await open('Potato notes');
-    await facts.load(id, { disposition: '' });
-    await facts.load(id, { disposition: '', offset: 25 });
-    const all = facts.facts.concat((await (await fetch(`/api/v1/knowledge-maintenance/workflows/${id}/facts?limit=25&offset=0`, { headers: { Authorization: `Bearer ${useAuthStore().token}` } })).json()).facts);
+  it('shows the later-stage blocks only from final approval on', async () => {
+    const { id, run, facts } = await open('Potato notes');
+    const read = async () => {
+      const token = useAuthStore().token;
+      const page = async (offset) => (await (await fetch(`/api/v1/knowledge-maintenance/workflows/${id}/facts?limit=25&offset=${offset}`, { headers: { Authorization: `Bearer ${token}` } })).json()).facts;
+      return [...await page(0), ...await page(25)];
+    };
+    const early = await read();
+    expect(early.some((f) => f.gate3 || f.mend || f.entity_resolution || f.entity_match_warnings.length || f.entity_conflict_warnings.length)).toBe(false);
+    await decideAll(facts, run, id, GATE1, 'pending');
+    await run.recheck(id, wait);
+    expect(run.workflow.state).toBe('awaiting_final_approval');
+    const all = await read();
     for (const key of ['gate3', 'mend', 'entity_resolution']) expect(all.some((f) => f[key])).toBe(true);
     expect(all.some((f) => f.entity_match_warnings.length)).toBe(true);
     expect(all.some((f) => f.entity_conflict_warnings.length)).toBe(true);

@@ -26,6 +26,7 @@ Source: [rough plan](../../wayfinder/stub-backend/rough-plan.md).
 | 05 | Knowledge Maintenance workflows and fact review | 01 |
 | 06 | Documentation and exit gate | 04, 05 |
 | 07 | Sample leaves for the Scan screen on the stub | 03 |
+| 08 | Extraction review shows only what extraction produced | 05 |
 
 Each ticket is demoable against the stub stack on its own, except 06.
 

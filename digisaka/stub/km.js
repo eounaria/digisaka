@@ -46,6 +46,10 @@ function multipartField(raw, contentType, name) {
   return null;
 }
 
+// Ontology check, correction, entity resolution and their warnings come from the stages after extraction
+// review (canonicalizing, validating, correcting), so the first review sees none of them.
+const laterStages = () => ({ gate3: null, mend: null, entity_resolution: null, entity_match_warnings: [], entity_conflict_warnings: [] });
+
 export function kmRoutes(store, { now = Date.now, stepMs = 4000 } = {}) {
   const iso = (ms) => new Date(ms).toISOString();
 
@@ -90,6 +94,7 @@ export function kmRoutes(store, { now = Date.now, stepMs = 4000 } = {}) {
     const held = f.claimed_by && live;
     return {
       ...rest,
+      ...(w.state === 'awaiting_extraction_review' ? laterStages() : {}),
       claimed_by: held ? f.claimed_by : null, claimed_at: held ? f.claimed_at : null, claim_expires_at: held ? f.claim_expires_at : null,
       requires_action: f.disposition === 'pending' || (w.state === 'awaiting_final_approval' && stale && f.disposition === 'accepted'),
     };
