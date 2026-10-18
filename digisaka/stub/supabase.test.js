@@ -64,3 +64,11 @@ test('an unmatched path is a 404 in the scheduler error shape', async () => {
   assert.equal(body.error, 'not_found');
   assert.equal(typeof body.detail, 'string');
 });
+
+test('the browser can sign in cross-origin: preflight is answered and replies allow any origin', async () => {
+  const pre = await fetch(`${base}/auth/v1/token?grant_type=password`, { method: 'OPTIONS', headers: { Origin: 'http://localhost:5173', 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type,apikey' } });
+  assert.equal(pre.status, 204);
+  assert.match(pre.headers.get('access-control-allow-headers'), /apikey/);
+  const res = await fetch(`${base}/__stub/health`, { headers: { Origin: 'http://localhost:5173' } });
+  assert.equal(res.headers.get('access-control-allow-origin'), '*');
+});

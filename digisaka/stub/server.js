@@ -32,6 +32,13 @@ async function readBody(req) {
   try { return { raw, body: JSON.parse(raw.toString()) }; } catch { return { raw }; }
 }
 
+// The browser signs in against the stub directly (another origin from the page), so every answer allows it.
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
+};
+
 export function createStub({ routes, onReset = [], now = Date.now, cycleMs, stepMs } = {}) {
   const store = createSeedStore();
   const km = createKmStore();
@@ -43,6 +50,7 @@ export function createStub({ routes, onReset = [], now = Date.now, cycleMs, step
     ...routes,
   ];
   return http.createServer(async (req, res) => {
+    if (req.method === 'OPTIONS') { res.writeHead(204, CORS); res.end(); return; }
     const url = new URL(req.url, 'http://stub');
     let route, params;
     for (const r of all) { params = match(r, req.method, url.pathname); if (params) { route = r; break; } }
@@ -53,7 +61,7 @@ export function createStub({ routes, onReset = [], now = Date.now, cycleMs, step
     } catch (e) {
       out = { status: 500, body: { error: 'stub_error', detail: String(e?.message || e) } };
     }
-    res.writeHead(out.status, { 'Content-Type': 'application/json' });
+    res.writeHead(out.status, { 'Content-Type': 'application/json', ...CORS });
     res.end(JSON.stringify(out.body));
   });
 }
