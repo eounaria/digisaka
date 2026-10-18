@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** done (live check pending)
+**Status:** done, checked live
 
 - [x] Closing the week asks for confirmation, then starts the cycle; a closed week can no longer take uploads.
 - [x] The cycle screen polls while the status is running, stops on a terminal status or when leaving the screen, and shows a clear timeout or failure state.

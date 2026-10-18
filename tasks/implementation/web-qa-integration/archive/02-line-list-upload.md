@@ -12,4 +12,4 @@
 - [x] The sessions so far for the line-week are listed and refresh after each upload.
 - [x] Scheduler error codes show readable messages (for example an invalid week or a closed week) and never a raw payload.
 - [x] Unit tests cover the upload, confirmation, re-scan and session list logic with a fake client.
-- [ ] Demoable against the local stack for `L04` in `2026-W24` (live check pending, see ticket 03).
+- [x] Demoable against the local stack for `L04` in `2026-W24` (checked live).
