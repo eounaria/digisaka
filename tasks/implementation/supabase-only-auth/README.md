@@ -1,6 +1,6 @@
 # Implementation tickets: Supabase-only accounts
 
-Tracer-bullet tickets for removing the web app's own accounts so the only logins are the AI_NeSy Supabase accounts, with Express reduced to the admin console (knowledge maintenance). Local files under `issues/`, numbered in dependency order, status in each ticket's own `**Status:**` line (same conventions as [docker-web-frontend](../docker-web-frontend/README.md)).
+Tracer-bullet tickets for removing the web app's own accounts so the only logins are the AI_NeSy Supabase accounts, with Express reduced to the admin console (knowledge maintenance). Local files under `issues/` (completed tickets move to `archive/`), numbered in dependency order, status in each ticket's own `**Status:**` line (same conventions as [docker-web-frontend](../docker-web-frontend/README.md)).
 
 Branch: `auth/supabase-only`, based on `docker/web-frontend`. Local only; never merged or pushed.
 
