@@ -1,0 +1,6 @@
+# Environment / secrets
+env.json
+env.*.json
+!env.example.json
+.env
+.env.*

@@ -46,9 +46,17 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
 # Local Claude Code instructions
 CLAUDE.local.md
 
 # Planning records: local, developer audit only
 tasks/**/decisions/
 tasks/wayfinder/*/rough-plan.md
+
+# Environment / secrets
+env.json
+env.*.json
+!env.example.json
+.env
+.env.*

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:digisaka/features/notification/presentation/pages/notifications_screen.dart';
 import 'package:digisaka/features/auth/presentation/pages/login_screen.dart';
+import 'package:digisaka/shared/models/user_profile.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,9 +14,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   // TODO: Replace these with real user data later.
-  final String _initials = 'JD';
-  final String _fullName = 'Juan Dela Cruz';
-  final String _farmLocation = 'Sitio Malabo Banana Farm · Balayan, Batangas';
+  UserProfile _profile = const UserProfile(
+    fullName: 'Juan Dela Cruz',
+    farmLocation: 'Sitio Malabo Banana Farm · Balayan, Batangas',
+  );
 
   bool _notificationsEnabled = true;
 
@@ -49,7 +52,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildListItem(
                 icon: Icons.person_outline,
                 label: 'User Information',
-                onTap: () => _showMessage('User Information tapped'),
+                onTap: () async {
+                  final updatedProfile = await Navigator.of(context).push<UserProfile>(
+                    MaterialPageRoute(
+                      builder: (_) => EditProfileScreen(profile: _profile),
+                    ),
+                  );
+                  if (updatedProfile != null && mounted) {
+                    setState(() => _profile = updatedProfile);
+                  }
+                },
               ),
               const SizedBox(height: 10),
               _buildListItem(
@@ -152,7 +164,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             radius: 34,
             backgroundColor: AppColors.primaryGreen,
             child: Text(
-              _initials,
+              _profile.initials,
               style: const TextStyle(
                 color: AppColors.white,
                 fontSize: 24,
@@ -162,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            _fullName,
+            _profile.fullName,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -171,7 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            _farmLocation,
+            _profile.farmLocation,
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 12.5, color: AppColors.textGrey),
           ),
