@@ -1,8 +1,14 @@
+import 'dart:io';
+
 import 'package:digisaka/shared/models/leaf_stage.dart';
 import 'package:digisaka/shared/models/leaf_assessment.dart';
 
 /// Mock leaves. (TODO: replace with the real backend response.)
-List<LeafAssessment> generateMockLeaves(int count) {
+///
+/// When [leafPhotos] is provided, each leaf's [LeafAssessment.imageFile] is
+/// populated from the matching index so captured photos survive into the
+/// result screen.
+List<LeafAssessment> generateMockLeaves(int count, {List<File?>? leafPhotos}) {
   const List<List<Object?>> pattern = [
     [LeafStage.healthy, 95.0],
     [LeafStage.stage1, 94.7],
@@ -20,6 +26,7 @@ List<LeafAssessment> generateMockLeaves(int count) {
       number: i + 1,
       stage: row[0] as LeafStage,
       confidence: row[1] as double?,
+      imageFile: i < (leafPhotos?.length ?? 0) ? leafPhotos![i] : null,
     );
   });
 }

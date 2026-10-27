@@ -54,9 +54,9 @@ extension LeafStageInfo on LeafStage {
       case LeafStage.stage3:
         return 'Treatment window may be considered — requires user review';
       case LeafStage.stage4:
-        return 'Priority treatment-window consideration — requires user review';
+        return 'Priority treatment window consideration — requires user review';
       case LeafStage.unvalidated:
-        return 'Do not proceed to treatment. Capture another image or perform further inspection.';
+        return 'Do not proceed to treatment. Capture another image or perform human inspection.';
     }
   }
 
@@ -84,4 +84,23 @@ extension LeafStageInfo on LeafStage {
       this == LeafStage.stage2 ||
       this == LeafStage.stage3 ||
       this == LeafStage.stage4;
+
+  /// Border color for the stage's group card (same hue as the stage dot).
+  /// One source of truth so group cards never duplicate stage colors.
+  Color get borderColor {
+    switch (this) {
+      case LeafStage.healthy:
+        return const Color(0xFF1A7A3C); // green
+      case LeafStage.stage1:
+        return const Color(0xFFF7D358); // yellow
+      case LeafStage.stage2:
+        return const Color(0xFFFFA05E); // orange
+      case LeafStage.stage3:
+        return const Color(0xFFFF8A4D); // deep orange
+      case LeafStage.stage4:
+        return const Color(0xFFE5405E); // red
+      case LeafStage.unvalidated:
+        return const Color(0xFFB5BDB3); // grey
+    }
+  }
 }

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/components/app_bar_widget.dart';
 import '../../../../shared/components/app_button.dart';
+import '../../../../shared/widgets/assessment_stepper.dart';
 import 'package:digisaka/features/notification/presentation/pages/notifications_screen.dart';
 import 'validation_screen.dart';
 import '../widgets/week_context_card.dart';
@@ -130,7 +131,10 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
     // Navigate to the Black Sigatoka Validation screen
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => BlackSigatokaValidationScreen(leafCount: _selectedLeaves.length),
+        builder: (_) => BlackSigatokaValidationScreen(
+              leafCount: _selectedLeaves.length,
+              leafPhotos: _selectedLeaves.map((p) => p.file).toList(),
+            ),
       ),
     );
   }
@@ -159,7 +163,7 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              _buildStepper(),
+              AssessmentStepper(currentStepIndex: 0),
               const SizedBox(height: 20),
               WeekContextCard(
                 initialLine: 'L04',
@@ -187,60 +191,6 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// The 1 - 2 - 3 step indicator at the top.
-  Widget _buildStepper() {
-    return Row(
-      children: [
-        _buildStepCircle(number: '1', label: 'Select Leaves', isActive: true),
-        _buildStepConnector(),
-        _buildStepCircle(number: '2', label: 'Bulk Assess', isActive: false),
-        _buildStepConnector(),
-        _buildStepCircle(number: '3', label: 'Results', isActive: false),
-      ],
-    );
-  }
-
-  Widget _buildStepCircle({
-    required String number,
-    required String label,
-    required bool isActive,
-  }) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 16,
-          backgroundColor: isActive ? AppColors.primaryGreen : AppColors.borderGrey,
-          child: Text(
-            number,
-            style: TextStyle(
-              color: isActive ? AppColors.white : AppColors.textGrey,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            color: isActive ? AppColors.primaryGreen : AppColors.textGrey,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStepConnector() {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        height: 2,
-        color: AppColors.borderGrey,
       ),
     );
   }

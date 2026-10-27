@@ -1,29 +1,39 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:digisaka/core/theme/app_colors.dart';
 
-/// White summary card: Plant, (Assessment Date), Bulk ID, Status.
+/// White summary card: Line / Week / Status — three columns, each a small grey
+/// label above a bold value.
+///
+/// `line`/`isoWeek` are the preferred values (used by the result screen).
+/// `plantName`/`assessmentDate` are kept as fallbacks for legacy callers
+/// (`validation_screen.dart`, `treatment_recommendation_screen.dart`) so those
+/// screens keep showing the plant name / date when `line`/`isoWeek` are absent.
 class BulkAssessmentSummaryCard extends StatelessWidget {
-  final String plantName;
+  final String? plantName; // legacy fallback
   final String bulkId;
   final String status;
-  final String? assessmentDate; // only shown on the result screen
+  final String? assessmentDate; // legacy fallback
+  final String? line;
+  final String? isoWeek;
 
   const BulkAssessmentSummaryCard({
     super.key,
-    required this.plantName,
+    this.plantName,
     required this.bulkId,
     required this.status,
     this.assessmentDate,
+    this.line,
+    this.isoWeek,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -32,96 +42,90 @@ class BulkAssessmentSummaryCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          _row('Plant', _value(plantName)),
-          const _DottedDivider(),
-          if (assessmentDate != null) ...[
-            _row('Assessment Date', _value(assessmentDate!)),
-            const _DottedDivider(),
-          ],
-          _row(
-            'Bulk ID',
-            Text(
-              bulkId,
+          _SummaryColumn(
+            label: 'Line',
+            value: Text(
+              line ?? plantName ?? '—',
               style: const TextStyle(
                 fontSize: 13,
-                fontFamily: 'monospace',
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
+            ),
+          ),
+          _SummaryDivider(),
+          _SummaryColumn(
+            label: 'Week',
+            value: Text(
+              isoWeek ?? assessmentDate ?? '—',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
+            ),
+          ),
+          _SummaryDivider(),
+          _SummaryColumn(
+            label: 'Status',
+            value: Text(
+              status,
+              style: const TextStyle(
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primaryGreen,
               ),
             ),
           ),
-          const _DottedDivider(),
-          _row(
-            'Status',
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEDE5D3),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Text(
-                status,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryGreen,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _value(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.bold,
-        color: AppColors.textDark,
-      ),
-    );
-  }
-
-  Widget _row(String label, Widget value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12.5, color: AppColors.textGrey),
-          ),
-          const SizedBox(width: 12),
-          Flexible(child: value),
         ],
       ),
     );
   }
 }
 
-/// Thin dotted line between summary rows.
-class _DottedDivider extends StatelessWidget {
-  const _DottedDivider();
+/// One column: grey label above a bold value.
+class _SummaryColumn extends StatelessWidget {
+  final String label;
+  final Text value;
+
+  const _SummaryColumn({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final int dots = (constraints.maxWidth / 5).floor();
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(
-            dots,
-            (_) => Container(width: 2, height: 1, color: const Color(0xFFD5DAD3)),
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textGrey,
+            ),
           ),
-        );
-      },
+          const SizedBox(height: 4),
+          value,
+        ],
+      ),
+    );
+  }
+}
+
+/// Thin vertical divider between summary columns.
+class _SummaryDivider extends StatelessWidget {
+  const _SummaryDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 28,
+      color: AppColors.borderGrey,
+      margin: const EdgeInsets.symmetric(vertical: 6),
     );
   }
 }

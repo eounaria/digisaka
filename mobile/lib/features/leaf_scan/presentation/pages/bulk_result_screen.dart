@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:digisaka/core/theme/app_colors.dart';
 import 'package:digisaka/shared/models/leaf_stage.dart';
 import 'package:digisaka/shared/models/leaf_assessment.dart';
-import 'package:digisaka/features/leaf_scan/domain/bulk_helpers.dart';
 import 'package:digisaka/features/leaf_scan/presentation/widgets/bulk_assessment_agent_checklist.dart';
 import 'package:digisaka/features/leaf_scan/presentation/widgets/bulk_assessment_summary_card.dart';
-import 'package:digisaka/shared/widgets/stage_dot.dart';
+import 'package:digisaka/features/leaf_scan/presentation/widgets/leaf_photo_dialog.dart';
+import 'package:digisaka/shared/components/app_bar_widget.dart';
+import 'package:digisaka/shared/widgets/assessment_stepper.dart';
 import 'package:digisaka/shared/widgets/dashed_rrect_painter.dart';
+import 'package:digisaka/shared/widgets/stage_dot.dart';
+import 'package:digisaka/features/notification/presentation/pages/notifications_screen.dart';
 import 'treatment_recommendation_screen.dart';
 
 class BulkAssessmentResultScreen extends StatefulWidget {
@@ -24,10 +27,8 @@ class BulkAssessmentResultScreen extends StatefulWidget {
       _BulkAssessmentResultScreenState();
 }
 
-class _BulkAssessmentResultScreenState
-    extends State<BulkAssessmentResultScreen> {
+class _BulkAssessmentResultScreenState extends State<BulkAssessmentResultScreen> {
   late final List<LeafAssessment> _leaves;
-  final String _date = getAssessmentDate();
 
   @override
   void initState() {
@@ -37,7 +38,6 @@ class _BulkAssessmentResultScreenState
 
   // ---------- data helpers ----------
 
-  /// Leaves grouped by stage, always in the fixed display order.
   Map<LeafStage, List<LeafAssessment>> get _groups {
     final map = <LeafStage, List<LeafAssessment>>{
       for (final s in kStageOrder) s: <LeafAssessment>[],
@@ -52,12 +52,7 @@ class _BulkAssessmentResultScreenState
 
   bool get _allConfirmed => _confirmedCount == _leaves.length;
 
-  /// Leaves in Stage 1-4, sorted by leaf number.
-  List<LeafAssessment> get _treatmentLeaves {
-    final list = _leaves.where((l) => l.stage.isTreatment).toList();
-    list.sort((a, b) => a.number.compareTo(b.number));
-    return list;
-  }
+  String get _status => _allConfirmed ? 'All leaves confirmed' : 'Waiting for your confirmation';
 
   void _toggleConfirm(LeafAssessment leaf) {
     setState(() => leaf.confirmed = !leaf.confirmed);
@@ -75,12 +70,17 @@ class _BulkAssessmentResultScreenState
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
+  void _goToNotifications() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+    );
+  }
+
   void _handleReview() {
     if (!_allConfirmed) {
       _showMessage('Confirm all leaves first ($_confirmedCount/${_leaves.length})');
       return;
     }
-    // Navigate to the Treatment Recommendation step.
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => TreatmentRecommendationScreen(
@@ -100,15 +100,19 @@ class _BulkAssessmentResultScreenState
         kStageOrder.where((s) => groups[s]!.isNotEmpty).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F5F2),
+      appBar: AppBarWidget(
+        title: 'Leaf Scan',
+        onNotificationsPressed: _goToNotifications,
+      ),
+      backgroundColor: AppColors.pageBackground,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Bulk Assessment Result',
+                'Black Sigatoka Validation',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -117,65 +121,42 @@ class _BulkAssessmentResultScreenState
               ),
               const SizedBox(height: 6),
               const Text(
-                "Confirm — or reassign — each leaf's AI-suggested stage below before continuing.",
+                'Confirm — or reassign — each leaf\'s AI-suggested stage below before continuing.',
                 style: TextStyle(fontSize: 13.5, color: AppColors.textGrey, height: 1.4),
               ),
               const SizedBox(height: 16),
-
+              AssessmentStepper(currentStepIndex: 1),
+              const SizedBox(height: 16),
               BulkAssessmentSummaryCard(
-                plantName: 'Banana Plant #002',
+                line: 'L04',
+                isoWeek: '2026-W24',
                 bulkId: widget.bulkId,
-                status: 'Validated — Grouped by Stage',
-                assessmentDate: _date,
+                status: _status,
+                // TODO: wire real line/week from the user's selection; demo values for now.
               ),
               const SizedBox(height: 18),
-
-              BulkAssessmentAgentChecklist(
-                bulkId: widget.bulkId,
-                currentStepIndex: 5, // Human Verification
-              ),
-              const SizedBox(height: 26),
-
-              // Big leaf count.
+              BulkAssessmentAgentChecklist(currentStepIndex: 5),
+              const SizedBox(height: 20),
               Center(
-                child: Column(
-                  children: [
-                    Text(
-                      '${_leaves.length}',
-                      style: const TextStyle(
-                        fontSize: 44,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryGreen,
-                      ),
-                    ),
-                    const Text(
-                      'Leaves in this Bulk',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textGrey,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  _status,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreen,
+                  ),
                 ),
               ),
-              const SizedBox(height: 14),
-
-              if (visibleStages.length >= 2) _buildInfoBanner(),
-              if (visibleStages.length >= 2) const SizedBox(height: 14),
-
-              _buildVerificationCard(),
               const SizedBox(height: 16),
-
+              _buildVerificationCard(),
+              const SizedBox(height: 14),
               for (final stage in visibleStages)
                 _buildGroupCard(stage, groups[stage]!),
-
-              if (_treatmentLeaves.isNotEmpty) _buildTreatmentSection(),
-
-              const SizedBox(height: 8),
-              _buildReviewButton(),
-              const SizedBox(height: 22),
-
+              const SizedBox(height: 20),
+              _buildLogBox(),
+              const SizedBox(height: 16),
+              _buildBottomButtons(),
+              const SizedBox(height: 24),
               const Center(
                 child: Text(
                   'This is an AI-assisted assessment and not a confirmed diagnosis. '
@@ -191,36 +172,15 @@ class _BulkAssessmentResultScreenState
     );
   }
 
-  /// Green-grey banner: "Bulk contains multiple ... groups".
-  Widget _buildInfoBanner() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE3EDE5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: const Text(
-        '📊 Bulk contains multiple Black Sigatoka assessment groups — see breakdown below.',
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
-          color: AppColors.primaryGreen,
-          height: 1.35,
-        ),
-      ),
-    );
-  }
-
   /// Yellow "Human Verification Required" card with the live counter.
   Widget _buildVerificationCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F0D6),
+        color: AppColors.verificationCardFill,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFF0DFA0)),
+        border: Border.all(color: AppColors.verificationCardBorder),
       ),
       child: Row(
         children: [
@@ -263,47 +223,45 @@ class _BulkAssessmentResultScreenState
 
   /// One white card per group: header, description, then its leaf rows.
   Widget _buildGroupCard(LeafStage stage, List<LeafAssessment> leaves) {
-    final bool isUnvalidated = stage == LeafStage.unvalidated;
+    final isUnvalidated = stage == LeafStage.unvalidated;
+    final sorted = [...leaves]..sort((a, b) => a.number.compareTo(b.number));
 
-    final Widget card = Container(
+    final card = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isUnvalidated ? const Color(0xFFEDEFEB) : AppColors.white,
+        color: isUnvalidated ? AppColors.unvalidatedCardFill : AppColors.white,
         borderRadius: BorderRadius.circular(18),
-        // Healthy: no border. Stage 1-4: light red border.
-        border: stage.isTreatment
-            ? Border.all(color: const Color(0xFFF3B5B5))
-            : null,
-        boxShadow: isUnvalidated
+        border: isUnvalidated
             ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+            : Border.all(color: stage.borderColor, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              StageDot(stage: stage),
+              StageDot(stage: stage, size: 22),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   stage.stageName,
                   style: TextStyle(
-                    fontSize: 15.5,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: isUnvalidated ? AppColors.textGrey : AppColors.textDark,
                   ),
                 ),
               ),
               Text(
-                '${leaves.length} ${leaves.length == 1 ? 'leaf' : 'leaves'}',
+                '${sorted.length} ${sorted.length == 1 ? 'leaf' : 'leaves'}',
                 style: const TextStyle(
                   fontSize: 12.5,
                   fontFamily: 'monospace',
@@ -316,10 +274,10 @@ class _BulkAssessmentResultScreenState
           const SizedBox(height: 8),
           Text(
             stage.description,
-            style: const TextStyle(fontSize: 12.5, color: AppColors.textGrey, height: 1.35),
+            style: const TextStyle(fontSize: 13, color: AppColors.textGrey, height: 1.35),
           ),
           const SizedBox(height: 12),
-          for (final leaf in leaves) _buildLeafRow(leaf),
+          for (final leaf in sorted) _buildLeafRow(leaf),
         ],
       ),
     );
@@ -332,74 +290,170 @@ class _BulkAssessmentResultScreenState
     );
   }
 
-  /// One leaf: info on the left, Confirm + "Move to..." on the right.
+  /// One leaf row: eye icon + info on the left, Confirm + Move to… on the right.
+  /// Single-line when wide enough; stacked otherwise.
   Widget _buildLeafRow(LeafAssessment leaf) {
-    final bool done = leaf.confirmed;
-    final String number = leaf.number.toString().padLeft(2, '0');
+    final done = leaf.confirmed;
+    final number = leaf.number.toString().padLeft(2, '0');
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-      decoration: BoxDecoration(
-        color: done ? const Color(0xFFE3F3E6) : const Color(0xFFF1F3EF),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: done ? const Color(0xFF8FCFA0) : const Color(0xFFDDE3DB),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '📷 Leaf $number',
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  leaf.confidence == null
-                      ? 'No confidence score (unvalidated)'
-                      : 'AI confidence: ${leaf.confidence!.toStringAsFixed(1)}%',
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textGrey,
-                    height: 1.25,
-                  ),
-                ),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth > 300;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: done ? AppColors.leafRowConfirmedFill : AppColors.leafRowFill,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: done ? AppColors.leafRowConfirmedBorder : AppColors.leafRowBorder,
+              width: 1,
             ),
           ),
-          const SizedBox(width: 8),
-          _buildConfirmButton(leaf),
-          const SizedBox(width: 6),
-          _buildMoveMenu(leaf),
-        ],
+          child: wide
+              ? _buildLeafRowInline(leaf, done, number)
+              : _buildLeafRowStacked(leaf, done, number),
+        );
+      },
+    );
+  }
+
+  Widget _buildLeafRowInline(LeafAssessment leaf, bool done, String number) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _buildEyeButton(leaf),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Leaf $number',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                leaf.confidence == null
+                    ? 'No confidence score (unvalidated)'
+                    : 'AI confidence: ${leaf.confidence!.toStringAsFixed(1)}%',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        _buildConfirmButton(leaf, done),
+        const SizedBox(width: 6),
+        _buildMoveMenu(leaf),
+      ],
+    );
+  }
+
+  Widget _buildLeafRowStacked(LeafAssessment leaf, bool done, String number) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildEyeButton(leaf),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Leaf $number',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    leaf.confidence == null
+                        ? 'No confidence score (unvalidated)'
+                        : 'AI confidence: ${leaf.confidence!.toStringAsFixed(1)}%',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(child: _buildConfirmButton(leaf, done)),
+            const SizedBox(width: 6),
+            Expanded(child: _buildMoveMenu(leaf)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Eye icon: opens the zoomable photo dialog for this leaf.
+  Widget _buildEyeButton(LeafAssessment leaf) {
+    final number = leaf.number.toString().padLeft(2, '0');
+    return Semantics(
+      label: 'View photo of Leaf $number',
+      button: true,
+      child: GestureDetector(
+        onTap: () => showLeafPhotoDialog(context, leaf),
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: AppColors.leafRowConfirmedFill,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.visibility_outlined,
+            color: AppColors.primaryGreen,
+            size: 20,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildConfirmButton(LeafAssessment leaf) {
-    final bool done = leaf.confirmed;
-
+  /// "Confirm" / "✓ Confirmed" pill.
+  Widget _buildConfirmButton(LeafAssessment leaf, bool done) {
     return GestureDetector(
       onTap: () => _toggleConfirm(leaf),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: done ? const Color(0xFF22A055) : AppColors.white,
-          borderRadius: BorderRadius.circular(18),
+          color: done ? AppColors.primaryGreen : AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: done ? AppColors.primaryGreen : AppColors.leafRowBorder,
+            width: 1,
+          ),
         ),
+        alignment: Alignment.center,
         child: Text(
           done ? '✓ Confirmed' : 'Confirm',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: FontWeight.bold,
             color: done ? AppColors.white : AppColors.primaryGreen,
           ),
@@ -408,8 +462,7 @@ class _BulkAssessmentResultScreenState
     );
   }
 
-  /// Looks like a dropdown, but uses a popup menu so the long
-  /// option names are never cut off. The leaf's own group is not listed.
+  /// "Move to…" dropdown. The leaf's own group is excluded.
   Widget _buildMoveMenu(LeafAssessment leaf) {
     return PopupMenuButton<LeafStage>(
       tooltip: '',
@@ -428,13 +481,15 @@ class _BulkAssessmentResultScreenState
             ),
       ],
       child: Container(
-        width: 100,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        width: 110,
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: AppColors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFDDE3DB)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.leafRowBorder, width: 1),
         ),
+        alignment: Alignment.center,
         child: const Row(
           children: [
             Expanded(
@@ -456,114 +511,102 @@ class _BulkAssessmentResultScreenState
     );
   }
 
-  /// Red heading + one card per leaf in Stage 1-4.
-  Widget _buildTreatmentSection() {
-    final leaves = _treatmentLeaves;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 8),
+  /// Agent log: one monospace line per leaf, sorted by number, rebuilt live on confirm.
+  Widget _buildLogBox() {
+    final sorted = [..._leaves]..sort((a, b) => a.number.compareTo(b.number));
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.placeholderFieldFill,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderGrey),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '🔶 Treatment Consideration — ${leaves.length} '
-            '${leaves.length == 1 ? 'leaf requires' : 'leaves require'} treatment-window review',
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFD32F2F),
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 10),
-          for (final leaf in leaves) _buildTreatmentCard(leaf),
+          ...sorted.map((leaf) => _buildLogLine(leaf)),
         ],
       ),
     );
   }
 
-  /// White card with a red bar on the left.
-  /// (A one-sided border can't have rounded corners in Flutter,
-  /// so the red bar is its own piece inside a clipped card.)
-  Widget _buildTreatmentCard(LeafAssessment leaf) {
-    final String number = leaf.number.toString().padLeft(2, '0');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+  Widget _buildLogLine(LeafAssessment leaf) {
+    final number = leaf.number.toString().padLeft(2, '0');
+    final confirmed = leaf.confirmed;
+    final prefix = confirmed ? '✓ ' : '';
+    final text = switch (leaf.stage) {
+      LeafStage.healthy => 'Leaf $number — Healthy',
+      LeafStage.unvalidated => 'Leaf $number — Unvalidated, review required',
+      _ => 'Leaf $number — ${leaf.stage.stageName}${confirmed ? '' : ', waiting for your confirmation'}',
+    };
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        '$prefix$text',
+        style: const TextStyle(
+          fontSize: 11.5,
+          fontFamily: 'monospace',
+          height: 1.3,
+          color: AppColors.textDark,
+        ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
+    );
+  }
+
+  /// Bottom row: Back (outlined, ~1/3) + View results (filled, ~2/3, faded until all confirmed).
+  Widget _buildBottomButtons() {
+    return Row(
+      children: [
+        Expanded(flex: 1, child: _buildBackButton()),
+        const SizedBox(width: 12),
+        Expanded(flex: 2, child: _buildViewResultsButton()),
+      ],
+    );
+  }
+
+  Widget _buildBackButton() {
+    return GestureDetector(
+      onTap: () => Navigator.maybePop(context),
+      child: Container(
+        height: 56,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
           color: AppColors.white,
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(width: 4, color: const Color(0xFFD32F2F)),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    child: Row(
-                      children: [
-                        StageDot(stage: leaf.stage, size: 18),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            'Leaf $number — ${leaf.stage.stageName}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textDark,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderGrey, width: 1),
+        ),
+        child: const Text(
+          'Back',
+          style: TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryGreen,
           ),
         ),
       ),
     );
   }
 
-  /// Green gradient button. Faded until every leaf is confirmed,
-  /// but always tappable (it tells you what's missing).
-  Widget _buildReviewButton() {
-    return Opacity(
-      opacity: _allConfirmed ? 1.0 : 0.5,
-      child: GestureDetector(
-        onTap: _handleReview,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [Color(0xFF22A055), AppColors.darkGreen],
-            ),
-          ),
-          child: const Text(
-            'Review Black Sigatoka Groups →',
-            style: TextStyle(
-              fontSize: 15.5,
-              fontWeight: FontWeight.bold,
-              color: AppColors.white,
-            ),
+  Widget _buildViewResultsButton() {
+    return GestureDetector(
+      onTap: _handleReview,
+      child: Container(
+        height: 56,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: _allConfirmed
+              ? AppColors.primaryGreen
+              : AppColors.primaryGreen.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Text(
+          'View results',
+          style: TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.bold,
+            color: AppColors.white,
           ),
         ),
       ),

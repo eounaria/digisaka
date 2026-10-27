@@ -1,38 +1,46 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:digisaka/core/theme/app_colors.dart';
 
-/// The "BULK ASSESSMENT AGENT" checklist (9 steps).
+/// The "BULK ASSESSMENT AGENT" checklist (7 steps) shown on the result screen.
+///
+/// Steps below [currentStepIndex] are completed (green check circle), the step
+/// at [currentStepIndex] is current (yellow numbered circle), and the rest are
+/// upcoming (grey numbered circle).
 class BulkAssessmentAgentChecklist extends StatelessWidget {
-  final String bulkId;
-  final int currentStepIndex; // 0-based: 2 = Black Sigatoka Validation
+  /// 0-based index of the current step.
+  final int currentStepIndex;
 
   const BulkAssessmentAgentChecklist({
     super.key,
-    required this.bulkId,
     required this.currentStepIndex,
   });
 
+  static const List<String> _kSteps = <String>[
+    'Leaf Images Collected',
+    'Black Sigatoka Validation',
+    'Individual Stage Assessment',
+    'Stage Groups Organized',
+    'Human Verification',
+    'Treatment Recommendation',
+    'Schedule Review',
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final List<String> steps = [
-      'Bulk Created — $bulkId',
-      'Leaf Images Collected',
-      'Black Sigatoka Validation',
-      'Individual Stage Assessment',
-      'Stage Groups Organized',
-      'Human Verification',
-      'Treatment Recommendation',
-      'Schedule Review',
-      'Confirm & Schedule',
-    ];
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF2EE),
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDDE3DB)),
+        border: Border.all(color: AppColors.borderGrey),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,16 +48,15 @@ class BulkAssessmentAgentChecklist extends StatelessWidget {
           const Text(
             'BULK ASSESSMENT AGENT',
             style: TextStyle(
-              fontSize: 11.5,
-              fontFamily: 'monospace',
+              fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
               letterSpacing: 1,
+              color: AppColors.textGrey,
             ),
           ),
-          const SizedBox(height: 10),
-          for (int i = 0; i < steps.length; i++)
-            _buildStep(steps[i], i),
+          const SizedBox(height: 14),
+          for (int i = 0; i < _kSteps.length; i++)
+            _buildStep(_kSteps[i], i),
         ],
       ),
     );
@@ -59,38 +66,65 @@ class BulkAssessmentAgentChecklist extends StatelessWidget {
     final bool isDone = index < currentStepIndex;
     final bool isCurrent = index == currentStepIndex;
 
-    final String symbol = isDone ? '✓' : (isCurrent ? '→' : '○');
-    final Color color = isDone
-        ? AppColors.textDark
-        : (isCurrent ? AppColors.primaryGreen : const Color(0xFF9AA39A));
+    final Color circleColor;
+    final Color textColor;
+    Widget symbol;
+
+    if (isDone) {
+      circleColor = AppColors.primaryGreen;
+      textColor = AppColors.primaryGreen;
+      symbol = const Icon(Icons.check, color: AppColors.white, size: 16);
+    } else if (isCurrent) {
+      circleColor = AppColors.accentYellow;
+      textColor = AppColors.primaryGreen;
+      symbol = Text(
+        '${index + 1}',
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: AppColors.primaryGreen,
+        ),
+      );
+    } else {
+      circleColor = AppColors.borderGrey;
+      textColor = AppColors.textGrey;
+      symbol = Text(
+        '${index + 1}',
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: AppColors.textGrey,
+        ),
+      );
+    }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 18,
-            child: Text(
-              symbol,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontFamily: 'monospace',
-                fontWeight: FontWeight.bold,
-                color: (isDone || isCurrent)
-                    ? AppColors.primaryGreen
-                    : const Color(0xFF9AA39A),
+            width: 24,
+            child: Center(
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: circleColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(child: symbol),
               ),
             ),
           ),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 12.5,
-                fontFamily: 'monospace',
-                fontWeight: (isDone || isCurrent) ? FontWeight.bold : FontWeight.normal,
-                color: color,
+                fontSize: 13,
+                fontWeight: isDone || isCurrent ? FontWeight.bold : FontWeight.normal,
+                color: textColor,
               ),
             ),
           ),

@@ -44,4 +44,16 @@ class AppColors {
 
   /// Disabled placeholder field fill.
   static const Color placeholderFieldFill = Color(0xFFF2F6F3); // muted disabled-field fill
+
+  /// Bulk Assessment Result screen — leaf rows.
+  static const Color leafRowFill = Color(0xFFF1F3EF); // light grey-green unconfirmed row
+  static const Color leafRowConfirmedFill = Color(0xFFE3F3E6); // green tint confirmed row
+  static const Color leafRowBorder = Color(0xFFDDE3DB); // unconfirmed row border
+  static const Color leafRowConfirmedBorder = Color(0xFF8FCFA0); // confirmed row border
+
+  /// Bulk Assessment Result screen — status / group cards.
+  static const Color verificationCardFill = Color(0xFFF8F0D6); // yellow human-verification card
+  static const Color verificationCardBorder = Color(0xFFF0DFA0); // yellow card border
+  static const Color unvalidatedCardFill = Color(0xFFEDEFEB); // grey unvalidated card fill
+  static const Color emptyPhotoTileFill = Color(0xFFE8F5EC); // light green no-photo tile
 }

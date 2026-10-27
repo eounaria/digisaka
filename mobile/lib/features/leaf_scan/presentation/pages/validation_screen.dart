@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:digisaka/core/theme/app_colors.dart';
@@ -10,8 +11,13 @@ import 'package:digisaka/features/leaf_scan/presentation/pages/bulk_result_scree
 
 class BlackSigatokaValidationScreen extends StatefulWidget {
   final int leafCount;
+  final List<File?>? leafPhotos;
 
-  const BlackSigatokaValidationScreen({super.key, required this.leafCount});
+  const BlackSigatokaValidationScreen({
+    super.key,
+    required this.leafCount,
+    this.leafPhotos,
+  });
 
   @override
   State<BlackSigatokaValidationScreen> createState() =>
@@ -33,7 +39,7 @@ class _BlackSigatokaValidationScreenState
   @override
   void initState() {
     super.initState();
-    _leaves = generateMockLeaves(widget.leafCount);
+    _leaves = generateMockLeaves(widget.leafCount, leafPhotos: widget.leafPhotos);
 
     // Keeps the arcs spinning.
     _spinController = AnimationController(
@@ -157,7 +163,6 @@ class _BlackSigatokaValidationScreenState
                 ),
                 const SizedBox(height: 18),
                 BulkAssessmentAgentChecklist(
-                  bulkId: _bulkId,
                   currentStepIndex: _currentStep,
                 ),
                 const SizedBox(height: 28),
