@@ -157,7 +157,6 @@ class _BlackSigatokaValidationScreenState
                 ),
                 const SizedBox(height: 18),
                 BulkAssessmentAgentChecklist(
-                  bulkId: _bulkId,
                   currentStepIndex: _currentStep,
                 ),
                 const SizedBox(height: 28),

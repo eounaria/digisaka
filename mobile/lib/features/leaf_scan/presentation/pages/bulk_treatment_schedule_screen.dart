@@ -140,7 +140,6 @@ class _BulkTreatmentScheduleScreenState
 
               // 9 steps (index 0-8). Index 9 = every step completed.
               BulkAssessmentAgentChecklist(
-                bulkId: widget.bulkId,
                 currentStepIndex: 9,
               ),
               const SizedBox(height: 24),
