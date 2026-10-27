@@ -109,6 +109,7 @@ class _BlackSigatokaValidationScreenState
     setState(() => _status = 'Validated — Grouped by Stage');
 
     if (!await _wait(800)) return;
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => BulkAssessmentResultScreen(
