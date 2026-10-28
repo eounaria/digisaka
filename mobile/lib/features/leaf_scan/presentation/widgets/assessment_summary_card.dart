@@ -6,9 +6,9 @@ import 'package:digisaka/core/theme/app_colors.dart';
 ///
 /// `line`/`isoWeek` are the preferred values (used by the result screen).
 /// `plantName`/`assessmentDate` are kept as fallbacks for legacy callers
-/// (`validation_screen.dart`, `treatment_recommendation_screen.dart`) so those
+/// (`bulk_assess_screen.dart`, `treatment_recommendation_screen.dart`) so those
 /// screens keep showing the plant name / date when `line`/`isoWeek` are absent.
-class BulkAssessmentSummaryCard extends StatelessWidget {
+class AssessmentSummaryCard extends StatelessWidget {
   final String? plantName; // legacy fallback
   final String bulkId;
   final String status;
@@ -16,7 +16,7 @@ class BulkAssessmentSummaryCard extends StatelessWidget {
   final String? line;
   final String? isoWeek;
 
-  const BulkAssessmentSummaryCard({
+  const AssessmentSummaryCard({
     super.key,
     this.plantName,
     required this.bulkId,

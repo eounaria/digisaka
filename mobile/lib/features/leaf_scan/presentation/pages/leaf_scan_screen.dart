@@ -6,8 +6,7 @@ import '../../../../shared/components/app_bar_widget.dart';
 import '../../../../shared/components/app_button.dart';
 import '../../../../shared/widgets/assessment_stepper.dart';
 import 'package:digisaka/features/notification/presentation/pages/notifications_screen.dart';
-import 'validation_screen.dart';
-import '../widgets/week_context_card.dart';
+import 'bulk_assess_screen.dart';
 
 /// One leaf in the grid: either a mock placeholder or a real photo.
 /// (This must live OUTSIDE the State class - Dart doesn't allow a class
@@ -21,7 +20,16 @@ class _LeafPhoto {
 }
 
 class LeafScanScreen extends StatefulWidget {
-  const LeafScanScreen({super.key});
+  final String line;
+  final String isoWeek;
+  final DateTime? selectedDate;
+
+  const LeafScanScreen({
+    super.key,
+    required this.line,
+    required this.isoWeek,
+    this.selectedDate,
+  });
 
   @override
   State<LeafScanScreen> createState() => _LeafScanScreenState();
@@ -131,9 +139,12 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
     // Navigate to the Black Sigatoka Validation screen
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => BlackSigatokaValidationScreen(
+        builder: (_) => BulkAssessScreen(
               leafCount: _selectedLeaves.length,
               leafPhotos: _selectedLeaves.map((p) => p.file).toList(),
+              line: widget.line,
+              isoWeek: widget.isoWeek,
+              selectedDate: widget.selectedDate ?? DateTime(2026, 6, 8),
             ),
       ),
     );
@@ -164,11 +175,6 @@ class _LeafScanScreenState extends State<LeafScanScreen> {
               ),
               const SizedBox(height: 20),
               AssessmentStepper(currentStepIndex: 0),
-              const SizedBox(height: 20),
-              WeekContextCard(
-                initialLine: 'L04',
-                demoToday: DateTime(2026, 6, 14),
-              ),
               const SizedBox(height: 20),
               _buildScanFrame(),
               const SizedBox(height: 10),

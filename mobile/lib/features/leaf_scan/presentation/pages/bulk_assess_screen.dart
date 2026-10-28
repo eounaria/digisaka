@@ -5,36 +5,51 @@ import 'package:digisaka/core/theme/app_colors.dart';
 import 'package:digisaka/shared/models/leaf_assessment.dart';
 import 'package:digisaka/features/leaf_scan/domain/bulk_helpers.dart';
 import 'package:digisaka/shared/models/leaf_stage.dart';
-import 'package:digisaka/features/leaf_scan/presentation/widgets/bulk_assessment_summary_card.dart';
-import 'package:digisaka/features/leaf_scan/presentation/widgets/bulk_assessment_agent_checklist.dart';
-import 'package:digisaka/features/leaf_scan/presentation/pages/bulk_result_screen.dart';
+import 'package:digisaka/features/leaf_scan/presentation/widgets/assessment_summary_card.dart';
+import 'package:digisaka/features/leaf_scan/presentation/widgets/assessment_progress_checklist.dart';
+import 'package:digisaka/features/leaf_scan/presentation/widgets/results_group_section.dart';
+import 'package:digisaka/features/leaf_scan/presentation/pages/assessment_results_screen.dart';
+import 'package:digisaka/features/leaf_scan/presentation/widgets/validated_group_card.dart';
+import 'package:digisaka/features/history/data/history_store.dart';
+import 'package:digisaka/shared/models/history_cycle.dart';
 
-class BlackSigatokaValidationScreen extends StatefulWidget {
+class BulkAssessScreen extends StatefulWidget {
   final int leafCount;
   final List<File?>? leafPhotos;
+  final String line;
+  final String isoWeek;
+  final DateTime selectedDate;
 
-  const BlackSigatokaValidationScreen({
+  const BulkAssessScreen({
     super.key,
     required this.leafCount,
     this.leafPhotos,
+    required this.line,
+    required this.isoWeek,
+    required this.selectedDate,
   });
 
   @override
-  State<BlackSigatokaValidationScreen> createState() =>
-      _BlackSigatokaValidationScreenState();
+  State<BulkAssessScreen> createState() => _BulkAssessScreenState();
 }
 
-class _BlackSigatokaValidationScreenState
-    extends State<BlackSigatokaValidationScreen>
+enum _ScreenState { validation, confirmation, validated }
+
+class _BulkAssessScreenState extends State<BulkAssessScreen>
     with SingleTickerProviderStateMixin {
   late final List<LeafAssessment> _leaves;
   late final AnimationController _spinController;
   final ScrollController _logController = ScrollController();
   final String _bulkId = generateBulkId();
 
+  _ScreenState _screenState = _ScreenState.validation;
   String _status = 'Validating...';
   int _currentStep = 2; // 2 = "Black Sigatoka Validation"
   final List<String> _logLines = [];
+
+  bool get _allConfirmed => _leaves.every((l) => l.confirmed);
+
+  int get _confirmedCount => _leaves.where((l) => l.confirmed).length;
 
   @override
   void initState() {
@@ -64,6 +79,9 @@ class _BlackSigatokaValidationScreenState
   }
 
   /// MOCK validation. (TODO: replace with the real backend call.)
+  /// When finished, transitions to the confirmation state (State B) instead of
+  /// pushing a separate results screen — validation + confirmation live on ONE
+  /// screen per the redesign spec.
   Future<void> _runValidation() async {
     final rand = Random();
     final int total = _leaves.length;
@@ -90,7 +108,7 @@ class _BlackSigatokaValidationScreenState
       if (leaf.stage == LeafStage.healthy) {
         _addLog('→ not eligible — healthy only');
         if (!await _wait(120)) return;
-        _addLog('✓ $tag complete — routed to: Healthy / Stage 0');
+        _addLog('✓ $tag complete — routed to: ${leaf.stage.stageName}');
       } else {
         _addLog('→ eligible — suspected Stage ${leaf.stage.index}');
         if (!await _wait(120)) return;
@@ -105,19 +123,12 @@ class _BlackSigatokaValidationScreenState
     if (!await _wait(700)) return;
     setState(() => _currentStep = 4); // Stage Groups Organized
 
-    if (!await _wait(700)) return;
-    setState(() => _status = 'Validated — Grouped by Stage');
-
     if (!await _wait(800)) return;
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => BulkAssessmentResultScreen(
-          leaves: _leaves,
-          bulkId: _bulkId,
-        ),
-      ),
-    );
+    setState(() {
+      _status = 'Validated — Grouped by Stage';
+      _screenState = _ScreenState.confirmation;
+    });
   }
 
   void _addLog(String line) {
@@ -136,59 +147,235 @@ class _BlackSigatokaValidationScreenState
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false, // can't go back while processing
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF3F5F2),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Black Sigatoka Validation',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryGreen,
+  /// Confirm a leaf (toggle). Moving a leaf also counts as confirmed.
+  void _toggleConfirm(LeafAssessment leaf) {
+    setState(() => leaf.confirmed = !leaf.confirmed);
+  }
+
+  void _moveLeaf(LeafAssessment leaf, LeafStage newStage) {
+    setState(() {
+      leaf.stage = newStage;
+      leaf.confirmed = true;
+    });
+  }
+
+  void _handleProceed() {
+    if (!_allConfirmed) {
+      _showMessage('Confirm all leaves first ($_confirmedCount/${_leaves.length})');
+      return;
+    }
+    setState(() {
+      _screenState = _ScreenState.validated;
+    });
+  }
+
+  void _handleViewResults() {
+    // Save every finished scan into History under the selected line. Keyed by
+    // (line, isoWeek), so re-scanning the same line and week replaces the
+    // existing cycle instead of duplicating it.
+    HistoryStore.instance.upsertCycle(
+      HistoryCycle(
+        line: widget.line,
+        isoWeek: widget.isoWeek,
+        bulkId: _bulkId,
+        leaves: _leaves,
+        status: HistoryCycle.initialStatus(_leaves),
+        // Mock treatment window until the backend supplies real dates.
+        windowStart: DateTime(2026, 6, 15),
+        windowEnd: DateTime(2026, 6, 17),
+      ),
+    );
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: 'results'),
+        builder: (_) => AssessmentResultsScreen(
+          leaves: _leaves,
+          bulkId: _bulkId,
+          line: widget.line,
+          isoWeek: widget.isoWeek,
+          selectedDate: widget.selectedDate,
+        ),
+      ),
+    );
+  }
+
+  void _showMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  // =========================================================================
+  // State A — Validation: spinning arcs + live log
+  // =========================================================================
+
+  Widget _buildValidationState() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 28),
+        _buildLoader(),
+        const SizedBox(height: 18),
+        Center(
+          child: Text(
+            'Validating & Assessing ${_leaves.length} Leaves...',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryGreen,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        _buildLogBox(),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // State B — Confirmation: group cards + leaf rows with confirm/move
+  // =========================================================================
+
+  Widget _buildConfirmationState() {
+    final groups = <LeafStage, List<LeafAssessment>>{
+      for (final s in kStageOrder) s: <LeafAssessment>[],
+    };
+    for (final leaf in _leaves) {
+      groups[leaf.stage]!.add(leaf);
+    }
+    final visibleStages =
+        kStageOrder.where((s) => groups[s]!.isNotEmpty).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        Center(
+          child: Text(
+            _status,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryGreen,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        ResultsGroupSection(
+          groups: groups,
+          visibleStages: visibleStages,
+          allConfirmed: _allConfirmed,
+          onConfirmLeaf: (leaf) => _toggleConfirm(leaf),
+          onMoveLeaf: (leaf, stage) => _moveLeaf(leaf, stage),
+        ),
+        const SizedBox(height: 20),
+        _buildProceedButton(enabled: true, onPressed: _handleProceed),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // State C — Validated: all leaves confirmed, ready for treatment proposal
+  // =========================================================================
+
+  Widget _buildValidatedState() {
+    final groups = <LeafStage, List<LeafAssessment>>{
+      for (final s in kStageOrder) s: <LeafAssessment>[],
+    };
+    for (final leaf in _leaves) {
+      groups[leaf.stage]!.add(leaf);
+    }
+    final visibleStages =
+        kStageOrder.where((s) => groups[s]!.isNotEmpty).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        Center(
+          child: Text(
+            'All leaves validated',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryGreen,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        for (final stage in visibleStages)
+          ValidatedGroupCard(stage: stage, leaves: groups[stage]!),
+        const SizedBox(height: 20),
+        _buildLogBox(),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: GestureDetector(
+                onTap: () => setState(() => _screenState = _ScreenState.confirmation),
+                child: Container(
+                  height: 50,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.borderGrey, width: 1),
                   ),
-                ),
-                const SizedBox(height: 16),
-                BulkAssessmentSummaryCard(
-                  plantName: 'Banana Plant #002',
-                  bulkId: _bulkId,
-                  status: _status,
-                ),
-                const SizedBox(height: 18),
-                BulkAssessmentAgentChecklist(
-                  currentStepIndex: _currentStep,
-                ),
-                const SizedBox(height: 28),
-                _buildLoader(),
-                const SizedBox(height: 18),
-                Center(
-                  child: Text(
-                    'Validating & Assessing ${_leaves.length} Leaves...',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 17,
+                  child: const Text(
+                    'Back',
+                    style: TextStyle(
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primaryGreen,
+                      color: AppColors.textGrey,
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                _buildLogBox(),
-              ],
+              ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 1,
+              child: _buildProceedButton(
+                enabled: true,
+                onPressed: _handleViewResults,
+                label: 'View results',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProceedButton({bool enabled = false, VoidCallback? onPressed, String? label}) {
+    final btnLabel = label ?? 'View results';
+    return GestureDetector(
+      onTap: enabled ? onPressed : () => _showMessage('Confirm all leaves first ($_confirmedCount/${_leaves.length})'),
+      child: Container(
+        width: double.infinity,
+        height: 56,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: enabled
+              ? AppColors.primaryGreen
+              : AppColors.primaryGreen.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          btnLabel,
+          style: const TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.bold,
+            color: AppColors.white,
           ),
         ),
       ),
     );
   }
+
+  // =========================================================================
+  // Shared UI: loader + log box
+  // =========================================================================
 
   /// Spinning double ring with a leaf in the middle.
   Widget _buildLoader() {
@@ -201,7 +388,7 @@ class _BlackSigatokaValidationScreenState
           children: [
             CustomPaint(
               size: const Size(150, 150),
-              painter: _ValidationArcPainter(_spinController),
+              painter: _BulkAssessArcPainter(_spinController),
             ),
             const Icon(Icons.eco, size: 38, color: AppColors.primaryGreen),
           ],
@@ -264,15 +451,65 @@ class _BlackSigatokaValidationScreenState
       ),
     );
   }
+
+  // =========================================================================
+  // Build
+  // =========================================================================
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false, // can't go back while processing
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF3F5F2),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Black Sigatoka Validation',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                AssessmentSummaryCard(
+                  plantName: 'Banana Plant #002',
+                  line: widget.line,
+                  isoWeek: widget.isoWeek,
+                  bulkId: _bulkId,
+                  status: _status,
+                ),
+                const SizedBox(height: 18),
+                AssessmentProgressChecklist(
+                  currentStepIndex: _currentStep,
+                ),
+                const SizedBox(height: 28),
+                switch (_screenState) {
+                  _ScreenState.validation => _buildValidationState(),
+                  _ScreenState.confirmation => _buildConfirmationState(),
+                  _ScreenState.validated => _buildValidatedState(),
+                },
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Pale track + two arcs of fixed length that keep spinning
 /// (outer one clockwise, inner one the other way).
-class _ValidationArcPainter extends CustomPainter {
+class _BulkAssessArcPainter extends CustomPainter {
   final Animation<double> animation;
 
   // "repaint" makes the painter redraw on every animation tick.
-  _ValidationArcPainter(this.animation) : super(repaint: animation);
+  _BulkAssessArcPainter(this.animation) : super(repaint: animation);
 
   @override
   void paint(Canvas canvas, Size size) {

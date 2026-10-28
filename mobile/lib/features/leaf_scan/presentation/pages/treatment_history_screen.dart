@@ -1,16 +1,34 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:digisaka/shared/models/treatment_history.dart';
+import 'package:digisaka/shared/models/leaf_assessment.dart';
+import 'package:digisaka/features/leaf_scan/presentation/pages/treatment_proposal_screen.dart';
 
 const Color _kBorder = Color(0xFFE3E8E1);
 
 /// Screen for collecting treatment history information.
+///
+/// The UI is restyled per the Figma "Treatment History" frame: a header card
+/// with the leaf logo, three selectable radio cards, and both follow-up fields
+/// that are always visible (enabled only when "Yes" is selected). The business
+/// logic and the [TreatmentHistory] result are unchanged.
 class TreatmentHistoryScreen extends StatefulWidget {
-  /// Called when Continue is pressed. If null, the screen pops with the
-  /// [TreatmentHistory] as its result.
+  /// Called when Continue is pressed. If null, the screen pushes a
+  /// [TreatmentProposalScreen] with the collected history.
   final ValueChanged<TreatmentHistory>? onContinue;
+  final List<LeafAssessment>? leaves;
+  final String? bulkId;
+  final String? line;
+  final String? isoWeek;
 
-  const TreatmentHistoryScreen({super.key, this.onContinue});
+  const TreatmentHistoryScreen({
+    super.key,
+    this.onContinue,
+    this.leaves,
+    this.bulkId,
+    this.line,
+    this.isoWeek,
+  });
 
   @override
   State<TreatmentHistoryScreen> createState() => _TreatmentHistoryScreenState();
@@ -55,8 +73,28 @@ class _TreatmentHistoryScreenState extends State<TreatmentHistoryScreen> {
     if (widget.onContinue != null) {
       widget.onContinue!(result);
     } else {
-      Navigator.of(context).pop(result);
+      _goToProposal(result);
     }
+  }
+
+  void _goToProposal(TreatmentHistory result) {
+    if (widget.leaves == null ||
+        widget.bulkId == null ||
+        widget.line == null ||
+        widget.isoWeek == null) {
+      return;
+    }
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => TreatmentProposalScreen(
+          leaves: widget.leaves!,
+          bulkId: widget.bulkId!,
+          line: widget.line!,
+          isoWeek: widget.isoWeek!,
+          treatmentHistory: result,
+        ),
+      ),
+    );
   }
 
   Future<void> _selectDate() async {
@@ -78,32 +116,56 @@ class _TreatmentHistoryScreenState extends State<TreatmentHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final yes = _selectedOption == 0;
+    final enabled = _canContinue;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F5F2),
+      backgroundColor: AppColors.pageBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              // Header card: leaf logo + title + X close.
               Container(
                 width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Treatment History',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.eco,
                         color: AppColors.primaryGreen,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Treatment History',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen,
+                        ),
                       ),
                     ),
                     GestureDetector(
@@ -112,7 +174,7 @@ class _TreatmentHistoryScreenState extends State<TreatmentHistoryScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppColors.primaryGreen.withOpacity(0.1),
+                          color: AppColors.primaryGreen.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -133,44 +195,42 @@ class _TreatmentHistoryScreenState extends State<TreatmentHistoryScreen> {
               ),
               const SizedBox(height: 16),
 
-              _buildRadioOption('Yes, I have treated it', 0),
+              _buildRadioCard('Yes, I have treated it', 0),
               const SizedBox(height: 12),
-              _buildRadioOption('No, I have not treated it', 1),
+              _buildRadioCard('No, I have not treated it', 1),
               const SizedBox(height: 12),
-              _buildRadioOption("I'm not sure", 2),
+              _buildRadioCard("I'm not sure", 2),
 
-              if (_selectedOption == 0) ...[
-                const SizedBox(height: 24),
-                const _FieldLabel('WHAT TYPE OF TREATMENT WAS LAST USED?'),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _typeController,
-                  onChanged: (_) => setState(() {}), // re-check Continue
-                  decoration: _inputDecoration(hint: 'e.g., Oil'),
-                ),
-                const SizedBox(height: 16),
-                const _FieldLabel('APPROXIMATE DATE OF PREVIOUS TREATMENT'),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _dateController,
-                  readOnly: true,
-                  onTap: _selectDate,
-                  decoration: _inputDecoration(
-                    hint: 'mm/dd/yyyy',
-                    suffix: const Icon(
-                      Icons.calendar_today,
-                      size: 18,
-                      color: AppColors.primaryGreen,
-                    ),
+              const SizedBox(height: 24),
+              const _FieldLabel('WHAT TYPE OF TREATMENT WAS LAST USED?'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _typeController,
+                onChanged: (_) => setState(() {}), // re-check Continue
+                enabled: yes,
+                decoration: _inputDecoration(hint: 'e.g., oil', enabled: yes),
+              ),
+              const SizedBox(height: 16),
+              const _FieldLabel('APPROXIMATE DATE OF PREVIOUS TREATMENT'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _dateController,
+                readOnly: true,
+                onTap: yes ? _selectDate : null,
+                enabled: yes,
+                decoration: _inputDecoration(
+                  hint: 'mm/dd/yyyy',
+                  enabled: yes,
+                  suffix: const Icon(
+                    Icons.calendar_today,
+                    size: 18,
+                    color: AppColors.primaryGreen,
                   ),
                 ),
-              ],
+              ),
 
-              // Continue button appears once an option is picked
-              if (_selectedOption != -1) ...[
-                const SizedBox(height: 28),
-                _buildContinueButton(),
-              ],
+              const SizedBox(height: 28),
+              _buildContinueButton(enabled),
             ],
           ),
         ),
@@ -178,7 +238,7 @@ class _TreatmentHistoryScreenState extends State<TreatmentHistoryScreen> {
     );
   }
 
-  InputDecoration _inputDecoration({required String hint, Widget? suffix}) {
+  InputDecoration _inputDecoration({required String hint, Widget? suffix, bool enabled = true}) {
     OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: c, width: w),
@@ -187,54 +247,47 @@ class _TreatmentHistoryScreenState extends State<TreatmentHistoryScreen> {
       hintText: hint,
       suffixIcon: suffix,
       filled: true,
-      fillColor: AppColors.white,
+      fillColor: enabled ? AppColors.white : AppColors.placeholderFieldFill,
       contentPadding:
           const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: border(_kBorder),
-      enabledBorder: border(_kBorder),
+      enabledBorder: border(enabled ? _kBorder : AppColors.textGrey.withValues(alpha: 0.5)),
       focusedBorder: border(AppColors.primaryGreen, 2),
+      disabledBorder: border(AppColors.textGrey.withValues(alpha: 0.5)),
     );
   }
 
-  Widget _buildContinueButton() {
-    final enabled = _canContinue;
+  Widget _buildContinueButton(bool enabled) {
     return GestureDetector(
       onTap: enabled ? _onContinuePressed : null,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.5,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [Color(0xFF22A055), AppColors.darkGreen],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: const Text(
-            'Continue',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.white,
-            ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: enabled
+              ? const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Color(0xFF22A055), AppColors.darkGreen],
+                )
+              : null,
+          color: enabled ? null : AppColors.textGrey.withValues(alpha: 0.35),
+        ),
+        child: const Text(
+          'Continue',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: AppColors.white,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildRadioOption(String label, int value) {
+  Widget _buildRadioCard(String label, int value) {
     final selected = _selectedOption == value;
     return GestureDetector(
       onTap: () => setState(() => _selectedOption = value),
@@ -243,7 +296,7 @@ class _TreatmentHistoryScreenState extends State<TreatmentHistoryScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: selected ? const Color(0xFFE8F1E8) : AppColors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? AppColors.primaryGreen : _kBorder,
             width: selected ? 1.5 : 1,
@@ -277,10 +330,10 @@ class _TreatmentHistoryScreenState extends State<TreatmentHistoryScreen> {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  color: selected ? AppColors.textDark : AppColors.textGrey,
                 ),
               ),
             ),

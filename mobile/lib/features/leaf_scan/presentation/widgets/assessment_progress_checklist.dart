@@ -6,11 +6,11 @@ import 'package:digisaka/core/theme/app_colors.dart';
 /// Steps below [currentStepIndex] are completed (green check circle), the step
 /// at [currentStepIndex] is current (yellow numbered circle), and the rest are
 /// upcoming (grey numbered circle).
-class BulkAssessmentAgentChecklist extends StatelessWidget {
+class AssessmentProgressChecklist extends StatelessWidget {
   /// 0-based index of the current step.
   final int currentStepIndex;
 
-  const BulkAssessmentAgentChecklist({
+  const AssessmentProgressChecklist({
     super.key,
     required this.currentStepIndex,
   });
