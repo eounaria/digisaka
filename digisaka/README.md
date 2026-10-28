@@ -241,3 +241,151 @@ its old CSS) can be deleted entirely.
 | GET/POST/PUT/DELETE | /admin/ontology/classes[/:id], /admin/ontology/relations[/:id] | |
 | GET/POST/PUT/DELETE | /admin/datasets/folders[/:id], /admin/datasets/images[/:id], GET .../images/:id/file | image upload is a raw body with `?name=&folderId=` |
 | GET, POST | /admin/users, /admin/users/import | |
+
+## Toka AI Login Page Redesign (2026-10-29)
+
+Complete visual redesign of the practitioner app login page (`/login` route) to match the Toka AI brand design specifications. The new design implements a pixel-accurate two-column desktop layout with a promotional left panel and centered login card on the right.
+
+### Files Modified
+| File | Purpose |
+|------|---------|
+| `client/src/views/LoginView.vue` | **Primary change** - Complete rewrite of the login page component with new two-column layout, Toka AI branding, gradient background, and responsive design |
+
+### Layout Implementation
+
+**Desktop (1440×948 reference):**
+- Two-column CSS Grid layout: `39.31%` left panel / `60.69%` right panel
+- Left panel: Full viewport height (`100vh` / `100dvh`), promotional content
+- Right panel: Flexbox centered login card (max-width `483px`, padding `48px 72px`)
+- No gap between panels, no unwanted margins or scrollbars at reference size
+
+**Responsive Breakpoints:**
+- **≥1440px**: Full reference design with proportional scaling
+- **1024–1439px**: Two-column retained, card padding reduced
+- **768–1023px**: Single column, left panel hidden, card centered with reduced padding
+- **<768px**: Mobile-first single column, card full-width with comfortable margins
+- **Height-based**: Promotional content hides at ≤800px, fully hidden at ≤700px
+
+### Background Image and Gradient
+
+**Image:** `blacksigatoka.png` (banana leaf with Black Sigatoka disease)
+- Path: `../assets/blacksigatoka.png` (relative to LoginView.vue)
+- `background-size: cover`, `background-position: center`
+
+**Gradient Overlay (4 colors, 72% opacity, 180deg vertical):**
+```css
+linear-gradient(
+  180deg,
+  rgba(227, 255, 241, 0.72) 0%,    /* #E3FFF1 - mint green */
+  rgba(27, 151, 90, 0.72) 33%,     /* #1B975A - emerald */
+  rgba(5, 96, 52, 0.72) 66%,       /* #056034 - forest */
+  rgba(18, 63, 41, 0.72) 100%      /* #123F29 - dark forest */
+)
+```
+- Layered **over** the image (not behind it)
+- Opacity applied per color stop, not to entire panel
+
+### Logo and Branding
+
+**Logo:** `bananaleaf1.png` (green banana leaf symbol)
+- Path: `../assets/bananaleaf1.png`
+- Container: `38×47px`, border `1px solid #007A48`, radius `2px`
+- `object-fit: contain` preserves aspect ratio
+
+**Brand Text:** "Toka AI"
+- Font: Roboto 700, 24px, `#006D43`
+- Gap: 10px from logo container
+
+**Replaced:** All "DigiSaka" references → "Toka AI" on the login page
+
+### Typography and Colors
+
+| Element | Font | Size | Weight | Color |
+|---------|------|------|--------|-------|
+| Promo Heading | Roboto | 36px | 700 | `#8CFF91` |
+| Promo Description | Roboto | 20px | 400 | `#F2F2F2` |
+| Footer | Roboto | 16px | 400 | `#9AA5A4` |
+| Login Heading | Roboto | 36px | 700 | `#1C1C1C` |
+| Login Subtitle | Roboto | 18px | 400 | `#98A2B3` |
+| Labels | Roboto | 16px | 400 | `#667085` |
+| Inputs | Roboto | 14px | 400 | `#1C1C1C` |
+| Placeholders | Roboto | 14px | 400 | `#98A2B3` |
+| Remember Me | Roboto | 14px | 400 | `#111111` |
+| Sign In Button | Roboto | 16px | 700 | `#FFFFFF` on `#006F47` |
+
+**Input Styling:**
+- Height: `45px` (desktop), `48px` (mobile)
+- Border: `1px solid #1F2937`, radius `11px`
+- Focus: `border-color: #006F47`
+- Padding: `0 20px` (email), `0 52px 0 18px` (password for eye icon)
+
+**Button Styling:**
+- Height: `52px` (desktop), `48px` (mobile)
+- Background: `#006F47`, hover `#005A3A`, active `#004D30`
+- Radius: `10px`, no gradients/shadows
+- Focus-visible: `3px solid #006F47` outline
+
+**Checkbox:**
+- `15×15px`, border `1px solid #111111`, radius `2px`
+- Checked: background `#006F47`, white checkmark
+
+### Form Functionality
+
+**Preserved from original:**
+- Supabase password grant authentication via `useAuthStore().signIn()`
+- Route guard integration (`redirectFor`, `safeNext`, `landingFor`)
+- Email/password validation (required fields, email type)
+- Loading state (`busy` ref) with disabled inputs/button
+- Error display via `error` ref
+- `rememberMe` form field (added to form model)
+
+**New implementations:**
+- Password visibility toggle (eye icon, functional, accessible)
+- ARIA attributes on toggle button (`aria-label`, `aria-pressed`)
+- Keyboard support for checkbox (Space/Enter)
+- Focus-visible states on all interactive elements
+- Reduced motion support (`prefers-reduced-motion`)
+
+### Responsive Design
+
+**Breakpoints & Behavior:**
+| Breakpoint | Left Panel | Right Panel | Card | Typography |
+|------------|------------|-------------|------|------------|
+| ≥1440px | Full promo | Centered 483px | 48px/72px | Reference sizes |
+| 1024–1439px | Full promo | Centered | 40px/48px | Slightly reduced |
+| 768–1023px | Hidden | Centered | 32px/24px | Heading 32px |
+| <768px | Hidden | Full-width | 24px/20px | Heading 28px |
+
+**Mobile Specific:**
+- Input font-size `16px` prevents iOS zoom
+- Touch targets ≥44px (button 48px, inputs 48px)
+- Vertical scrolling enabled (`min-height: 100dvh`)
+- Logo not shown on mobile (left panel hidden entirely)
+
+**Height Adaptation:**
+- `@media (max-height: 800px)`: Promo content repositions to bottom
+- `@media (max-height: 700px)`: Promo content hidden, footer raised
+
+### Verification Checklist
+
+- [x] Two-column layout at 1440×948 matches reference proportions
+- [x] Gradient uses exact 4 colors at 72% opacity over photograph
+- [x] Logo uses `bananaleaf1.png` with correct border/radius
+- [x] All text uses Roboto font family
+- [x] Branding reads "Toka AI" (no "DigiSaka" on login page)
+- [x] Login card centered in right panel with correct dimensions
+- [x] Form measurements match reference (339px input width, 45px height, etc.)
+- [x] Password visibility toggle works (eye open/closed icons)
+- [x] Remember me checkbox functional with custom styling
+- [x] Sign In button submits form, integrates with auth store
+- [x] Existing authentication flow preserved (Supabase, route guards)
+- [x] Responsive at 320px, 768px, 1024px, 1440px, 1920px
+- [x] No horizontal overflow at any breakpoint
+- [x] Vertical scrolling works on short screens
+- [x] Images load from correct relative paths
+- [x] Accessibility: labels, ARIA, focus-visible, reduced motion
+
+### Build Status
+- ✅ `npm run build` succeeds (1.20s)
+- ✅ Assets processed correctly (`blacksigatoka-D1L-Y0yq.png` in dist)
+- ✅ No TypeScript/ESLint errors
