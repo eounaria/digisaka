@@ -21,8 +21,6 @@ class AppBottomNav extends StatelessWidget {
       color: AppColors.primaryGreen,
       height: 70,
       padding: EdgeInsets.zero,
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -42,7 +40,7 @@ class AppBottomNav extends StatelessWidget {
           _buildNavItem(
             index: 3,
             label: 'Profile',
-            icon: Icons.person_outline,
+            icon: Icons.person_outlined,
             activeIcon: Icons.person,
           ),
         ],
@@ -57,7 +55,7 @@ class AppBottomNav extends StatelessWidget {
     required IconData activeIcon,
   }) {
     final bool isSelected = currentIndex == index;
-    final Color color = isSelected ? AppColors.accentYellow : AppColors.white;
+    final Color color = isSelected ? AppColors.white : AppColors.white.withValues(alpha: 0.7);
 
     return InkWell(
       onTap: () => onTap(index),
@@ -66,37 +64,56 @@ class AppBottomNav extends StatelessWidget {
         children: [
           Icon(isSelected ? activeIcon : icon, color: color, size: 24),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: color, fontSize: 11)),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  /// The circular "Scan" button that pops up above the nav bar.
+  /// The Scan tab item. It uses the same scan-frame "A" icon as the home
+  /// action buttons (see HomeScreen._ScanFrameIcon), rendered here as a
+  /// regular tab item instead of a floating button above the bar.
   Widget _buildScanItem() {
     final bool isSelected = currentIndex == 2;
+    final Color color = isSelected ? AppColors.white : AppColors.white.withValues(alpha: 0.7);
 
     return InkWell(
       onTap: () => onTap(2),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            height: 46,
-            width: 46,
-            decoration: BoxDecoration(
-              color: AppColors.primaryGreen,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.white, width: 3),
+          SizedBox(
+            height: 26,
+            width: 26,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(Icons.crop_free, color: color, size: 22),
+                Text(
+                  'A',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-            child: const Icon(Icons.center_focus_strong, color: AppColors.white, size: 22),
           ),
           const SizedBox(height: 4),
           Text(
             'Scan',
             style: TextStyle(
-              color: isSelected ? AppColors.accentYellow : AppColors.white,
+              color: color,
               fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
         ],

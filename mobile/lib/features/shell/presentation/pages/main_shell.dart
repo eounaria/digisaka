@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:digisaka/features/shell/presentation/widgets/app_bottom_nav.dart';
 import 'package:digisaka/features/home/presentation/pages/home_screen.dart';
 import 'package:digisaka/features/history/presentation/pages/history_screen.dart';
-import 'package:digisaka/features/leaf_scan/presentation/pages/leaf_scan_screen.dart';
+import 'package:digisaka/features/leaf_scan/presentation/pages/line_insights_screen.dart';
 import 'package:digisaka/features/profile/presentation/pages/profile_screen.dart';
 import 'package:digisaka/shared/navigation/shell_scope.dart';
 
@@ -128,7 +128,7 @@ class _ScanFlow extends StatelessWidget {
       key: navKey,
       onGenerateRoute: (settings) => MaterialPageRoute(
         settings: settings,
-        builder: (_) => const LeafScanScreen(),
+        builder: (_) => const LineInsightsScreen(),
       ),
     );
   }
