@@ -3,6 +3,7 @@ import 'package:digisaka/shared/models/leaf_assessment.dart';
 import 'package:digisaka/shared/models/leaf_stage.dart';
 import '../domain/models/smart_schedule_models.dart';
 import 'package:digisaka/shared/models/treatment_history.dart';
+import 'package:digisaka/shared/models/fungicide_product.dart';
 
 /// In-memory store for scheduled bulks.
 /// TODO: persist to local storage / backend so bulks survive an app restart.
@@ -29,6 +30,9 @@ class ScheduleStore extends ChangeNotifier {
     required String plantName,
     required List<LeafAssessment> leaves,
     TreatmentHistory? history,
+    FungicideProduct? selectedProduct,
+    DateTime? selectedDate,
+    String? note,
   }) {
     final existing = bulkById(bulkId);
     if (existing != null) return existing;
@@ -41,7 +45,7 @@ class ScheduleStore extends ChangeNotifier {
       }
     }
 
-    final today = DateTime.now();
+    final today = selectedDate ?? DateTime.now();
     final stages = <ScheduledStage>[];
 
     groups.forEach((stage, numbers) {
@@ -54,6 +58,8 @@ class ScheduleStore extends ChangeNotifier {
         stage: stage,
         leafNumbers: numbers,
         treatmentWindow: formatWindow(start, end),
+        windowStart: start,
+        windowEnd: end,
         steps: _buildSteps(bulkId, stage, start, today),
       ));
     });
@@ -68,6 +74,9 @@ class ScheduleStore extends ChangeNotifier {
       createdAt: today,
       stages: stages,
       priorTreatment: history,
+      selectedProduct: selectedProduct,
+      selectedDate: selectedDate,
+      note: note,
     );
 
     _bulks.add(bulk);

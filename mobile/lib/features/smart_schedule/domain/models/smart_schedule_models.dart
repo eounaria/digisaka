@@ -1,5 +1,6 @@
 import 'package:digisaka/shared/models/leaf_stage.dart';
 import 'package:digisaka/shared/models/treatment_history.dart';
+import 'package:digisaka/shared/models/fungicide_product.dart';
 
 // ---------- date helpers (no intl dependency needed) ----------
 
@@ -119,12 +120,16 @@ class ScheduledStage {
   final LeafStage stage;
   final List<int> leafNumbers;
   final String treatmentWindow;
+  final DateTime windowStart;
+  final DateTime windowEnd;
   final List<TimelineStep> steps;
 
   ScheduledStage({
     required this.stage,
     required this.leafNumbers,
     required this.treatmentWindow,
+    required this.windowStart,
+    required this.windowEnd,
     required this.steps,
   });
 
@@ -145,6 +150,9 @@ class ScheduledBulk {
   final DateTime createdAt;
   final List<ScheduledStage> stages;
   final TreatmentHistory? priorTreatment;
+  final FungicideProduct? selectedProduct;
+  final DateTime? selectedDate;
+  final String? note;
 
   ScheduledBulk({
     required this.id,
@@ -153,6 +161,9 @@ class ScheduledBulk {
     required this.createdAt,
     required this.stages,
     this.priorTreatment,
+    this.selectedProduct,
+    this.selectedDate,
+    this.note,
   });
 
   ScheduledStage? stageOf(LeafStage stage) {
