@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import { landingFor, safeNext } from '../routeGuard.js';
@@ -8,6 +8,9 @@ const router = useRouter(), route = useRoute(), auth = useAuthStore();
 const busy = ref(false), error = ref('');
 const f = ref({ email: '', password: '' });
 const showPassword = ref(false);
+
+// Entrance animation state
+const reveal = ref({ logo: false, heading: false, form: false, button: false });
 
 async function submit() {
   busy.value = true; error.value = '';
@@ -21,103 +24,130 @@ async function submit() {
 function togglePassword() {
   showPassword.value = !showPassword.value;
 }
+
+// Staggered entrance animation
+onMounted(() => {
+  const steps = [
+    { key: 'logo', delay: 0 },
+    { key: 'heading', delay: 100 },
+    { key: 'form', delay: 200 },
+    { key: 'button', delay: 300 },
+  ];
+  steps.forEach(({ key, delay }) => {
+    setTimeout(() => { reveal.value[key] = true; }, delay);
+  });
+});
 </script>
 
 <template>
   <div class="login-page">
     <!-- LEFT PANEL - Promotional Background -->
     <section class="left-panel" aria-hidden="true">
-      <div class="logo-container">
-        <div class="logo-box">
-          <img src="../assets/bananaleaf1.png" alt="" aria-hidden="true">
+      <div class="left-content" :class="{ 'is-visible': reveal.logo }">
+        <div class="logo-container">
+          <div class="logo-box">
+            <img src="../assets/bananaleaf1.png" alt="" aria-hidden="true">
+          </div>
+          <span class="brand-text">Toka AI</span>
         </div>
-        <span class="brand-text">Toka AI</span>
       </div>
 
-      <div class="promo-content">
-        <h2 class="promo-heading">
-          Catch Black Sigatoka<br>
-          before it spreads
-        </h2>
+      <div class="left-content promo-wrapper" :class="{ 'is-visible': reveal.heading }">
+        <div class="promo-block">
+          <h2 class="promo-heading">
+            Catch Black Sigatoka<br>
+            before it spreads
+          </h2>
+          <p class="promo-description">
+            Scan banana leaves, assess them in<br>
+            bulk, and schedule treatment while it<br>
+            still works.
+          </p>
+        </div>
       </div>
 
-      <p class="promo-description">
-        Scan banana leaves, assess them in<br>
-        bulk, and schedule treatment while it<br>
-        still works.
-      </p>
-
-      <p class="footer-text">
-        Leads Agricultural Products Corporation
-      </p>
+      <div class="left-content footer-area" :class="{ 'is-visible': reveal.logo }">
+        <p class="footer-text">
+          Leads Agricultural Products Corporation
+        </p>
+      </div>
     </section>
 
     <!-- RIGHT PANEL - Login Form -->
     <section class="right-panel">
       <form class="login-card" novalidate @submit.prevent="submit">
-        <h1 class="login-heading">Sign In</h1>
-        <p class="login-subtitle">Use your Toka AI account.</p>
-
-        <div class="form-group">
-          <label class="form-label" for="email">Email</label>
-          <div class="input-wrapper">
-            <input
-              type="email"
-              id="email"
-              v-model="f.email"
-              class="form-input"
-              placeholder="Email or Mobile Number"
-              autocomplete="email"
-              required
-              :disabled="busy"
-            >
+        <div class="mobile-brand" :class="{ 'is-visible': reveal.logo }" aria-hidden="true">
+          <div class="logo-box">
+            <img src="../assets/bananaleaf1.png" alt="">
           </div>
+          <span class="brand-text">Toka AI</span>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <div class="input-wrapper">
-            <input
-              :type="showPassword ? 'text' : 'password'"
-              id="password"
-              v-model="f.password"
-              class="form-input password-input"
-              placeholder="Email Password"
-              autocomplete="current-password"
-              required
-              :disabled="busy"
-            >
-            <button
-              type="button"
-              class="toggle-password"
-              @click="togglePassword"
-              :aria-label="showPassword ? 'Hide password' : 'Show password'"
-              :aria-pressed="showPassword"
-              :disabled="busy"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" v-if="!showPassword">
-                <path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/>
-                <circle cx="12" cy="12" r="3.2"/>
-              </svg>
-              <svg viewBox="0 0 24 24" aria-hidden="true" v-else>
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
-              </svg>
-            </button>
+        <div class="form-wrapper" :class="{ 'is-visible': reveal.form }">
+          <h1 class="login-heading" :class="{ 'is-visible': reveal.heading }">Sign In</h1>
+          <p class="login-subtitle" :class="{ 'is-visible': reveal.heading }">Use your Toka AI account.</p>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Email</label>
+            <div class="input-wrapper">
+              <input
+                type="email"
+                id="email"
+                v-model="f.email"
+                class="form-input"
+                placeholder="Email or Mobile Number"
+                autocomplete="email"
+                required
+                :disabled="busy"
+              >
+            </div>
           </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <div class="input-wrapper">
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                id="password"
+                v-model="f.password"
+                class="form-input password-input"
+                placeholder="Email Password"
+                autocomplete="current-password"
+                required
+                :disabled="busy"
+              >
+              <button
+                type="button"
+                class="toggle-password"
+                @click="togglePassword"
+                :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                :aria-pressed="showPassword"
+                :disabled="busy"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" v-if="!showPassword">
+                  <path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/>
+                  <circle cx="12" cy="12" r="3.2"/>
+                </svg>
+                <svg viewBox="0 0 24 24" aria-hidden="true" v-else>
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="remember-me">
+            <input type="checkbox" id="rememberMe" v-model="f.rememberMe" :disabled="busy">
+            <label for="rememberMe">Remember me</label>
+          </div>
+
+          <div class="err" role="alert" v-if="error">{{ error }}</div>
+
+          <button class="signin-button" type="submit" :disabled="busy" :class="{ 'is-visible': reveal.button }">
+            <span v-if="busy">Signing in…</span>
+            <span v-else>Sign In</span>
+          </button>
         </div>
-
-        <div class="remember-me">
-          <input type="checkbox" id="rememberMe" v-model="f.rememberMe" :disabled="busy">
-          <label for="rememberMe">Remember me</label>
-        </div>
-
-        <div class="err" role="alert" v-if="error">{{ error }}</div>
-
-        <button class="signin-button" type="submit" :disabled="busy">
-          <span v-if="busy">Signing in…</span>
-          <span v-else>Sign In</span>
-        </button>
       </form>
     </section>
   </div>
@@ -134,9 +164,71 @@ function togglePassword() {
   grid-template-columns: 39.31% 1fr;
 }
 
+/* ENTRANCE ANIMATIONS */
+.left-content,
+.form-wrapper,
+.mobile-brand {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.left-content.is-visible,
+.form-wrapper.is-visible,
+.mobile-brand.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Children of form-wrapper animate in when parent is visible */
+.form-wrapper .login-heading,
+.form-wrapper .login-subtitle,
+.form-wrapper .form-group,
+.form-wrapper .remember-me,
+.form-wrapper .err,
+.form-wrapper .signin-button {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.form-wrapper.is-visible .login-heading,
+.form-wrapper.is-visible .login-subtitle,
+.form-wrapper.is-visible .form-group,
+.form-wrapper.is-visible .remember-me,
+.form-wrapper.is-visible .err,
+.form-wrapper.is-visible .signin-button {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays for form children */
+.form-wrapper.is-visible .login-heading { transition-delay: 0ms; }
+.form-wrapper.is-visible .login-subtitle { transition-delay: 50ms; }
+.form-wrapper.is-visible .form-group:nth-child(1) { transition-delay: 100ms; }
+.form-wrapper.is-visible .form-group:nth-child(2) { transition-delay: 150ms; }
+.form-wrapper.is-visible .remember-me { transition-delay: 200ms; }
+.form-wrapper.is-visible .err { transition-delay: 250ms; }
+.form-wrapper.is-visible .signin-button { transition-delay: 300ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .left-content,
+  .form-wrapper,
+  .form-wrapper .login-heading,
+  .form-wrapper .login-subtitle,
+  .form-wrapper .form-group,
+  .form-wrapper .remember-me,
+  .form-wrapper .err,
+  .form-wrapper .signin-button,
+  .mobile-brand {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 /* LEFT PANEL */
 .left-panel {
-  position: relative;
   min-height: 100vh;
   min-height: 100dvh;
   background-image:
@@ -152,12 +244,26 @@ function togglePassword() {
   background-position: center;
   background-repeat: no-repeat;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px 48px;
+  box-sizing: border-box;
+}
+
+.left-content {
+  width: 100%;
+}
+
+.promo-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 40px; /* space above footer */
 }
 
 .logo-container {
-  position: absolute;
-  left: 34px;
-  top: 22px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -188,43 +294,56 @@ function togglePassword() {
   white-space: nowrap;
 }
 
-.promo-content {
-  position: absolute;
-  left: 47px;
-  top: 698px;
-  width: 450px;
+.promo-block {
+  text-align: left;
 }
 
 .promo-heading {
   font-family: 'Roboto', sans-serif;
   font-size: 36px;
   font-weight: 700;
-  line-height: 36px;
+  line-height: 44px;
   color: #8CFF91;
   margin: 0;
 }
 
 .promo-description {
-  position: absolute;
-  left: 47px;
-  top: 792px;
-  width: 370px;
   font-family: 'Roboto', sans-serif;
   font-size: 20px;
   font-weight: 400;
-  line-height: 24px;
+  line-height: 28px;
   color: #F2F2F2;
-  margin: 0;
+  margin: 24px 0 0 0;
+}
+
+.footer-area {
+  margin-top: auto;
 }
 
 .footer-text {
-  position: absolute;
-  left: 41px;
-  bottom: 21px;
   font-family: 'Roboto', sans-serif;
   font-size: 16px;
   font-weight: 400;
   color: #9AA5A4;
+  margin: 0;
+}
+
+/* MOBILE BRAND (shown when left panel hidden) */
+.mobile-brand {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.mobile-brand .logo-box {
+  width: 48px;
+  height: 48px;
+}
+
+.mobile-brand .brand-text {
+  font-size: 28px;
 }
 
 /* RIGHT PANEL */
@@ -245,6 +364,10 @@ function togglePassword() {
   border-radius: 12px;
   padding: 48px 72px;
   box-sizing: border-box;
+}
+
+.form-wrapper {
+  width: 100%;
 }
 
 .login-heading {
@@ -286,18 +409,19 @@ function togglePassword() {
   width: 100%;
   height: 45px;
   padding: 0 20px;
-  border: 1px solid #1F2937;
+  border: 1px solid var(--line);
   border-radius: 11px;
   background: #FFFFFF;
   font-family: 'Roboto', sans-serif;
   font-size: 14px;
   color: #1C1C1C;
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .form-input:focus {
-  border-color: #006F47;
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 3px rgba(10, 159, 85, 0.15);
 }
 
 .form-input:disabled {
@@ -351,12 +475,13 @@ function togglePassword() {
 .remember-me input[type="checkbox"] {
   width: 15px;
   height: 15px;
-  border: 1px solid #111111;
+  border: 1px solid var(--line);
   border-radius: 2px;
   appearance: none;
   cursor: pointer;
   position: relative;
   flex-shrink: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .remember-me input[type="checkbox"]:checked {
@@ -409,7 +534,7 @@ function togglePassword() {
   font-weight: 700;
   color: #FFFFFF;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
 .signin-button:hover:not(:disabled) {
@@ -418,6 +543,7 @@ function togglePassword() {
 
 .signin-button:active:not(:disabled) {
   background: #004D30;
+  transform: scale(0.98);
 }
 
 .signin-button:disabled {
@@ -435,8 +561,19 @@ function togglePassword() {
   .login-page {
     grid-template-columns: 39.31% 1fr;
   }
+  .left-panel {
+    padding: 32px 40px;
+  }
   .login-card {
     padding: 40px 48px;
+  }
+  .promo-heading {
+    font-size: 32px;
+    line-height: 40px;
+  }
+  .promo-description {
+    font-size: 18px;
+    line-height: 26px;
   }
 }
 
@@ -454,6 +591,9 @@ function togglePassword() {
     max-width: 100%;
     padding: 32px 24px;
     border-radius: 16px;
+  }
+  .mobile-brand {
+    display: flex;
   }
   .login-heading {
     font-size: 32px;
@@ -486,6 +626,17 @@ function togglePassword() {
     padding: 24px 20px;
     border-radius: 16px;
   }
+  .mobile-brand {
+    display: flex;
+    margin-bottom: 24px;
+  }
+  .mobile-brand .logo-box {
+    width: 40px;
+    height: 40px;
+  }
+  .mobile-brand .brand-text {
+    font-size: 24px;
+  }
   .login-heading {
     font-size: 28px;
     line-height: 36px;
@@ -514,28 +665,10 @@ function togglePassword() {
   }
 }
 
-@media (max-height: 800px) {
-  .promo-content {
-    top: auto;
-    bottom: 220px;
-  }
-  .promo-description {
-    top: auto;
-    bottom: 110px;
-  }
-}
-
 @media (max-height: 700px) {
   .promo-content,
   .promo-description {
     display: none;
   }
-  .footer-text {
-    bottom: 16px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
 }
 </style>
