@@ -122,17 +122,27 @@ export function ReactodiaGraph({ useCaseSlug, token }) {
 
         console.log('REACTODIA CHECK 3 - Layout completed');
 
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              if (signal.aborted) return;
+          const fitTimeout = setTimeout(async () => {
+          if (signal.aborted) return;
 
-              const canvas = view.findAnyCanvas();
+          const canvas = view.findAnyCanvas();
 
-              if (canvas) {
-                canvas.zoomToFit();
-              }
-            });
-          });
+          if (canvas) {
+            try {
+              await canvas.zoomToFit();
+              console.log('REACTODIA - Initial viewport fitted');
+            } catch (err) {
+              console.error('Failed to fit graph viewport:', err);
+            }
+          }
+        }, 300);
+
+        signal.addEventListener(
+          'abort',
+          () => clearTimeout(fitTimeout),
+          { once: true }
+        );
+
 
         if (!signal.aborted) {
           setLoading(false);
