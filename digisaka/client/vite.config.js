@@ -21,4 +21,11 @@ export default defineConfig({
   },
   build: { outDir: 'dist', emptyOutDir: true },
   test: { include: ['src/**/*.test.js', 'vite.proxy.test.js'] },
+  // Reactodia layout worker - use native worker format
+  worker: {
+    format: 'es'
+  },
+  optimizeDeps: {
+    include: ['@reactodia/workspace', 'n3']
+  }
 });

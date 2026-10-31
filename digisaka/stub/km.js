@@ -8,6 +8,104 @@ import { stubFacts } from './km-facts.js';
 
 const BASE = '/api/v1/knowledge-maintenance/workflows';
 const TECHNICAL = ['administrator', 'domain_expert', 'plant_pathologist'];
+
+// Sample TTL ontology for stub - matches the Digisaka Black Sigatoka domain
+const SAMPLE_TTL = `
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ds: <https://digisaka.org/ontology#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+ds:BlackSigatoka rdf:type owl:Class ;
+    rdfs:label "Black Sigatoka" ;
+    rdfs:comment "Fungal disease caused by Pseudocercospora fijiensis affecting banana plants" ;
+    skos:prefLabel "Black Sigatoka"@en .
+
+ds:BananaPlant rdf:type owl:Class ;
+    rdfs:label "Banana Plant" ;
+    rdfs:comment "Musa species cultivated for fruit production" ;
+    skos:prefLabel "Banana Plant"@en .
+
+ds:Leaf rdf:type owl:Class ;
+    rdfs:label "Leaf" ;
+    rdfs:comment "Individual leaf of a banana plant" ;
+    skos:prefLabel "Leaf"@en .
+
+ds:LeafStage rdf:type owl:Class ;
+    rdfs:label "Leaf Stage" ;
+    rdfs:comment "Developmental stage of a leaf affecting disease susceptibility" ;
+    skos:prefLabel "Leaf Stage"@en .
+
+ds:Treatment rdf:type owl:Class ;
+    rdfs:label "Treatment" ;
+    rdfs:comment "Fungicide or cultural treatment applied to manage disease" ;
+    skos:prefLabel "Treatment"@en .
+
+ds:Fungicide rdf:type owl:Class ;
+    rdfs:label "Fungicide" ;
+    rdfs:subClassOf ds:Treatment ;
+    skos:prefLabel "Fungicide"@en .
+
+ds:CulturalPractice rdf:type owl:Class ;
+    rdfs:label "Cultural Practice" ;
+    rdfs:subClassOf ds:Treatment ;
+    skos:prefLabel "Cultural Practice"@en .
+
+ds:hasStage rdf:type owl:ObjectProperty ;
+    rdfs:domain ds:Leaf ;
+    rdfs:range ds:LeafStage ;
+    rdfs:label "has stage" .
+
+ds:hasDisease rdf:type owl:ObjectProperty ;
+    rdfs:domain ds:Leaf ;
+    rdfs:range ds:BlackSigatoka ;
+    rdfs:label "has disease" .
+
+ds:treatedWith rdf:type owl:ObjectProperty ;
+    rdfs:domain ds:Leaf ;
+    rdfs:range ds:Treatment ;
+    rdfs:label "treated with" .
+
+ds:hasSeverity rdf:type owl:DatatypeProperty ;
+    rdfs:domain ds:BlackSigatoka ;
+    rdfs:range xsd:integer ;
+    rdfs:label "has severity" .
+
+ds:hasIncubationDays rdf:type owl:DatatypeProperty ;
+    rdfs:domain ds:BlackSigatoka ;
+    rdfs:range xsd:integer ;
+    rdfs:label "has incubation days" .
+
+ds:YoungLeaf rdf:type ds:LeafStage ;
+    rdfs:label "Young Leaf" ;
+    skos:prefLabel "Young Leaf"@en .
+
+ds:MatureLeaf rdf:type ds:LeafStage ;
+    rdfs:label "Mature Leaf" ;
+    skos:prefLabel "Mature Leaf"@en .
+
+ds:OldLeaf rdf:type ds:LeafStage ;
+    rdfs:label "Old Leaf" ;
+    skos:prefLabel "Old Leaf"@en .
+
+ds:Mancozeb rdf:type ds:Fungicide ;
+    rdfs:label "Mancozeb" ;
+    skos:prefLabel "Mancozeb"@en .
+
+ds:Propiconazole rdf:type ds:Fungicide ;
+    rdfs:label "Propiconazole" ;
+    skos:prefLabel "Propiconazole"@en .
+
+ds:LeafRemoval rdf:type ds:CulturalPractice ;
+    rdfs:label "Leaf Removal" ;
+    skos:prefLabel "Leaf Removal"@en .
+
+ds:FieldSanitation rdf:type ds:CulturalPractice ;
+    rdfs:label "Field Sanitation" ;
+    skos:prefLabel "Field Sanitation"@en .
+`;
 const CLAIM_MS = 15 * 60000;
 const DISPOSITIONS = ['pending', 'accepted', 'rejected', 'unresolved'];
 const GATE_STAGE = { awaiting_extraction_review: 'extraction_review', awaiting_final_approval: 'final_review' };
@@ -19,7 +117,7 @@ const NEXT = {
 };
 
 const err = (status, code, message) => ({ status, body: { error: { code, message, details: {} } } });
-const ok = (body, status = 200) => ({ status, body });
+const ok = (body, status = 200, headers = {}) => ({ status, body, headers });
 
 // A title containing `commit-fail` fails its first commit; `fail` fails extraction; `slow` stretches every state.
 export function pathOf(title) {
@@ -196,6 +294,17 @@ export function kmRoutes(store, { now = Date.now, stepMs = 4000 } = {}) {
         enter(w, 'committing', now());
         return ok(view(w), 202);
       }),
+    },
+    {
+      method: 'GET', path: '/api/v1/knowledge-maintenance/ontology/export',
+      handle: (req) => {
+        const user = userForToken((req.headers.authorization || '').replace(/^Bearer\s+/i, ''));
+        if (!user) return err(401, 'UNAUTHENTICATED', 'Sign in to continue.');
+        if (!user.roles.some((r) => TECHNICAL.includes(r))) return err(403, 'FORBIDDEN', 'This account is not a Technical User.');
+        const format = req.query?.get?.('format') || 'ttl';
+        if (format !== 'ttl') return err(422, 'VALIDATION_ERROR', 'Only format=ttl is supported');
+        return ok(SAMPLE_TTL, 200, { 'Content-Type': 'text/turtle; charset=utf-8' });
+      },
     },
   ];
 }

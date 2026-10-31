@@ -25,7 +25,7 @@ const routes = [
       { path: 'workflows/:id', component: () => import('./admin/WorkflowView.vue') },
       { path: 'tracing', component: () => import('./admin/NotAvailableView.vue'), props: { title: 'Tracing' } },
       { path: 'history', component: () => import('./admin/AuditView.vue') },
-      { path: 'kg', component: () => import('./admin/NotAvailableView.vue'), props: { title: 'Knowledge Graph' } },
+      { path: 'kg', component: () => import('./admin/GraphView.vue') },
       { path: 'ontology', component: () => import('./admin/OntologyView.vue') },
     ],
   },

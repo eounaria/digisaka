@@ -17,12 +17,16 @@
     "node": ">=22"
   },
   "dependencies": {
+    "@reactodia/workspace": "^0.35.2",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.3",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
     "helmet": "^8.3.0",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "n3": "^2.13.12",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   }
 }

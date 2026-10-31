@@ -27,8 +27,7 @@ export const WORKSPACE = [
  },
  {
   "screen": "kg",
-  "unavailable": true,
-  "svg": "<path d=\"M12 3v18\"></path><path d=\"M3 12h18\"></path><circle cx=\"12\" cy=\"12\" r=\"7\"></circle>",
+  "svg": "<circle cx=\"12\" cy=\"12\" r=\"7\"></circle><path d=\"M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83\"></path>",
   "label": "Knowledge Graph"
  },
  {
