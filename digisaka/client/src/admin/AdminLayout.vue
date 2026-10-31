@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter, RouterView } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import { useUseCaseStore } from '../stores/useCase.js';
@@ -22,14 +22,34 @@ const active = computed(() => {
   return path || 'overview';
 });
 
+// Use case dropdown
+const usecaseOpen = ref(false);
+const currentUsecaseLabel = computed(() => uc.cases.find(c => c.slug === uc.slug)?.label ?? '');
+
 function leave() { closeMenu(); auth.signOut(); router.push('/login'); }
 function toApp() { closeMenu(); router.push('/scan'); }
 const to = (screen) => (screen === 'overview' ? '/admin' : `/admin/${screen}`);
 
+function toggleUsecase() { usecaseOpen.value = !usecaseOpen.value; }
+function selectUsecase(slug) { uc.select(slug); usecaseOpen.value = false; }
+
+// Close use case dropdown on outside click
+onMounted(() => {
+  document.addEventListener('click', closeUsecaseOnOutsideClick);
+  uc.load().catch(() => {});
+});
+onUnmounted(() => {
+  document.removeEventListener('click', closeUsecaseOnOutsideClick);
+});
+
+function closeUsecaseOnOutsideClick(e) {
+  if (usecaseOpen.value && !e.target.closest('.topbar-usecase')) {
+    usecaseOpen.value = false;
+  }
+}
+
 // Close sidebar on route change (mobile)
 watch(route, () => { if (narrow.value) sidebarOpen.value = false; });
-
-onMounted(() => uc.load().catch(() => {}));
 </script>
 
 <template>
@@ -137,16 +157,18 @@ onMounted(() => uc.load().catch(() => {}));
           <button v-if="auth.practitioner" type="button" class="topbar-btn" @click="toApp">
             ⮐ Toka app
           </button>
-          <label class="topbar-usecase">
+          <div class="topbar-usecase">
             <span>Use Case</span>
-            <select
-              :value="uc.slug"
-              @change="uc.select($event.target.value)"
-              aria-label="Select use case"
-            >
-              <option v-for="c in uc.cases" :key="c.slug" :value="c.slug">{{ c.label }}</option>
-            </select>
-          </label>
+            <div class="usecase-select" @click="toggleUsecase" tabindex="0" @keydown.enter="toggleUsecase" @keydown.space.prevent="toggleUsecase" role="combobox" aria-expanded="usecaseOpen" aria-haspopup="listbox" aria-label="Select use case">
+              <span>{{ currentUsecaseLabel }}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#056b43" stroke-width="3" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg>
+            </div>
+            <div v-if="usecaseOpen" class="usecase-dropdown" role="listbox">
+              <div v-for="c in uc.cases" :key="c.slug" class="usecase-option" role="option" :aria-selected="uc.slug === c.slug" @click="selectUsecase(c.slug)">
+                {{ c.label }}
+              </div>
+            </div>
+          </div>
           <div ref="account" class="topbar-account">
             <button
               ref="avatar"
@@ -416,20 +438,58 @@ onMounted(() => uc.load().catch(() => {}));
   align-items: center;
   gap: 8px;
   height: 38px;
-  padding: 0 14px 0 19px;
-  background: #f3f4f6;
-  border-radius: 10px;
+  white-space: nowrap;
+  position: relative;
+}
+.usecase-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 142px;
+  height: 27px;
+  padding: 0 8px 0 15px;
+  border: 1px solid #056b43;
+  border-radius: 8px;
+  background: #fff;
+  color: #056b43;
   font: 500 14px var(--font-body);
-  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+.usecase-select svg {
+  flex-shrink: 0;
+}
+.usecase-select:hover {
+  background: #f3f4f6;
+}
+.usecase-select:focus-visible {
+  outline: 3px solid var(--leaf);
+  outline-offset: 2px;
+}
+.usecase-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  min-width: 142px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+.usecase-option {
+  padding: 8px 12px;
+  font: 500 14px var(--font-body);
+  color: #111;
+  cursor: pointer;
   white-space: nowrap;
 }
-.topbar-usecase select {
-  border: 0;
-  background: transparent;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-  min-width: 0;
+.usecase-option:hover,
+.usecase-option[aria-selected="true"] {
+  background: #f3f4f6;
+  color: #056b43;
 }
 .topbar-account {
   position: relative;
@@ -599,8 +659,12 @@ onMounted(() => uc.load().catch(() => {}));
     height: 38px;
     padding: 0 12px;
   }
-  .topbar-usecase span {
+  .topbar-usecase > span {
     display: none;
+  }
+  .usecase-select {
+    width: 120px;
+    padding: 0 8px 0 12px;
   }
   .topbar-hamburger {
     display: grid;
