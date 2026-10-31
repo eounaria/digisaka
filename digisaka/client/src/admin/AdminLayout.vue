@@ -61,10 +61,7 @@ onMounted(() => uc.load().catch(() => {}));
       <!-- Branding - Toka AI logo -->
       <div class="sidebar-brand">
         <span class="sidebar-mark" aria-hidden="true">
-          <svg width="32" height="36" viewBox="0 0 30 38">
-            <path d="M4 2C18 4 28 16 24 36C14 30 6 18 4 2Z" fill="#12a150"/>
-            <path d="M4 2C10 14 16 26 24 36" stroke="#fff" stroke-width="2" fill="none"/>
-          </svg>
+          <img src="../assets/bananaleaf2.png" alt="" width="32" height="36" />
         </span>
         <span class="sidebar-title">Toka AI</span>
       </div>
