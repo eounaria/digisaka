@@ -13,6 +13,7 @@ const routes = [
       { path: 'schedule', component: () => import('./views/ScheduleListView.vue'), meta: { title: 'Treatment Schedule' } },
       { path: 'treatment/:lineId/:week', component: () => import('./views/TreatmentDetailView.vue'), meta: { title: 'Treatment' } },
       { path: 'schedule/:lineId', component: () => import('./views/ScheduleLineView.vue'), meta: { title: 'Treatment Schedule' } },
+      { path: 'profile', component: () => import('./views/ProfileView.vue'), meta: { title: 'My Profile' } },
     ],
   },
   {
