@@ -184,7 +184,7 @@ rebuilt rather than ported.
 
 | Screen | What it does |
 |---|---|
-| Overview | Image KPIs, ontology counts and latest activity. Entity, relationship and document figures are not available yet |
+| Overview | Image KPIs, ontology counts and latest activity. Entity, relationship and document figures are not available yet. Logo updated to bananaleaf2; use-case dropdown rebuilt as a custom component matching the reference design |
 | Document Extractions | Submit a document to the Knowledge Maintenance workflow (port 8000), follow it, review extracted facts, approve the commit |
 | Tracing | One document's activity log and its four pipeline steps (source → extraction → correction → knowledge graph) |
 | History | Audit log of every admin change, searchable and filterable by action |
