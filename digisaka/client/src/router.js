@@ -19,6 +19,7 @@ const routes = [
     path: '/admin', component: () => import('./admin/AdminLayout.vue'), meta: { auth: true, admin: true },
     children: [
       { path: '', component: () => import('./admin/OverviewView.vue') },
+      { path: 'kg-processing', component: () => import('./admin/NotAvailableView.vue'), props: { title: 'KG Processing' } },
       { path: 'users', component: () => import('./admin/UsersView.vue') },
       { path: 'datasets', component: () => import('./admin/DatasetsView.vue') },
       { path: 'extractions', component: () => import('./admin/ExtractionsView.vue') },
