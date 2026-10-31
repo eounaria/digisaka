@@ -121,7 +121,18 @@ export function ReactodiaGraph({ useCaseSlug, token }) {
         });
 
         console.log('REACTODIA CHECK 3 - Layout completed');
-        
+
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              if (signal.aborted) return;
+
+              const canvas = view.findAnyCanvas();
+
+              if (canvas) {
+                canvas.zoomToFit();
+              }
+            });
+          });
 
         if (!signal.aborted) {
           setLoading(false);

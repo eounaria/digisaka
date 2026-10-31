@@ -222,12 +222,6 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.react-mount {
-  width: 100%;
-  height: 100%;
-  min-height: 500px;
-}
-
 .status-overlay {
   position: absolute;
   inset: 0;
@@ -254,23 +248,27 @@ onUnmounted(() => {
 }
 
 
-/* Ensure Reactodia fills the graph container */
+/* Make React fill the entire available graph area */
 .react-mount {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  min-height: 500px;
+  min-height: 0;
 }
 
-/* Fix Reactodia's zero-height canvas */
+/* Make Reactodia's canvas fill the React mount */
 .react-mount :deep(.reactodia-canvas) {
+  width: 100% !important;
   height: 100% !important;
-  min-height: 500px !important;
+  min-height: 0 !important;
 }
 
-/* Fix Reactodia's zero-height pane */
+/* Make the diagram pane fill the canvas */
 .react-mount :deep(.reactodia-paper__pane) {
+  width: 100% !important;
   height: 100% !important;
-  min-height: 500px !important;
+  min-height: 0 !important;
 }
 
 </style>
