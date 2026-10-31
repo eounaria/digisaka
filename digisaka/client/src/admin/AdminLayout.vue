@@ -1,9 +1,8 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter, RouterView } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import { useUseCaseStore } from '../stores/useCase.js';
-import Icon from '../components/Icon.vue';
 import { useAccountMenu } from '../components/useAccountMenu.js';
 import { WORKSPACE } from './nav.js';
 import '../styles/admin.css';
@@ -46,88 +45,81 @@ onMounted(() => uc.load().catch(() => {}));
 
     <!-- Sidebar -->
     <aside id="admin-sidebar" class="sidebar" :class="{ 'sidebar--open': sidebarOpen, 'sidebar--narrow': narrow }">
-      <!-- Decorative banana leaves - top -->
-      <div class="leaf-decoration leaf-decoration--top" aria-hidden="true">
-        <svg viewBox="0 0 200 200" fill="currentColor" class="leaf-svg">
-          <path d="M100 0 C60 0 30 30 20 60 C10 90 30 130 60 150 C90 170 130 170 160 150 C190 130 190 90 180 60 C170 30 140 0 100 0 Z" />
-          <path d="M100 10 C70 10 45 35 38 65 C31 95 45 135 75 150 C105 165 145 155 162 135 C179 115 185 80 175 50 C165 20 130 10 100 10 Z" opacity="0.5"/>
+      <!-- Decorative leaf silhouettes (matching reference) -->
+      <svg class="leaf-deco leaf-deco--1" aria-hidden="true" width="80" height="120" viewBox="0 0 80 120">
+        <path d="M70 6C40 10 20 40 10 110C50 90 76 50 70 6Z" fill="#fff" opacity="0.07"/>
+      </svg>
+      <svg class="leaf-deco leaf-deco--2" aria-hidden="true" width="150" height="130" viewBox="0 0 150 130">
+        <path d="M0 30C40 40 50 80 30 110C-10 90 -10 60 0 30Z" fill="#fff" opacity="0.08"/>
+        <path d="M0 90C50 70 110 90 140 110C90 130 30 125 0 110Z" fill="#fff" opacity="0.08"/>
+      </svg>
+      <svg class="leaf-deco leaf-deco--3" aria-hidden="true" width="160" height="170" viewBox="0 0 160 170">
+        <path d="M5 5C80 20 140 80 150 170H20C0 110 -5 50 5 5Z" fill="#fff" opacity="0.06"/>
+        <path d="M130 0C165 30 160 100 140 140C110 100 110 40 130 0Z" fill="#fff" opacity="0.06"/>
+      </svg>
+
+      <!-- Branding - Toka AI logo -->
+      <div class="sidebar-brand">
+        <span class="sidebar-mark" aria-hidden="true">
+          <svg width="32" height="36" viewBox="0 0 30 38">
+            <path d="M4 2C18 4 28 16 24 36C14 30 6 18 4 2Z" fill="#12a150"/>
+            <path d="M4 2C10 14 16 26 24 36" stroke="#fff" stroke-width="2" fill="none"/>
+          </svg>
+        </span>
+        <span class="sidebar-title">Toka AI</span>
+      </div>
+
+      <!-- Workspace label -->
+      <div class="sidebar-section">Workspace</div>
+
+      <!-- Navigation -->
+      <nav class="sidebar-nav" aria-label="Admin navigation">
+        <ul class="sidebar-list" role="list">
+          <li v-for="n in WORKSPACE" :key="n.screen">
+            <button
+              v-if="n.unavailable"
+              type="button"
+              class="sidebar-link sidebar-link--unavailable"
+              :title="'Not available yet'"
+              disabled
+            >
+              <svg viewBox="0 0 24 24" class="sidebar-icon" v-html="n.svg" aria-hidden="true"></svg>
+              <span class="sidebar-label">{{ n.label }}</span>
+              <span class="sidebar-badge" aria-label="Not available">Soon</span>
+            </button>
+            <button
+              v-else
+              type="button"
+              class="sidebar-link"
+              :class="{ 'sidebar-link--active': active === n.screen }"
+              @click="router.push(to(n.screen))"
+            >
+              <svg viewBox="0 0 24 24" class="sidebar-icon" v-html="n.svg" aria-hidden="true"></svg>
+              <span class="sidebar-label">{{ n.label }}</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Sign Out button at fixed position -->
+      <button
+        type="button"
+        class="sidebar-signout"
+        @click="leave"
+      >
+        <svg viewBox="0 0 24 24" class="sidebar-icon" aria-hidden="true">
+          <path d="M9 4H5v16h4"></path>
+          <path d="M16 8l4 4-4 4"></path>
+          <path d="M20 12H9"></path>
         </svg>
-      </div>
-
-      <div class="sidebar-content">
-        <!-- Branding -->
-        <div class="sidebar-brand">
-          <span class="sidebar-mark" aria-hidden="true">🌾</span>
-          <span class="sidebar-title">DigiSaka</span>
-        </div>
-
-        <!-- Navigation -->
-        <nav class="sidebar-nav" aria-label="Admin navigation">
-          <h2 class="sidebar-section">Workspace</h2>
-          <ul class="sidebar-list" role="list">
-            <li v-for="n in WORKSPACE" :key="n.screen">
-              <button
-                v-if="n.unavailable"
-                type="button"
-                class="sidebar-link sidebar-link--unavailable"
-                :title="'Not available yet'"
-                disabled
-              >
-                <svg viewBox="0 0 24 24" class="sidebar-icon" v-html="n.svg" aria-hidden="true"></svg>
-                <span class="sidebar-label">{{ n.label }}</span>
-                <span class="sidebar-badge" aria-label="Not available">Soon</span>
-              </button>
-              <button
-                v-else
-                type="button"
-                class="sidebar-link"
-                :class="{ 'sidebar-link--active': active === n.screen }"
-                @click="router.push(to(n.screen))"
-              >
-                <svg viewBox="0 0 24 24" class="sidebar-icon" v-html="n.svg" aria-hidden="true"></svg>
-                <span class="sidebar-label">{{ n.label }}</span>
-              </button>
-            </li>
-          </ul>
-        </nav>
-
-        <!-- Spacer pushes sign-out to bottom -->
-        <div class="sidebar-spacer"></div>
-
-        <!-- Sign Out -->
-        <div class="sidebar-footer">
-          <button
-            type="button"
-            class="sidebar-signout"
-            @click="leave"
-          >
-            <svg viewBox="0 0 24 24" class="sidebar-icon" aria-hidden="true">
-              <path d="M9 4H5v16h4"></path>
-              <path d="M16 8l4 4-4 4"></path>
-              <path d="M20 12H9"></path>
-            </svg>
-            <span>Sign out</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Decorative banana leaves - bottom -->
-      <div class="leaf-decoration leaf-decoration--bottom" aria-hidden="true">
-        <svg viewBox="0 0 200 200" fill="currentColor" class="leaf-svg">
-          <path d="M100 0 C60 0 30 30 20 60 C10 90 30 130 60 150 C90 170 130 170 160 150 C190 130 190 90 180 60 C170 30 140 0 100 0 Z" />
-          <path d="M100 10 C70 10 45 35 38 65 C31 95 45 135 75 150 C105 165 145 155 162 135 C179 115 185 80 175 50 C165 20 130 10 100 10 Z" opacity="0.5"/>
-        </svg>
-      </div>
+        <span>Sign out</span>
+      </button>
     </aside>
 
     <!-- Main content area -->
     <div class="admin-main">
       <!-- Topbar -->
       <header class="topbar">
-        <div class="topbar-brand">
-          <span class="topbar-mark" aria-hidden="true">🌾</span>
-          <span class="topbar-title">DigiSaka AI</span>
-        </div>
         <div class="topbar-tools">
           <!-- Mobile hamburger menu -->
           <button
@@ -146,7 +138,7 @@ onMounted(() => uc.load().catch(() => {}));
             </svg>
           </button>
           <button v-if="auth.practitioner" type="button" class="topbar-btn" @click="toApp">
-            ⮐ Digisaka app
+            ⮐ Toka app
           </button>
           <label class="topbar-usecase">
             <span>Use Case</span>
@@ -172,7 +164,7 @@ onMounted(() => uc.load().catch(() => {}));
             >{{ initial }}</button>
             <div v-if="menuOpen" id="admin-account-menu" class="topbar-menu">
               <p class="topbar-menu-who">{{ auth.email }}</p>
-              <button v-if="auth.practitioner" type="button" class="topbar-menu-item" @click="toApp">⮐ Digisaka app</button>
+              <button v-if="auth.practitioner" type="button" class="topbar-menu-item" @click="toApp">⮐ Toka app</button>
               <button type="button" class="topbar-menu-item" @click="leave">Sign out</button>
             </div>
           </div>
@@ -200,135 +192,122 @@ onMounted(() => uc.load().catch(() => {}));
   min-height: 100vh;
 }
 
-/* Sidebar - full height, dark forest green */
+/* Sidebar - full height, dark forest green (#056b43 per reference) */
 .sidebar {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(180deg, var(--forest) 0%, var(--forest-deep) 100%);
+  width: var(--sidebar-w);
+  background: #056b43;
   color: #fff;
   overflow: hidden;
   z-index: 20;
 }
 
-/* Decorative banana leaves - prominent silhouette accents */
-.leaf-decoration {
+/* Decorative leaf silhouettes - matching reference positions exactly */
+.leaf-deco {
   position: absolute;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.12;
-  color: rgba(255, 255, 255, 0.25);
 }
-.leaf-decoration--top {
-  top: -60px;
-  right: -40px;
-  width: 220px;
-  height: 220px;
+.leaf-deco--1 {
+  right: -10px;
+  top: 0;
+  width: 80px;
+  height: 120px;
 }
-.leaf-decoration--bottom {
-  bottom: -70px;
-  left: -50px;
-  width: 260px;
-  height: 260px;
-  transform: rotate(180deg);
+.leaf-deco--2 {
+  left: -20px;
+  top: 620px;
+  width: 150px;
+  height: 130px;
 }
-.leaf-svg {
-  width: 100%;
-  height: 100%;
-}
-
-/* Sidebar content sits above decorations - no scrolling, fixed height */
-.sidebar-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: clamp(16px, 3vh, 24px) clamp(12px, 2vw, 16px) clamp(12px, 2vh, 20px);
+.leaf-deco--3 {
+  left: 100px;
+  top: 780px;
+  width: 160px;
+  height: 170px;
 }
 
-/* Branding */
+/* Branding - absolute positioned per reference */
 .sidebar-brand {
+  position: absolute;
+  left: 24px;
+  top: 22px;
   display: flex;
   align-items: center;
-  gap: clamp(10px, 2vw, 12px);
-  padding: 0 clamp(6px, 1vw, 8px) clamp(12px, 2.5vh, 16px);
-  font: 800 clamp(20px, 3vw, 24px) var(--font-display);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: clamp(6px, 1vh, 10px);
+  gap: 12px;
+  font: 700 24px var(--font-display);
+  letter-spacing: -0.3px;
+  z-index: 1;
 }
 .sidebar-mark {
-  display: grid;
-  place-items: center;
-  width: clamp(32px, 5vw, 36px);
-  height: clamp(32px, 5vw, 36px);
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.12);
-  font-size: clamp(18px, 3vw, 20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 43px;
   flex-shrink: 0;
 }
 .sidebar-title {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* Navigation - no scrolling, fits in viewport */
-.sidebar-nav {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
+/* Workspace section label - absolute positioned per reference */
 .sidebar-section {
-  padding: clamp(8px, 1.5vh, 10px) clamp(8px, 1.5vw, 12px) clamp(4px, 0.5vh, 6px);
-  font: 800 clamp(10px, 1.5vw, 12px) var(--font-display);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  position: absolute;
+  left: 24px;
+  top: 97px;
+  font: 700 12px var(--font-display);
+  line-height: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  z-index: 1;
+}
+
+/* Navigation - absolute positioned per reference */
+.sidebar-nav {
+  position: absolute;
+  left: 24px;
+  top: 128px;
+  width: 208px;
+  z-index: 1;
 }
 .sidebar-list {
-  display: grid;
-  gap: clamp(1px, 0.3vh, 2px);
-  padding: 0 clamp(4px, 1vw, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .sidebar-link {
   display: flex;
   align-items: center;
-  gap: clamp(10px, 2vw, 12px);
+  gap: 14px;
   width: 100%;
-  padding: clamp(9px, 1.8vh, 10px) clamp(10px, 2vw, 14px);
+  height: 48px;
+  padding: 0 0 0 12px;
   border: 0;
-  border-radius: clamp(10px, 1.5vw, 12px);
+  border-radius: 8px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.78);
-  font: 700 clamp(13px, 1.8vw, 14.5px) var(--font-body);
+  color: #fff;
+  font: 500 16px var(--font-body);
   text-align: left;
   cursor: pointer;
-  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  transition: background var(--t-fast) var(--ease);
 }
-.sidebar-link:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+.sidebar-link:hover:not(:disabled):not(.sidebar-link--active) {
+  background: rgba(0, 0, 0, 0.12);
 }
 .sidebar-link:focus-visible {
   outline: 3px solid var(--leaf);
   outline-offset: 2px;
 }
 .sidebar-link--active {
-  background: rgba(255, 255, 255, 0.16);
+  background: #04583a;
   color: #fff;
-  font-weight: 800;
 }
 .sidebar-icon {
-  width: clamp(16px, 2.5vw, 18px);
-  height: clamp(16px, 2.5vw, 18px);
+  width: 18px;
+  height: 18px;
   flex: none;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  fill: #fff;
+  stroke: none;
 }
 .sidebar-label {
   white-space: nowrap;
@@ -336,53 +315,46 @@ onMounted(() => uc.load().catch(() => {}));
   text-overflow: ellipsis;
 }
 .sidebar-link--unavailable {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 .sidebar-link--unavailable:hover {
   background: transparent;
-  color: rgba(255, 255, 255, 0.45);
 }
 .sidebar-badge {
   margin-left: auto;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.15);
   font: 700 10px var(--font-display);
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.8);
 }
 
-/* Spacer - pushes sign-out to bottom, flexible but constrained */
-.sidebar-spacer {
-  flex: 1;
-  min-height: clamp(8px, 1.5vh, 12px);
-  max-height: clamp(40px, 8vh, 80px);
-}
-
-/* Footer - Sign out */
-.sidebar-footer {
-  padding: 0 clamp(4px, 1vw, 8px) clamp(6px, 1vh, 10px);
-}
+/* Sign Out button - absolute positioned per reference (top: 868px) */
 .sidebar-signout {
+  position: absolute;
+  left: 24px;
+  top: 868px;
+  width: 208px;
+  height: 52px;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+  color: #056b43;
+  font: 700 15px var(--font-body);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(10px, 2vw, 12px);
-  width: 100%;
-  padding: clamp(11px, 1.8vh, 13px) clamp(14px, 2.5vw, 16px);
-  border: 0;
-  border-radius: clamp(10px, 1.5vw, 12px);
-  background: #fff;
-  color: var(--forest);
-  font: 800 clamp(13px, 1.8vw, 15px) var(--font-body);
-  cursor: pointer;
+  gap: 12px;
+  z-index: 1;
   transition: background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), box-shadow var(--t-base) var(--ease);
 }
 .sidebar-signout:hover {
-  background: var(--tint);
+  background: #f3f4f6;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(8, 120, 63, 0.2);
+  box-shadow: 0 4px 12px rgba(5, 107, 67, 0.2);
 }
 .sidebar-signout:active {
   transform: scale(0.98);
@@ -390,6 +362,12 @@ onMounted(() => uc.load().catch(() => {}));
 .sidebar-signout:focus-visible {
   outline: 3px solid var(--leaf);
   outline-offset: 2px;
+}
+.sidebar-signout .sidebar-icon {
+  width: 18px;
+  height: 18px;
+  fill: #056b43;
+  stroke: none;
 }
 
 /* Main content area */
@@ -400,73 +378,52 @@ onMounted(() => uc.load().catch(() => {}));
   height: 100dvh;
 }
 
-/* Topbar */
+/* Topbar - height 84px per reference */
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: clamp(10px, 2vw, 12px);
-  height: var(--header-h);
-  min-height: var(--header-h);
-  padding: 0 var(--gutter);
+  justify-content: flex-end;
+  gap: 22px;
+  height: 84px;
+  min-height: 84px;
+  padding: 0 27px 0 0;
   background: #fff;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid #e5e7eb;
   flex: none;
   position: sticky;
   top: 0;
   z-index: 10;
 }
-.topbar-brand {
-  display: flex;
-  align-items: center;
-  gap: clamp(10px, 2vw, 12px);
-  font: 800 clamp(16px, 2.5vw, 17px) var(--font-display);
-  color: var(--forest);
-  white-space: nowrap;
-}
-.topbar-mark {
-  display: grid;
-  place-items: center;
-  width: clamp(28px, 4vw, 32px);
-  height: clamp(28px, 4vw, 32px);
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--leaf), var(--forest));
-  font-size: clamp(14px, 2.5vw, 16px);
-  flex-shrink: 0;
-}
 .topbar-tools {
   display: flex;
   align-items: center;
-  gap: clamp(8px, 1.5vw, 12px);
+  gap: 12px;
   flex-wrap: nowrap;
 }
-.topbar-hamburger {
-  display: none;
-}
 .topbar-btn {
-  height: 40px;
-  padding: 0 clamp(12px, 2vw, 16px);
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  height: 38px;
+  padding: 0 14px 0 19px;
+  border: 1px solid #056b43;
+  border-radius: 10px;
   background: #fff;
-  color: var(--forest);
-  font: 800 clamp(12px, 1.5vw, 14px) var(--font-body);
+  color: #056b43;
+  font: 500 14px var(--font-body);
   white-space: nowrap;
   transition: background var(--t-fast) var(--ease);
 }
 .topbar-btn:hover {
-  background: var(--tint);
+  background: #f3f4f6;
 }
 .topbar-usecase {
   display: flex;
   align-items: center;
-  gap: clamp(8px, 1.5vw, 10px);
-  height: 40px;
-  padding: 0 clamp(10px, 1.5vw, 12px) 0 clamp(12px, 2vw, 16px);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font: 800 clamp(12px, 1.5vw, 14px) var(--font-body);
-  color: var(--forest);
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px 0 19px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  font: 500 14px var(--font-body);
+  color: #374151;
   white-space: nowrap;
 }
 .topbar-usecase select {
@@ -484,17 +441,17 @@ onMounted(() => uc.load().catch(() => {}));
   border: 0;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: var(--leaf);
+  background: #16a34a;
   color: #fff;
-  font: 800 clamp(12px, 1.5vw, 14px) var(--font-display);
+  font: 700 14px var(--font-display);
   cursor: pointer;
   transition: background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
 .topbar-avatar:hover {
-  background: var(--forest);
+  background: #12a150;
   transform: scale(1.02);
 }
 .topbar-avatar:focus-visible {
@@ -510,15 +467,15 @@ onMounted(() => uc.load().catch(() => {}));
   min-width: 200px;
   max-width: calc(100vw - 2 * var(--gutter));
   padding: 6px;
-  border: 1px solid var(--line);
+  border: 1px solid #e5e7eb;
   border-radius: 14px;
   background: #fff;
-  box-shadow: 0 8px 24px rgba(6, 40, 20, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 .topbar-menu-who {
   padding: 8px 12px;
   font-size: 13px;
-  color: var(--ink-soft);
+  color: #6b7280;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -532,12 +489,12 @@ onMounted(() => uc.load().catch(() => {}));
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: var(--forest);
-  font: 800 15px var(--font-body);
+  color: #056b43;
+  font: 700 15px var(--font-body);
   text-align: left;
 }
 .topbar-menu-item:hover {
-  background: var(--tint);
+  background: #f3f4f6;
 }
 
 /* Content */
@@ -545,7 +502,7 @@ onMounted(() => uc.load().catch(() => {}));
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: clamp(20px, 3vh, 26px) var(--gutter) clamp(32px, 4vh, 40px);
+  padding: 20px 32px 32px;
 }
 
 /* Mobile responsive - below 900px */
@@ -562,10 +519,11 @@ onMounted(() => uc.load().catch(() => {}));
     top: 0;
     bottom: 0;
     z-index: 50;
-    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
     height: 100dvh;
     max-height: 100dvh;
-    box-shadow: 4px 0 24px rgba(6, 40, 20, 0.2);
+    box-shadow: 4px 0 24px rgba(5, 107, 67, 0.2);
     transform: translateX(-100%);
     transition: transform var(--t-slow) var(--ease);
     overflow: visible;
@@ -576,13 +534,42 @@ onMounted(() => uc.load().catch(() => {}));
   .sidebar.sidebar--narrow {
     transform: translateX(-100%);
   }
-  .sidebar-content {
-    height: 100%;
-    padding: clamp(12px, 2vh, 16px) clamp(12px, 2vw, 16px) clamp(16px, 3vh, 20px);
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+
+  /* Hide absolute positioned elements in mobile drawer - they'll be in wrong positions */
+  .sidebar.sidebar--narrow .sidebar-brand,
+  .sidebar.sidebar--narrow .sidebar-section,
+  .sidebar.sidebar--narrow .sidebar-nav,
+  .sidebar.sidebar--narrow .sidebar-signout {
+    position: static;
+    width: auto;
   }
-  .leaf-decoration {
+  .sidebar.sidebar--narrow .sidebar-brand {
+    margin: 16px 16px 20px;
+  }
+  .sidebar.sidebar--narrow .sidebar-section {
+    margin: 0 16px 8px;
+  }
+  .sidebar.sidebar--narrow .sidebar-nav {
+    margin: 0 16px;
+  }
+  .sidebar.sidebar--narrow .sidebar-signout {
+    position: static;
+    width: calc(100% - 32px);
+    margin: auto 16px 16px;
+  }
+  .sidebar.sidebar--narrow .sidebar-nav {
+    position: static;
+    width: auto;
+  }
+  .sidebar.sidebar--narrow .sidebar-list {
+    gap: 2px;
+  }
+  .sidebar.sidebar--narrow .sidebar-link {
+    padding: 12px 14px;
+    height: 44px;
+  }
+
+  .leaf-deco {
     display: none;
   }
 
@@ -591,7 +578,7 @@ onMounted(() => uc.load().catch(() => {}));
     position: fixed;
     inset: 0;
     z-index: 40;
-    background: rgba(6, 40, 20, 0.4);
+    background: rgba(5, 107, 67, 0.4);
     opacity: 0;
     visibility: hidden;
     transition: opacity var(--t-base) var(--ease), visibility var(--t-base) var(--ease);
@@ -601,45 +588,22 @@ onMounted(() => uc.load().catch(() => {}));
     visibility: visible;
   }
 
-  .sidebar-brand {
-    padding-bottom: clamp(12px, 2vh, 16px);
-    margin-bottom: clamp(6px, 1vh, 8px);
-  }
-
-  .sidebar-section {
-    padding: clamp(10px, 1.5vh, 12px) clamp(8px, 1vw, 12px) clamp(4px, 0.5vh, 6px);
-  }
-
-  .sidebar-list {
-    gap: clamp(2px, 0.5vh, 3px);
-  }
-
-  .sidebar-link {
-    padding: clamp(10px, 1.5vh, 12px) clamp(10px, 1.5vw, 14px);
-    font-size: clamp(13px, 1.8vw, 15px);
-  }
-
-  .sidebar-signout {
-    padding: clamp(12px, 1.5vh, 14px) clamp(14px, 2vw, 16px);
-    font-size: clamp(14px, 1.8vw, 15px);
-  }
-
   .topbar {
-    height: var(--header-h);
-    min-height: var(--header-h);
+    height: 72px;
+    min-height: 72px;
     padding: 0 var(--gutter);
-  }
-  .topbar-title {
-    display: none;
+    justify-content: flex-end;
+    gap: 12px;
   }
   .topbar-btn {
     display: none;
   }
+  .topbar-usecase {
+    height: 38px;
+    padding: 0 12px;
+  }
   .topbar-usecase span {
     display: none;
-  }
-  .topbar-usecase {
-    padding: 0 clamp(8px, 1.5vw, 12px);
   }
   .topbar-hamburger {
     display: grid;
@@ -649,11 +613,11 @@ onMounted(() => uc.load().catch(() => {}));
     border: 0;
     border-radius: 10px;
     background: transparent;
-    color: var(--forest);
+    color: #056b43;
     transition: background var(--t-fast) var(--ease);
   }
   .topbar-hamburger:hover {
-    background: var(--tint);
+    background: #f3f4f6;
   }
   .topbar-hamburger:focus-visible {
     outline: 3px solid var(--leaf);
@@ -665,7 +629,7 @@ onMounted(() => uc.load().catch(() => {}));
   }
 }
 
-/* Tablet - sidebar as drawer */
+/* Tablet - sidebar as drawer from right */
 @media (min-width: 600px) and (max-width: 899px) {
   .sidebar {
     max-width: 320px;
@@ -677,6 +641,37 @@ onMounted(() => uc.load().catch(() => {}));
   }
   .sidebar.sidebar--open {
     transform: translateX(0);
+  }
+  .sidebar.sidebar--narrow .sidebar-brand,
+  .sidebar.sidebar--narrow .sidebar-section,
+  .sidebar.sidebar--narrow .sidebar-nav,
+  .sidebar.sidebar--narrow .sidebar-signout {
+    position: absolute;
+  }
+  .sidebar.sidebar--narrow .sidebar-brand {
+    left: 24px;
+    top: 22px;
+    margin: 0;
+  }
+  .sidebar.sidebar--narrow .sidebar-section {
+    left: 24px;
+    top: 97px;
+    margin: 0;
+  }
+  .sidebar.sidebar--narrow .sidebar-nav {
+    left: 24px;
+    top: 128px;
+    width: 208px;
+    margin: 0;
+  }
+  .sidebar.sidebar--narrow .sidebar-signout {
+    left: 24px;
+    top: 868px;
+    width: 208px;
+    margin: 0;
+  }
+  .leaf-deco {
+    display: block;
   }
 }
 </style>
