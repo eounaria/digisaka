@@ -118,18 +118,13 @@ watch(route, () => { if (narrow.value) sidebarOpen.value = false; });
         </ul>
       </nav>
 
-      <!-- Sign Out button at fixed position -->
+      <!-- Sign Out button at fixed position (matches reference: white button, no icon) -->
       <button
         type="button"
         class="sidebar-signout"
         @click="leave"
       >
-        <svg viewBox="0 0 24 24" class="sidebar-icon" aria-hidden="true">
-          <path d="M9 4H5v16h4"></path>
-          <path d="M16 8l4 4-4 4"></path>
-          <path d="M20 12H9"></path>
-        </svg>
-        <span>Sign out</span>
+        Sign Out
       </button>
     </aside>
 
@@ -350,11 +345,11 @@ watch(route, () => { if (narrow.value) sidebarOpen.value = false; });
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* Sign Out button - absolute positioned per reference (top: 868px) */
+/* Sign Out button - absolute positioned at bottom (responsive, not fixed top) */
 .sidebar-signout {
   position: absolute;
   left: 24px;
-  top: 868px;
+  bottom: 24px;
   width: 208px;
   height: 52px;
   border: 0;
@@ -363,10 +358,6 @@ watch(route, () => { if (narrow.value) sidebarOpen.value = false; });
   color: #056b43;
   font: 700 15px var(--font-body);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
   z-index: 1;
   transition: background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), box-shadow var(--t-base) var(--ease);
 }
@@ -381,12 +372,6 @@ watch(route, () => { if (narrow.value) sidebarOpen.value = false; });
 .sidebar-signout:focus-visible {
   outline: 3px solid var(--leaf);
   outline-offset: 2px;
-}
-.sidebar-signout .sidebar-icon {
-  width: 18px;
-  height: 18px;
-  fill: #056b43;
-  stroke: none;
 }
 
 /* Main content area */
