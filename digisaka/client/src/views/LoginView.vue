@@ -6,11 +6,11 @@ import { landingFor, safeNext } from '../routeGuard.js';
 
 const router = useRouter(), route = useRoute(), auth = useAuthStore();
 const busy = ref(false), error = ref('');
-const f = ref({ email: '', password: '' });
+const f = ref({ email: '', password: '', rememberMe: false });
 const showPassword = ref(false);
 
 // Entrance animation state
-const reveal = ref({ logo: false, heading: false, form: false, button: false });
+const reveal = ref({ logo: false, heading: false, form: false, button: false, links: false });
 
 async function submit() {
   busy.value = true; error.value = '';
@@ -25,6 +25,22 @@ function togglePassword() {
   showPassword.value = !showPassword.value;
 }
 
+function goToForgotPassword() {
+  router.push('/forgot-password');
+}
+
+function goToSignUp() {
+  router.push('/signup');
+}
+
+function goToPrivacy() {
+  router.push('/privacy');
+}
+
+function goToTerms() {
+  router.push('/terms');
+}
+
 // Staggered entrance animation
 onMounted(() => {
   const steps = [
@@ -32,6 +48,7 @@ onMounted(() => {
     { key: 'heading', delay: 100 },
     { key: 'form', delay: 200 },
     { key: 'button', delay: 300 },
+    { key: 'links', delay: 400 },
   ];
   steps.forEach(({ key, delay }) => {
     setTimeout(() => { reveal.value[key] = true; }, delay);
@@ -139,6 +156,7 @@ onMounted(() => {
           <div class="remember-me">
             <input type="checkbox" id="rememberMe" v-model="f.rememberMe" :disabled="busy">
             <label for="rememberMe">Remember me</label>
+            <a class="forgot-link" href="#" @click.prevent="goToForgotPassword" :class="{ 'is-visible': reveal.links }">Forgot Password?</a>
           </div>
 
           <div class="err" role="alert" v-if="error">{{ error }}</div>
@@ -147,6 +165,17 @@ onMounted(() => {
             <span v-if="busy">Signing in…</span>
             <span v-else>Sign In</span>
           </button>
+
+          <div class="signup-row" :class="{ 'is-visible': reveal.links }">
+            <span>No account yet? </span>
+            <a href="#" @click.prevent="goToSignUp">Sign Up</a>
+          </div>
+
+          <div class="legal-links" :class="{ 'is-visible': reveal.links }">
+            <a href="#" @click.prevent="goToPrivacy">Privacy Policy</a>
+            <span class="legal-separator">and</span>
+            <a href="#" @click.prevent="goToTerms">Terms of Service</a>
+          </div>
         </div>
       </form>
     </section>
@@ -468,7 +497,7 @@ onMounted(() => {
 .remember-me {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   margin: 24px 0 32px 0;
 }
 
@@ -554,6 +583,84 @@ onMounted(() => {
 .signin-button:focus-visible {
   outline: 3px solid #006F47;
   outline-offset: 2px;
+}
+
+/* FORGOT PASSWORD LINK */
+.forgot-link {
+  margin-left: auto;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #006F47;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.forgot-link:hover {
+  color: #005A3A;
+  text-decoration: underline;
+}
+.forgot-link:focus-visible {
+  outline: 3px solid #006F47;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* SIGN UP ROW */
+.signup-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  color: #667085;
+}
+.signup-row a {
+  font-weight: 700;
+  color: #006F47;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.signup-row a:hover {
+  color: #005A3A;
+  text-decoration: underline;
+}
+.signup-row a:focus-visible {
+  outline: 3px solid #006F47;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* LEGAL LINKS */
+.legal-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  color: #98A2B3;
+}
+.legal-links a {
+  color: #006F47;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+.legal-links a:hover {
+  color: #005A3A;
+  text-decoration: underline;
+}
+.legal-links a:focus-visible {
+  outline: 3px solid #006F47;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.legal-separator {
+  color: #98A2B3;
+  font-weight: 400;
 }
 
 /* RESPONSIVE DESIGN */
