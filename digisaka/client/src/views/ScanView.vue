@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router';
-import { computed, onMounted, onBeforeUnmount, ref, nextTick, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import PageHeader from '../components/PageHeader.vue';
 import Icon from '../components/Icon.vue';
 import EvidenceCharts from '../components/EvidenceCharts.vue';
@@ -22,7 +22,7 @@ const maxDate = todayIso();                 // scans can't be added to a future 
 const dateInput = ref(maxDate);
 const weekRange = computed(() => (scan.weekOk ? `${weekStart(scan.week)} to ${weekEnd(scan.week)}` : ''));
 const atLatest = computed(() => scan.week >= isoWeekOf(fromIso(maxDate)));
-const gallery = ref(null), camera = ref(null), rescanInput = ref(null), logBox = ref(null);
+const gallery = ref(null), camera = ref(null), rescanInput = ref(null);
 const rescanId = ref(null);
 const stubSamples = samplesEnabled(); // only true on the stub stack (docker-compose.stub.yml)
 const previews = new Map();
@@ -67,7 +67,6 @@ const agentIndex = computed(() => (scan.assessing ? 1 : needsAnswer.value.length
 const status = computed(() => (scan.assessing ? 'Validating...' : needsAnswer.value.length ? 'Waiting for your confirmation' : failed.value.length ? 'Some leaves failed' : 'Validated'));
 const canContinue = computed(() => allDone.value && !scan.assessing);
 
-watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) logBox.value.scrollTop = logBox.value.scrollHeight; });
 </script>
 
 <template>
@@ -174,37 +173,41 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
       <div v-if="scan.assessing" class="loader" aria-hidden="true"><i></i><Icon name="scan" :size="38" /></div>
       <p class="center big">{{ scan.assessing ? `Validating & Assessing ${scan.leaves.length} Leaves...` : status }}</p>
 
-      <section v-if="needsAnswer.length" class="card answers" aria-live="polite">
-        <h2>Needs your confirmation</h2>
-        <div v-for="l in needsAnswer" :key="l.id" class="ask">
-          <img :src="preview(l)" :alt="`Leaf ${scan.leaves.indexOf(l) + 1}`">
-          <div v-if="l.phase === 'confirm'">
-            <strong>Leaf {{ scan.leaves.indexOf(l) + 1 }}{{ l.stage ? ` — ${l.stage}` : '' }}</strong>
-            <p>Do you see these on the leaf?</p>
-            <ul class="checks"><li v-for="c in l.checklist" :key="c">{{ c }}</li></ul>
-            <p v-if="l.error" class="err" role="alert">{{ l.error }}</p>
-            <button class="primary" @click="scan.confirm(l.id, true)">Yes</button>
-            <button @click="scan.confirm(l.id, false)">No</button>
-          </div>
-          <div v-else>
-            <strong>Leaf {{ scan.leaves.indexOf(l) + 1 }} — retake</strong>
-            <p>QA could not match the symptoms. Take a new photo of the same leaf.</p>
-            <p v-if="l.error" class="err" role="alert">{{ l.error }}</p>
-            <button class="primary" @click="startRescan(l.id)">Retake</button>
-            <button v-if="stubSamples" @click="scan.rescan(l.id, sampleFile(RETAKE_SAMPLE))">Use sample</button>
-          </div>
+      <div class="assessment-grid" :class="{ 'has-prompts': needsAnswer.length || (failed.length && !scan.assessing) }">
+        <div class="assessment-prompts">
+          <section v-if="needsAnswer.length" class="card answers" aria-live="polite">
+            <h2>Needs your confirmation</h2>
+            <div v-for="l in needsAnswer" :key="l.id" class="ask">
+              <img :src="preview(l)" :alt="`Leaf ${scan.leaves.indexOf(l) + 1}`">
+              <div v-if="l.phase === 'confirm'">
+                <strong>Leaf {{ scan.leaves.indexOf(l) + 1 }}{{ l.stage ? ` — ${l.stage}` : '' }}</strong>
+                <p>Do you see these on the leaf?</p>
+                <ul class="checks"><li v-for="c in l.checklist" :key="c">{{ c }}</li></ul>
+                <p v-if="l.error" class="err" role="alert">{{ l.error }}</p>
+                <button class="primary" @click="scan.confirm(l.id, true)">Yes</button>
+                <button @click="scan.confirm(l.id, false)">No</button>
+              </div>
+              <div v-else>
+                <strong>Leaf {{ scan.leaves.indexOf(l) + 1 }} — retake</strong>
+                <p>QA could not match the symptoms. Take a new photo of the same leaf.</p>
+                <p v-if="l.error" class="err" role="alert">{{ l.error }}</p>
+                <button class="primary" @click="startRescan(l.id)">Retake</button>
+                <button v-if="stubSamples" @click="scan.rescan(l.id, sampleFile(RETAKE_SAMPLE))">Use sample</button>
+              </div>
+            </div>
+          </section>
+
+          <section v-if="failed.length && !scan.assessing" class="card">
+            <p v-for="l in failed" :key="l.id" class="err" role="alert">Leaf {{ scan.leaves.indexOf(l) + 1 }}: {{ l.error }}</p>
+            <button class="primary" @click="scan.assess()">Retry failed leaves</button>
+          </section>
         </div>
-      </section>
-      <input ref="rescanInput" type="file" accept="image/*" capture="environment" hidden @change="rescanPicked">
 
-      <section v-if="failed.length && !scan.assessing" class="card">
-        <p v-for="l in failed" :key="l.id" class="err" role="alert">Leaf {{ scan.leaves.indexOf(l) + 1 }}: {{ l.error }}</p>
-        <button class="primary" @click="scan.assess()">Retry failed leaves</button>
-      </section>
-
-      <div ref="logBox" class="log" role="log" aria-label="Assessment log">
-        <p v-for="(e, i) in scan.log" :key="i" :class="e.kind">{{ e.text }}</p>
+        <div class="log" role="log" aria-label="Assessment log">
+          <p v-for="(e, i) in scan.log" :key="i" :class="e.kind">{{ e.text }}</p>
+        </div>
       </div>
+      <input ref="rescanInput" type="file" accept="image/*" capture="environment" hidden @change="rescanPicked">
 
       <div class="nav">
         <button :disabled="scan.assessing" @click="step = 1">Back</button>
@@ -349,7 +352,13 @@ button.wide { width: 100%; padding: 14px; margin: 20px 0 8px; border-radius: 14p
 .loader i { position: absolute; inset: 0; border-radius: 50%; border: 4px solid var(--tint); border-top-color: var(--forest); animation: spin 1.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .big { font: 800 17px var(--font-display); color: var(--forest); margin-bottom: 16px; }
-.log { height: 190px; overflow-y: auto; background: rgba(255,255,255,.75); border: 1px solid #dde3db; border-radius: 12px; padding: 10px 12px; font: 11.5px/1.3 ui-monospace, monospace; margin-bottom: 16px; }
+.log { min-height: 190px; background: rgba(255,255,255,.75); border: 1px solid #dde3db; border-radius: 12px; padding: 10px 12px; font: 13px/1.45 var(--font-body); margin-bottom: 16px; }
+.assessment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.assessment-grid:not(.has-prompts) { grid-template-columns: minmax(0, 1fr); }
+.assessment-prompts { min-width: 0; }
+.assessment-prompts:empty { display: none; }
+.assessment-grid > .log { width: 100%; max-width: none; margin-bottom: 16px; }
+.assessment-prompts > .card { width: 100%; max-width: none; }
 .log p { margin-bottom: 6px; }
 .log .agent { font-weight: 800; } .log .step { color: var(--teal); } .log .ok { font-weight: 800; } .log .bad { color: var(--danger); font-weight: 800; }
 .ask { display: flex; gap: 12px; }
@@ -371,6 +380,7 @@ button.wide { width: 100%; padding: 14px; margin: 20px 0 8px; border-radius: 14p
 }
 @media (max-width: 680px) {
   .scan-columns { grid-template-columns: minmax(0, 1fr); }
+  .assessment-grid { grid-template-columns: minmax(0, 1fr); }
   .stepper { gap: 0; }
   .dot { gap: 5px; }
   .dot span { min-width: 30px; height: 30px; padding: 0 8px; }

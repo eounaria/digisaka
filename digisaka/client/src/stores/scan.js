@@ -56,7 +56,7 @@ export const useScanStore = defineStore('scan', {
     },
     async _send(leaf, file, reuse) {
       leaf.error = ''; leaf.phase = 'uploading';
-      this.note(`🤖 Agent → ${this.label(leaf)} — Black Sigatoka validation`, 'agent');
+      this.note(`Agent → ${this.label(leaf)} — Black Sigatoka validation`, 'agent');
       try {
         const { img_name, img } = await fileToPayload(file);
         const body = { img_name, img, ...(reuse ? { qa_output_id: reuse } : {}) };
