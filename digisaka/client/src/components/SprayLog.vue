@@ -81,10 +81,10 @@ const applications = computed(() => {
     </section>
 
     <div class="history-sidebar">
-      <section class="card frac-card" aria-label="FRAC history">
+      <section class="card frac-card" :class="{ restricted: prototypeStore.data?.frac_history?.some((entry) => entry.status === 'Restricted') }" aria-label="FRAC history">
         <header>
           <div>
-            <h2>FRAC history</h2>
+            <h2>{{ prototypeStore.data?.frac_history?.some((entry) => entry.status === 'Restricted') ? 'Restricted FRAC groups' : 'FRAC history' }}</h2>
             <p>Rotation context and sample season-use limits.</p>
           </div>
           <span v-if="prototypeStore.phase === 'ready'" class="sample-badge">Sample only</span>
@@ -93,14 +93,15 @@ const applications = computed(() => {
           <p class="sample-label">{{ prototypeStore.data.label }}</p>
           <div class="frac-history">
             <div v-for="entry in prototypeStore.data.frac_history" :key="entry.frac_code" class="frac-row">
-              <div class="frac-row-heading">
-                <strong>FRAC {{ entry.frac_code }}</strong>
-                <span>{{ entry.uses }} / {{ entry.limit }} uses</span>
-                <span class="badge" :class="{ restricted: entry.status === 'Restricted' }">{{ entry.status }}</span>
+              <span class="frac-code">FRAC {{ entry.frac_code }}</span>
+              <div class="frac-row-detail">
+                <strong>{{ entry.reason }}</strong>
+                <small>{{ entry.uses }} / {{ entry.limit }} sample uses</small>
               </div>
-              <small>{{ entry.reason }}</small>
+              <span class="frac-status" :class="{ restricted: entry.status === 'Restricted' }">{{ entry.status }}</span>
             </div>
           </div>
+          <p v-if="prototypeStore.data.frac_history.some((entry) => entry.status === 'Restricted')" class="frac-footnote">Restricted groups are excluded from eligible sample options.</p>
         </template>
         <p v-else class="rotation-note">
           FRAC codes and season-use limits are not provided by the scheduler, so rotation eligibility cannot be assessed here.
@@ -145,10 +146,17 @@ header p, .hint, .empty { color: var(--ink-soft); font-size: .88rem; line-height
 .sample-badge { flex: none; padding: 5px 10px; border-radius: 999px; background: #e5e7eb; color: #374151; font-size: .72rem; font-weight: 800; }
 .sample-timeline { margin-top: 10px; }
 .badge.restricted { background: var(--warn-tint); color: var(--warn); }
-.frac-history { display: grid; gap: 9px; margin-top: 14px; }
-.frac-row { padding: 11px; border-radius: 10px; background: var(--tint); }
-.frac-row-heading { display: grid; grid-template-columns: minmax(55px, .7fr) minmax(80px, 1fr) auto; align-items: center; gap: 8px; font-size: .8rem; }
-.frac-row small { display: block; margin-top: 6px; color: var(--ink-soft); font-size: .78rem; line-height: 1.4; }
+.frac-card.restricted { border: 1.5px solid #d6455a; box-shadow: none; }
+.frac-card.restricted header h2 { color: var(--ink); }
+.frac-history { display: grid; gap: 2px; margin-top: 12px; }
+.frac-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px 0; }
+.frac-code { flex: none; padding: 4px 9px; border-radius: 999px; background: #e5e7eb; color: #374151; font-size: .72rem; font-weight: 800; white-space: nowrap; }
+.frac-row-detail { display: grid; min-width: 0; gap: 2px; }
+.frac-row-detail strong { color: var(--ink); font-size: .79rem; font-weight: 600; line-height: 1.4; }
+.frac-row-detail small { color: var(--ink-soft); font-size: .72rem; }
+.frac-status { flex: none; padding: 3px 9px; border-radius: 999px; background: #dff3e4; color: #0b5a1f; font-size: .68rem; font-weight: 800; white-space: nowrap; }
+.frac-status.restricted { background: #fbdada; color: #9b1c1c; }
+.frac-footnote { margin-top: 5px; color: var(--ink-soft); font-size: .74rem; line-height: 1.4; }
 .action-card { display: grid; gap: 12px; }
 .action-card header { align-items: center; }
 .action-card header h2 { margin: 0; }

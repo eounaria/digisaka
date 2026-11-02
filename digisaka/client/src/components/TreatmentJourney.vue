@@ -19,6 +19,7 @@ const proposalStore = useProposalStore();
 const prototypeStore = usePrototypeStore();
 const page = ref(0);
 const note = ref('');
+const sampleDecision = ref('');
 const PAGES = ['Weather risk', 'Spray log', 'Fungicide options', 'Product details', 'Decision', 'Schedule'];
 const proposal = computed(() => proposalStore.proposal);
 const treatment = computed(() => proposal.value?.treatment ?? null);
@@ -64,7 +65,20 @@ async function showOptions() {
 }
 
 function confirmSampleProduct() {
-  if (detailProduct.value && prototypeStore.confirmSample(detailProduct.value.id)) page.value = 2;
+  if (detailProduct.value && prototypeStore.confirmSample(detailProduct.value.id)) {
+    sampleDecision.value = '';
+    page.value = 2;
+  }
+}
+
+function removeSampleProduct(optionId) {
+  prototypeStore.removeSample(optionId);
+  sampleDecision.value = '';
+}
+
+function decideSample(decision) {
+  sampleDecision.value = decision;
+  page.value = 5;
 }
 
 function showProductDetails(optionId) {
@@ -173,7 +187,7 @@ async function decide(decision) {
                   </span>
                   <span class="product-action">
                     <span v-if="isConfirmed(product.id)" class="selection-state">Selected</span>
-                    <span aria-hidden="true">View details <b>→</b></span>
+                    <span class="product-link" aria-hidden="true">View details <b>→</b></span>
                   </span>
                 </button>
               </div>
@@ -196,7 +210,7 @@ async function decide(decision) {
                   </span>
                   <span class="product-action">
                     <span v-if="isConfirmed(product.id)" class="selection-state insisted">Insisted</span>
-                    <span aria-hidden="true">Details <b>→</b></span>
+                    <span class="product-link" aria-hidden="true">View details <b>→</b></span>
                   </span>
                 </button>
               </div>
@@ -207,10 +221,14 @@ async function decide(decision) {
               <ul>
                 <li v-for="product in confirmedProducts" :key="product.id">
                   <span>{{ product.name }} <small v-if="product.eligibility !== 'Eligible in prototype data'">· Excluded in sample</small></span>
-                  <button type="button" @click="prototypeStore.removeSample(product.id)">Remove</button>
+                  <button type="button" class="text-action" @click="removeSampleProduct(product.id)">Remove</button>
                 </li>
               </ul>
             </section>
+            <div v-if="confirmedProducts.length" class="options-continue">
+              <p>Review your sample selections and record a prototype-only decision.</p>
+              <button type="button" class="journey-cta" @click="page = 4">Continue to decision</button>
+            </div>
           </div>
         </template>
         <template v-else-if="cycle.phase === 'proposal' && proposalStore.phase === 'ready' && proposal">
@@ -346,8 +364,64 @@ async function decide(decision) {
 
     <template v-else-if="page === 4">
       <section class="card decision-card">
-        <div class="heading-row"><h2>Your decision</h2><span class="badge" :class="status">{{ status }}</span></div>
-        <template v-if="proposal">
+        <template v-if="prototypeStore.enabled && confirmedProducts.length">
+          <div class="heading-row">
+            <div>
+              <span class="eyebrow">Prototype preview</span>
+              <h2>Your decision</h2>
+            </div>
+            <span class="badge proposed">Not a scheduler decision</span>
+          </div>
+            <div class="decision-layout">
+            <div class="decision-main">
+              <section class="detail-section decision-recommendation">
+                <p class="section-kicker">Recommended action · sample</p>
+                <div class="action-chips">
+                  <span class="action-chip preventive" :class="{ active: prototypeStore.data?.recommended_action?.preventive }">Preventive</span>
+                  <span class="action-chip mechanical" :class="{ active: prototypeStore.data?.recommended_action?.mechanical }">Mechanical</span>
+                  <span class="action-chip provisional">{{ prototypeStore.data?.recommended_action?.provisional_label ?? 'Provisional' }}</span>
+                </div>
+                <div class="detail-rows">
+                  <div class="detail-row"><span>Apply</span><strong>Not provided</strong></div>
+                  <div class="detail-row"><span>Reassess</span><strong>{{ week }}</strong></div>
+                </div>
+              </section>
+              <section class="detail-section decision-selection">
+                <p class="section-kicker">Selected products · sample only</p>
+                <div v-for="product in confirmedProducts" :key="product.id" class="decision-product">
+                  <div>
+                    <strong>{{ product.name }}</strong>
+                    <span>FRAC {{ product.frac_code }} · {{ product.mobility }}</span>
+                  </div>
+                  <span class="badge" :class="product.eligibility === 'Eligible in prototype data' ? 'selected' : 'rejected'">
+                    {{ product.eligibility === 'Eligible in prototype data' ? 'Sample eligible' : 'Excluded' }}
+                  </span>
+                  <p v-if="product.eligibility !== 'Eligible in prototype data'" class="decision-product-warning">{{ product.resistance_note }} Not recommended.</p>
+                </div>
+                <p class="sample-note">Compatibility, label eligibility, rates, and timing are not verified. These selections are not an application recommendation.</p>
+              </section>
+              <section class="detail-section decision-why">
+                <p class="section-kicker">Why</p>
+                <p>{{ prototypeStore.data?.recommended_action?.summary ?? 'No sample rationale is available.' }}</p>
+              </section>
+            </div>
+            <aside class="detail-section decision-choice">
+              <p class="section-kicker">Your decision</p>
+              <div v-if="sampleDecision" class="decision-saved" role="status">
+                <strong>{{ sampleDecision === 'approved' ? 'Sample preview approved' : 'Sample preview rejected' }}</strong>
+                <span>This is a local prototype choice only. It does not update the scheduler or create a treatment schedule.</span>
+              </div>
+              <div v-else class="decision-actions">
+                <button type="button" class="reject" @click="decideSample('rejected')">Reject</button>
+                <button type="button" class="primary" @click="decideSample('approved')">Approve sample preview</button>
+              </div>
+              <p class="decision-disclaimer">Verify all findings and registered product labels with an agricultural specialist before making treatment decisions.</p>
+            </aside>
+          </div>
+        </template>
+        <template v-else>
+          <div class="heading-row"><h2>Your decision</h2><span class="badge" :class="status">{{ status }}</span></div>
+          <template v-if="proposal">
           <h3>{{ selectedProduct?.name ?? treatment?.name ?? 'Treatment details unavailable' }}</h3>
           <p>Line {{ line }} · {{ week }}</p>
           <p v-if="proposal.window">Proposed application window: {{ proposal.window.start }} to {{ proposal.window.end }}</p>
@@ -361,21 +435,30 @@ async function decide(decision) {
             <button type="button" class="primary" :disabled="proposalStore.busy" @click="decide('approved')">Approve</button>
           </div>
           <p v-else class="hint">This proposal has already been {{ status }}. Its decision cannot be changed here.</p>
+          </template>
+          <div v-else class="empty">
+            <h3>No treatment decision is available</h3>
+            <p>The scheduler did not return a proposal. Review the scheduler outcome before making treatment decisions.</p>
+          </div>
         </template>
-        <div v-else class="empty">
-          <h3>No treatment decision is available</h3>
-          <p>The scheduler did not return a proposal. Review the scheduler outcome before making treatment decisions.</p>
-        </div>
       </section>
       <div class="nav">
         <button type="button" @click="page = 3">Back to product details</button>
-        <button v-if="proposal && status !== 'proposed'" class="primary" type="button" @click="page = 5">View schedule status</button>
+        <button v-if="sampleDecision" class="primary" type="button" @click="page = 5">View decision status</button>
+        <button v-else-if="proposal && status !== 'proposed'" class="primary" type="button" @click="page = 5">View schedule status</button>
       </div>
     </template>
 
     <template v-else>
       <section class="card schedule-card" aria-live="polite">
-        <template v-if="proposal && status === 'proposed'">
+        <template v-if="sampleDecision">
+          <span class="schedule-icon" :class="sampleDecision === 'approved' ? 'approved' : 'review'">{{ sampleDecision === 'approved' ? '✓' : '!' }}</span>
+          <h2>{{ sampleDecision === 'approved' ? 'Sample decision approved' : 'Sample decision rejected' }}</h2>
+          <p>{{ confirmedProducts.map((product) => product.name).join(' · ') }} · Line {{ line }} · {{ week }}</p>
+          <p>This prototype-only decision does not approve or create a real treatment schedule.</p>
+          <button type="button" @click="page = 4">Review your decision</button>
+        </template>
+        <template v-else-if="proposal && status === 'proposed'">
           <span class="schedule-icon waiting">…</span>
           <h2>Treatment schedule awaiting decision</h2>
           <p>{{ treatment?.name ?? 'Proposed treatment' }} · Line {{ line }} · {{ week }}</p>
@@ -464,6 +547,12 @@ async function decide(decision) {
 .product-description, .product-meta { display: block; color: var(--ink-soft); font-size: .79rem; line-height: 1.4; }
 .product-action { display: grid; flex: 0 0 auto; justify-items: end; gap: 4px; margin-left: auto; color: var(--forest); font-size: .76rem; font-weight: 800; white-space: nowrap; }
 .product-action b { margin-left: 3px; font-size: 1rem; }
+.product-link, .text-action { color: var(--forest); font-size: .8rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+.text-action { border: 0; background: transparent; padding: 3px 6px; }
+.product-option:hover .product-link, .excluded-option:hover .product-link, .text-action:hover { color: var(--forest-deep); }
+.options-continue { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+.options-continue p { color: var(--ink-soft); font-size: .84rem; }
+.options-continue .journey-cta { flex: 0 0 auto; }
 .selection-state { color: var(--forest); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
 .excluded-products { display: grid; gap: 2px; }
 .excluded-option { min-height: 58px; padding: 10px 12px; border-radius: 8px; background: transparent; }
@@ -547,6 +636,24 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
 .decision-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 .decision-actions button { min-width: 120px; }
 .reject { background: #fff; border: 1px solid var(--danger); color: var(--danger); }
+.decision-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: 20px; align-items: start; }
+.decision-main { display: grid; gap: 14px; min-width: 0; }
+.decision-recommendation .detail-rows { margin-top: 12px; }
+.decision-selection { display: grid; gap: 10px; }
+.decision-product { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 0; border-top: 1px solid #e5e7e5; }
+.decision-product > div { display: grid; gap: 3px; min-width: 0; }
+.decision-product > div strong { overflow-wrap: anywhere; }
+.decision-product > div span { color: var(--ink-soft); font-size: .8rem; }
+.decision-product > .badge { font-size: .67rem; }
+.decision-product-warning { grid-column: 1 / -1; color: var(--danger); font-size: .8rem !important; }
+.decision-why p:last-child { color: var(--ink-soft); font-size: .88rem; }
+.decision-choice { display: grid; gap: 12px; }
+.decision-choice .decision-actions { margin: 0; }
+.decision-choice .decision-actions button { flex: 1; }
+.decision-choice .decision-actions .primary { border: 1px solid var(--forest); background: var(--forest); color: #fff; }
+.decision-disclaimer { color: var(--ink-soft); font-size: .78rem !important; line-height: 1.5; }
+.decision-saved { display: grid; gap: 6px; padding: 12px; border-radius: 12px; background: var(--tint); color: var(--forest-deep); }
+.decision-saved span { font-size: .82rem; line-height: 1.45; }
 .error { color: var(--danger); }
 .outcome { color: var(--ink-soft); }
 .schedule-card { display: grid; justify-items: start; gap: 8px; padding: 24px; }
@@ -570,6 +677,7 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
 @media (max-width: 760px) {
   .journey-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 12px; }
   .product-detail-layout { grid-template-columns: minmax(0, 1fr); }
+  .decision-layout { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 520px) {
   .heading-row, .option { flex-direction: column; }
@@ -577,11 +685,14 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
   .product-option { align-items: flex-start; }
   .excluded-option { align-items: center; }
   .combo-heading, .excluded-heading { align-items: flex-start; }
+  .options-continue { align-items: stretch; flex-direction: column; }
   .journey-cta { width: 100%; }
   .product-name-row { align-items: flex-start; flex-direction: column; }
   .detail-row { align-items: flex-start; flex-direction: column; gap: 3px; }
   .detail-row strong { text-align: left; }
   .eligibility-row { align-items: flex-start; }
+  .decision-product { grid-template-columns: minmax(0, 1fr); }
+  .decision-choice .decision-actions { flex-direction: column; }
   .decision-actions { flex-direction: column; }
   .decision-actions button { width: 100%; min-height: 42px; }
 }
