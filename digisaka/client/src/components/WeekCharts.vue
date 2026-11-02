@@ -6,7 +6,7 @@ import { diseaseCaption, rainfallCaption, missingWeeks, linePath, niceMax } from
 // weeks are highlighted and captioned; without them it is a plain look at recent weeks.
 const props = defineProps({ weeks: { type: Array, required: true }, disease: { type: Object, default: null }, rainfall: { type: Object, default: null } });
 
-const W = 320, H = 150, L = 34, R = 10, T = 10, B = 28;
+const W = 320, H = 150, L = 34, R = 10, T = 10, B = 28, RAIN_L = 46;
 const hoveredPoint = ref(null), focusedPoint = ref(null);
 const diseaseTooltipText = ref(null), rainfallTooltipText = ref(null);
 const tooltipWidth = ref(0);
@@ -59,8 +59,9 @@ const ticks = computed(() => [lo.value, Math.round((lo.value + hi.value) / 2), h
 
 // Rainfall chart.
 const rainTop = computed(() => niceMax(Math.max(0, ...weeks.value.map((w) => w.rainfall_mm ?? 0), props.rainfall?.min_total_mm ?? 0)));
+const rainX = (i) => (weeks.value.length < 2 ? (RAIN_L + W - R) / 2 : RAIN_L + (i * (W - RAIN_L - R)) / (weeks.value.length - 1));
 const yR = (v) => T + (1 - v / rainTop.value) * (H - T - B);
-const barW = computed(() => Math.min(24, ((W - L - R) / Math.max(weeks.value.length, 1)) * 0.6));
+const barW = computed(() => Math.min(24, ((W - RAIN_L - R) / Math.max(weeks.value.length, 1)) * 0.6));
 const group = (w) => (!props.rainfall || props.rainfall.recent_weeks.includes(w) ? 'recent' : props.rainfall.previous_weeks.includes(w) ? 'previous' : 'other');
 const minLine = computed(() => (props.rainfall?.min_total_mm > 0 ? props.rainfall.min_total_mm / Math.max(props.rainfall.window_weeks, 1) : 0));
 
@@ -116,19 +117,19 @@ const cell = (v) => (v == null ? '—' : v);</script>
     <figcaption>Rainfall by week (mm)</figcaption>
     <svg :viewBox="`0 0 ${W} ${H}`" role="group" :aria-label="rLabel" @pointerleave="clearChartHover('rainfall')">
       <g class="axis">
-        <template v-for="t in [0, rainTop / 2, rainTop]" :key="t"><line :x1="L" :x2="W - R" :y1="yR(t)" :y2="yR(t)" /><text :x="L - 6" :y="yR(t) + 3" text-anchor="end">{{ t }}</text></template>
-        <text v-for="(w, i) in weeks" :key="w.week" :x="x(i)" :y="H - 10" text-anchor="middle">{{ label(w.week) }}</text>
+        <template v-for="t in [0, rainTop / 2, rainTop]" :key="t"><line :x1="RAIN_L" :x2="W - R" :y1="yR(t)" :y2="yR(t)" /><text :x="L - 6" :y="yR(t) + 3" text-anchor="end">{{ t }}</text></template>
+        <text v-for="(w, i) in weeks" :key="w.week" :x="rainX(i)" :y="H - 10" text-anchor="middle">{{ label(w.week) }}</text>
       </g>
       <template v-for="(w, i) in weeks" :key="w.week">
-        <rect v-if="w.rainfall_mm != null" :class="['bar', group(w.week)]" :x="x(i) - barW / 2" :y="yR(w.rainfall_mm)" :width="barW" :height="yR(0) - yR(w.rainfall_mm)"
+        <rect v-if="w.rainfall_mm != null" :class="['bar', group(w.week)]" :x="rainX(i) - barW / 2" :y="yR(w.rainfall_mm)" :width="barW" :height="yR(0) - yR(w.rainfall_mm)"
               tabindex="0" role="img" :aria-label="`${w.week}, rainfall: ${w.rainfall_mm} mm`"
-              @pointerenter="hoverPoint('rainfall', w, 'Rainfall', w.rainfall_mm, x(i), yR(w.rainfall_mm))"
+              @pointerenter="hoverPoint('rainfall', w, 'Rainfall', w.rainfall_mm, rainX(i), yR(w.rainfall_mm))"
               @pointerleave="clearHover('rainfall', `rainfall-${w.week}-Rainfall`)"
-              @focus="focusPoint('rainfall', w, 'Rainfall', w.rainfall_mm, x(i), yR(w.rainfall_mm))" @blur="clearPoint('rainfall')">
+              @focus="focusPoint('rainfall', w, 'Rainfall', w.rainfall_mm, rainX(i), yR(w.rainfall_mm))" @blur="clearPoint('rainfall')">
           <title>{{ w.week }} · Rainfall: {{ w.rainfall_mm }} mm</title>
         </rect>
       </template>
-      <line v-if="minLine" class="min" :x1="L" :x2="W - R" :y1="yR(minLine)" :y2="yR(minLine)" />
+      <line v-if="minLine" class="min" :x1="RAIN_L" :x2="W - R" :y1="yR(minLine)" :y2="yR(minLine)" />
       <g v-if="activePoint?.chart === 'rainfall'" class="tooltip" aria-hidden="true">
         <rect :x="tooltipX - tooltipWidth / 2" :y="tooltipY - 9" :width="tooltipWidth" height="18" rx="4" />
         <text ref="rainfallTooltipText" :x="tooltipX" :y="tooltipY + 2.5">{{ pointText }}</text>
