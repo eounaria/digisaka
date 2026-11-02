@@ -86,65 +86,72 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
 
     <!-- Step 1: Select Leaves -->
     <template v-if="step === 1">
-      <section class="card pick">
-        <label>Line
-          <select :value="scan.line" @change="setLine">
+      <div class="scan-columns">
+        <section class="card pick context" aria-label="Line context">
+          <label for="scan-line">Line</label>
+          <select id="scan-line" :value="scan.line" @change="setLine">
             <option v-if="!farm.lines.length" value="">No lines available</option>
             <option v-for="l in farm.lines" :key="l" :value="l">{{ l }}</option>
           </select>
-        </label>
-        <div class="week">
-          <label>Date <input v-model="dateInput" type="date" :max="maxDate" @change="setDate"></label>
-          <button type="button" @click="stepWeek(previousWeek)">Previous week</button>
-          <button type="button" :disabled="atLatest" @click="stepWeek(nextWeek)">Next week</button>
+          <label for="scan-date" class="date-label">Date</label>
+          <div class="week-nav">
+            <input id="scan-date" v-model="dateInput" type="date" :max="maxDate" @change="setDate">
+            <button type="button" @click="stepWeek(previousWeek)">Previous week</button>
+            <button type="button" :disabled="atLatest" @click="stepWeek(nextWeek)">Next week</button>
+          </div>
+          <p class="week-label">Week {{ scan.week }} <span v-if="weekRange">({{ weekRange }})</span></p>
+          <p v-if="farm.linesError" class="err" role="alert">{{ farm.linesError }}</p>
+          <LineHistory :line="scan.line" :week="scan.week" />
+        </section>
+
+        <div class="capture-panel">
+          <div class="frame" role="img" aria-label="Camera viewfinder. Position the banana leaf inside the frame.">
+            <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br bb"></span>
+            <Icon name="scan" :size="64" />
+            <p>Position the banana leaf inside the frame</p>
+          </div>
+          <p class="hint center">Good lighting <span aria-hidden="true">•</span> Clear leaf <span aria-hidden="true">•</span> Symptoms visible</p>
+
+          <div class="capture">
+            <button class="gallery" :disabled="scan.leaves.length >= MAX_LEAVES" @click="gallery.click()">
+              <span class="tile"><Icon name="folder" :size="26" /></span>Gallery
+            </button>
+            <button class="shutter" :disabled="scan.leaves.length >= MAX_LEAVES" aria-label="Take photo" @click="camera.click()"><span></span></button>
+          </div>
+          <div v-if="stubSamples" class="samples" aria-label="Sample leaves (stub only)">
+            <span>Sample leaves</span>
+            <button v-for="(label, key) in SAMPLE_SCENARIOS" :key="key" :disabled="scan.leaves.length >= MAX_LEAVES" @click="scan.addFiles([sampleFile(key)])">{{ label }}</button>
+          </div>
+          <input ref="camera" type="file" accept="image/*" capture="environment" hidden @change="picked">
+          <input ref="gallery" type="file" accept="image/*" multiple hidden @change="picked">
+
+          <section class="card selected" aria-label="Selected leaves">
+            <div class="head">
+              <strong class="count">{{ scan.leaves.length }} leaves selected</strong>
+              <button v-if="scan.leaves.length" class="link" @click="scan.clear()">Clear all</button>
+            </div>
+            <p v-if="scan.notice" class="err" role="alert">{{ scan.notice }}</p>
+            <ul class="grid">
+              <li v-for="(l, i) in scan.leaves" :key="l.id" class="thumb">
+                <img :src="preview(l)" :alt="`Leaf ${i + 1}`">
+                <span class="pill">Leaf {{ i + 1 }}</span>
+                <button class="x" :aria-label="`Remove leaf ${i + 1}`" @click="scan.remove(l.id)"><Icon name="plus" :size="12" /></button>
+              </li>
+              <li v-if="scan.leaves.length < MAX_LEAVES"><button class="add" aria-label="Add leaves" @click="gallery.click()"><Icon name="plus" :size="22" /></button></li>
+            </ul>
+            <button class="primary wide" :disabled="!scan.canAssess" @click="assess">
+              Assess All Leaves{{ scan.leaves.length ? ` (${scan.leaves.length})` : '' }}
+            </button>
+            <p v-if="!scan.leaves.length" class="hint center">No leaves added yet.</p>
+          </section>
+
+          <section class="card soon" aria-disabled="true">
+            <h2>Not available yet</h2>
+            <label class="off">Stage override <select disabled><option>Use QA's stage</option></select></label>
+            <label class="off">Treatment history <select disabled><option>Not available yet</option></select></label>
+          </section>
         </div>
-        <p class="hint">Week {{ scan.week }} ({{ weekRange }})</p>
-        <p v-if="farm.linesError" class="err" role="alert">{{ farm.linesError }}</p>
-        <LineHistory :line="scan.line" :week="scan.week" />
-      </section>
-
-      <div class="frame" aria-hidden="true">
-        <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br bb"></span>
-        <Icon name="scan" :size="90" />
-        <p>Position the banana leaf inside the frame</p>
       </div>
-      <p class="hint center">Good lighting • Clear leaf • Symptoms visible</p>
-
-      <div class="capture">
-        <button class="gallery" :disabled="scan.leaves.length >= MAX_LEAVES" @click="gallery.click()"><span class="tile"><Icon name="folder" :size="26" /></span>Gallery</button>
-        <button class="shutter" :disabled="scan.leaves.length >= MAX_LEAVES" aria-label="Take photo" @click="camera.click()"><span></span></button>
-      </div>
-      <div v-if="stubSamples" class="samples" aria-label="Sample leaves (stub only)">
-        <span>Sample leaves</span>
-        <button v-for="(label, key) in SAMPLE_SCENARIOS" :key="key" :disabled="scan.leaves.length >= MAX_LEAVES" @click="scan.addFiles([sampleFile(key)])">{{ label }}</button>
-      </div>
-      <input ref="camera" type="file" accept="image/*" capture="environment" hidden @change="picked">
-      <input ref="gallery" type="file" accept="image/*" multiple hidden @change="picked">
-
-      <div class="head">
-        <strong class="count">{{ scan.leaves.length }} leaves selected</strong>
-        <button v-if="scan.leaves.length" class="link" @click="scan.clear()">Clear all</button>
-      </div>
-      <p v-if="scan.notice" class="err" role="alert">{{ scan.notice }}</p>
-      <ul class="grid">
-        <li v-for="(l, i) in scan.leaves" :key="l.id" class="thumb">
-          <img :src="preview(l)" :alt="`Leaf ${i + 1}`">
-          <span class="pill">Leaf {{ i + 1 }}</span>
-          <button class="x" :aria-label="`Remove leaf ${i + 1}`" @click="scan.remove(l.id)"><Icon name="plus" :size="12" /></button>
-        </li>
-        <li v-if="scan.leaves.length < MAX_LEAVES"><button class="add" aria-label="Add leaves" @click="gallery.click()"><Icon name="plus" :size="22" /></button></li>
-      </ul>
-
-      <button class="primary wide" :disabled="!scan.canAssess" @click="assess">
-        Assess All Leaves{{ scan.leaves.length ? ` (${scan.leaves.length})` : '' }}
-      </button>
-      <p v-if="!scan.leaves.length" class="hint center">No leaves added yet.</p>
-
-      <section class="card soon" aria-disabled="true">
-        <h2>Not available yet</h2>
-        <label class="off">Stage override <select disabled><option>Use QA's stage</option></select></label>
-        <label class="off">Treatment history <select disabled><option>Not available yet</option></select></label>
-      </section>
     </template>
 
     <!-- Step 2: Bulk Assess -->
@@ -265,13 +272,25 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
 </template>
 
 <style scoped>
-.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow); padding: 16px; margin-bottom: 16px; max-width: 720px; display: grid; gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px; max-width: 720px; display: grid; gap: 12px; }
 h2 { font: 800 14px var(--font-display); color: var(--forest); letter-spacing: .04em; }
 .page > * { max-width: 720px; }
-.pick { display: grid; }
-.week { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.page > .scan-columns { max-width: 1180px; }
+.scan-columns { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .92fr); gap: 24px; align-items: start; }
+.capture-panel { min-width: 0; }
+.pick { display: grid; gap: 8px; }
 label { display: grid; gap: 4px; font-weight: 700; color: var(--ink-soft); }
-input, select, button { padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff; }
+input, select, button { min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff; }
+.pick select, .week-nav input, .week-nav button { height: 44px; }
+.date-label { margin-top: 8px; }
+.week-nav { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; }
+.week-nav input { width: 100%; }
+.week-nav button { white-space: nowrap; }
+.week-label { margin: 0; color: var(--ink-soft); font-size: 13px; }
+.week-label span { color: var(--ink-soft); }
+.context { max-width: none; padding: 22px 24px; }
+.selected { max-width: none; margin: 16px 0; padding: 18px; gap: 12px; }
+.selected .head { margin: 0; }
 button:disabled, select:disabled { opacity: .55; cursor: not-allowed; }
 button.primary { background: var(--forest); border-color: var(--forest); color: #fff; font-weight: 800; }
 button.wide { width: 100%; padding: 14px; margin: 20px 0 8px; border-radius: 14px; }
@@ -279,19 +298,20 @@ button.wide { width: 100%; padding: 14px; margin: 20px 0 8px; border-radius: 14p
 .center { text-align: center; }
 .err { color: var(--danger); }
 
-.stepper { display: flex; align-items: flex-start; list-style: none; margin-bottom: 20px; }
-.dot { display: grid; justify-items: center; gap: 6px; }
-.dot span { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--line); color: var(--ink-soft); }
-.dot small { font-size: 11px; color: var(--ink-soft); }
+.stepper { display: flex; align-items: center; list-style: none; margin-bottom: 20px; max-width: 1180px; }
+.dot { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.dot span { min-width: 39px; height: 31px; padding: 0 12px; border-radius: 999px; display: grid; place-items: center; font-weight: 800; background: #8b8f8b; color: #fff; }
+.dot small { font-size: 15px; color: var(--ink); }
 .dot.active span { background: var(--forest); color: #fff; }
 .dot.active small { color: var(--forest); font-weight: 800; }
-.conn { flex: 1; height: 2px; background: var(--line); margin: 15px 8px 0; }
+.conn { flex: 1; height: 2px; background: var(--line); margin: 0 14px; }
 
-.frame { position: relative; aspect-ratio: 1.5; border-radius: 20px; background: linear-gradient(#08783F, #0D3D1E); display: grid; place-items: center; color: rgba(255,255,255,.15); }
-.frame p { position: absolute; bottom: 18px; color: #fff; font-weight: 700; font-size: 13px; }
+.frame { position: relative; aspect-ratio: 1.5; min-height: 260px; max-height: 340px; border-radius: 14px; background: linear-gradient(#0a7a3c 20%, #045f2b); display: grid; place-items: center; color: rgba(255,255,255,.25); overflow: hidden; }
+.frame p { position: absolute; bottom: 12px; width: 100%; color: #fff; font-weight: 700; font-size: 12px; text-align: center; }
 .br { position: absolute; width: 28px; height: 28px; border: 0 solid var(--banana); }
-.tl { top: 14px; left: 14px; border-width: 3px 0 0 3px; } .tr { top: 14px; right: 14px; border-width: 3px 3px 0 0; }
-.bl { bottom: 14px; left: 14px; border-width: 0 0 3px 3px; } .bb { bottom: 14px; right: 14px; border-width: 0 3px 3px 0; }
+.tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; } .tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+.bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; } .bb { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+.capture-panel > .hint { margin: 10px 0 8px; }
 .samples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 13px; }
 .samples span { color: var(--ink-soft); }
 .samples button { padding: 6px 10px; font-size: 13px; }
@@ -310,7 +330,8 @@ button.wide { width: 100%; padding: 14px; margin: 20px 0 8px; border-radius: 14p
 .x { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: #e53935; color: #fff; display: grid; place-items: center; }
 .x :deep(svg) { transform: rotate(45deg); }
 .add { width: 100%; aspect-ratio: 1; border: 2px dashed var(--leaf-soft); border-radius: 14px; color: var(--forest); background: none; display: grid; place-items: center; padding: 0; }
-.soon { opacity: .6; margin-top: 16px; }
+.soon { opacity: .72; max-width: none; margin-top: 16px; }
+.soon .off { opacity: .7; }
 
 .summary { grid-template-columns: repeat(3, 1fr); }
 .summary span { display: block; color: var(--ink-soft); font-size: 12px; }
@@ -338,4 +359,22 @@ button.wide { width: 100%; padding: 14px; margin: 20px 0 8px; border-radius: 14p
 .btn.primary { background: var(--forest); color: #fff; font-weight: 800; }
 .results li { display: flex; gap: 10px; align-items: center; }
 .results img { width: 48px; height: 48px; object-fit: cover; border-radius: 10px; }
+@media (max-width: 900px) {
+  .scan-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .context { padding: 18px; }
+  .week-nav { grid-template-columns: minmax(0, 1fr) auto; }
+  .week-nav input { grid-column: 1 / -1; }
+  .week-nav button { white-space: normal; }
+}
+@media (max-width: 680px) {
+  .scan-columns { grid-template-columns: minmax(0, 1fr); }
+  .stepper { gap: 0; }
+  .dot { gap: 5px; }
+  .dot span { min-width: 30px; height: 30px; padding: 0 8px; }
+  .dot small { font-size: 11px; }
+  .conn { margin: 0 7px; }
+  .frame { aspect-ratio: 1.5; min-height: 220px; }
+  .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .selected, .context { padding: 16px; }
+}
 </style>

@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Toka AI – Leaf Scan</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #0b5f27;
+    --green-btn: #117a2a;
+    --sidebar: #0e6b30;
+    --sidebar-active: #0a5a28;
+    --ink: #1f2937;
+    --muted: #4b5563;
+    --line: #d4d8d4;
+    --bg: #e5e5e5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
+  svg { display: block; flex: none; }
+  a { color: inherit; text-decoration: none; }
+  button, select, input { font-family: inherit; }
+  button { cursor: pointer; }
+
+  .app { display: grid; grid-template-columns: 237px 1fr; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { background: var(--sidebar); color: #fff; padding: 26px 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; margin: 0 0 38px 10px; }
+  .brand-logo { width: 40px; height: 40px; border-radius: 10px; background: #fff; display: grid; place-items: center; }
+  .brand-name { font-size: 24px; font-weight: 500; }
+  .group-label { font-size: 12px; font-weight: 500; opacity: .85; margin: 0 0 14px; }
+  .nav { list-style: none; margin: 0 0 40px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .nav a { display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 0 12px; border-radius: 8px; font-size: 15px; }
+  .nav a.active { background: var(--sidebar-active); font-weight: 500; }
+  .nav a:hover:not(.active) { background: rgba(255, 255, 255, .08); }
+  .nav svg { width: 18px; height: 18px; }
+
+  /* Header */
+  .topbar { background: #f2f2f2; height: 78px; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { margin: 0; font-size: 26px; font-weight: 700; color: var(--green); }
+  .icon-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #9ca3af; background: #fff; display: grid; place-items: center; }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  main { padding: 20px 32px 48px; min-width: 0; }
+  .lead { margin: 8px 0 16px; font-size: 16px; color: var(--muted); }
+
+  /* Stepper */
+  .steps { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; margin-bottom: 18px; max-width: 1180px; }
+  .step { display: flex; align-items: center; gap: 8px; font-size: 17px; color: #374151; }
+  .step i { font-style: normal; min-width: 39px; height: 31px; padding: 0 12px; border-radius: 999px; background: #8b8f8b; color: #fff; display: grid; place-items: center; font-size: 15px; font-weight: 500; }
+  .step.on i { background: #0f7a2a; }
+  .step:nth-child(2) { justify-self: start; }
+  .step:nth-child(3) { justify-self: end; margin-right: 140px; }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 640px) minmax(0, 485px); gap: 30px; align-items: start; }
+
+  .card { background: #fff; border: 1px solid #d9dcd9; border-radius: 24px; padding: 22px 24px; }
+  label.f { display: block; font-size: 19px; font-weight: 600; margin: 4px 0 8px; }
+  .select, .field {
+    width: 100%; height: 42px; border: 1px solid #9ca3af; border-radius: 10px; background: #fff;
+    padding: 0 18px; font-size: 17px; color: var(--ink);
+  }
+  .daterow { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; }
+  .btn-o { height: 42px; padding: 0 18px; border: 1px solid #9ca3af; border-radius: 10px; background: #fff; font-size: 17px; color: var(--ink); }
+  .btn-o:disabled { color: #9ca3af; border-color: #d1d5db; cursor: default; }
+  .week { font-size: 16px; margin: 8px 0 20px; }
+
+  /* Tiles */
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .tile { background: #f0f3f0; border-radius: 12px; padding: 12px 14px; min-height: 80px; }
+  .tile i { display: block; font-style: normal; font-size: 11px; color: var(--muted); }
+  .tile b { display: block; font-size: 23px; font-weight: 700; margin: 2px 0; }
+  .tile small { display: block; font-size: 10.5px; color: var(--muted); }
+  .tile.risk { background: #fdebc8; } .tile.risk i, .tile.risk small { color: #6b4000; } .tile.risk b { color: #6b4000; }
+  .tile.prog { background: #efb6c1; } .tile.prog i, .tile.prog small { color: #7a1d33; } .tile.prog b { color: #5b1226; }
+  .last { display: flex; gap: 30px; font-size: 13px; padding-top: 10px; margin-top: 10px; border-top: 1px solid #e5e7e5; }
+  .last b { font-weight: 600; }
+
+  h2.sec { font-size: 23px; font-weight: 700; margin: 34px 0 4px; }
+  .sub { font-size: 15.5px; color: var(--muted); margin: 0 0 6px; line-height: 1.25; }
+  .note { font-size: 15.5px; color: var(--muted); margin: 4px 0; }
+
+  details > summary { list-style: none; cursor: pointer; font-size: 21px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 28px 0 14px; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before { content: "▼"; font-size: 14px; }
+  details:not([open]) > summary::before { content: "▶"; }
+  table { border-collapse: collapse; font-size: 17px; line-height: 1.2; }
+  th { text-align: left; font-weight: 700; padding: 0 60px 4px 0; }
+  td { padding: 0 60px 1px 0; }
+
+  /* Canopy */
+  .canopy-h { display: flex; align-items: center; justify-content: space-between; margin: 34px 0 14px; }
+  .canopy-h h3 { margin: 0; font-size: 21px; font-weight: 700; }
+  .chip { font-size: 11px; font-weight: 700; padding: 6px 30px; border-radius: 999px; }
+  .warn { background: #fdebc8; color: #7a4a00; }
+  .bar { position: relative; height: 18px; background: #e5e7eb; border-radius: 9px; }
+  .bar .fill { width: 78%; height: 18px; background: #8a6508; border-radius: 9px; }
+  .bar .tick { position: absolute; top: -5px; width: 2px; height: 28px; }
+  .ticks { position: relative; height: 22px; font-size: 11px; font-weight: 700; margin-top: 4px; }
+  .ticks span { position: absolute; }
+  .canopy-t { display: flex; gap: 36px; font-size: 14px; margin-top: 8px; }
+
+  /* Why */
+  .why { padding-left: 25px; }
+  .row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0 9px; border-top: 1px solid #e5e7e5; }
+  .row:first-child { border-top: 0; }
+  .row b { display: block; font-size: 14px; margin-bottom: 4px; }
+  .row p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; max-width: 200px; }
+  .badges { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 5px; }
+  .bd { display: inline-block; min-width: 145px; text-align: center; font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 999px; }
+  .bd.gy { background: #e5e7eb; color: #374151; min-width: 83px; }
+  .bd.pv { background: #fdebc8; color: #7a4a00; }
+  .bd.bad { background: #fbdada; color: #9b1c1c; }
+  .bd.wt { background: #fdebc8; color: #7a4a00; min-width: 135px; }
+  .one { background: #f1f1f1; border-radius: 12px; padding: 12px 20px; font-size: 13px; line-height: 1.5; margin-top: 8px; }
+
+  /* Camera */
+  .cam { position: relative; height: 318px; border-radius: 14px; background: linear-gradient(#0a7a3c 20%, #045f2b); overflow: hidden; }
+  .cam .c { position: absolute; width: 20px; height: 20px; border: 0 solid #e5b923; }
+  .cam .tl { top: 8px; left: 8px; border-top-width: 2px; border-left-width: 2px; }
+  .cam .tr { top: 8px; right: 8px; border-top-width: 2px; border-right-width: 2px; }
+  .cam .bl { bottom: 8px; left: 8px; border-bottom-width: 2px; border-left-width: 2px; }
+  .cam .br { bottom: 8px; right: 8px; border-bottom-width: 2px; border-right-width: 2px; }
+  .cam .focus { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); opacity: .25; }
+  .cam .cap { position: absolute; bottom: 12px; width: 100%; text-align: center; font-size: 9px; font-weight: 700; color: #fff; }
+  .hint { text-align: center; font-size: 15px; color: var(--muted); margin: 10px 0 8px; }
+  .shots { display: flex; justify-content: center; align-items: center; gap: 44px; }
+  .gal { display: grid; justify-items: center; gap: 8px; font-size: 11px; color: #374151; }
+  .gal span.tile2 { width: 52px; height: 52px; border-radius: 10px; background: #f3e3c8; display: grid; place-items: center; }
+  .shutter { width: 60px; height: 60px; border-radius: 50%; border: 3px solid #0b5f27; background: #fff; padding: 4px; }
+  .shutter i { display: block; width: 100%; height: 100%; border-radius: 50%; background: #0b5f27; }
+
+  .sel { margin-top: 28px; padding: 24px 32px 20px; border-radius: 24px; }
+  .sel-h { display: flex; justify-content: space-between; align-items: baseline; }
+  .sel-h b { font-size: 18px; } .sel-h button { border: 0; background: none; font-size: 14px; font-weight: 600; color: var(--muted); }
+  .thumbs { display: flex; gap: 12px; margin: 26px 0 16px; align-items: stretch; }
+  .thumb { position: relative; width: 108px; height: 80px; background: #a8e6a8; border-radius: 4px; font-size: 11px; display: flex; align-items: flex-end; padding: 6px 11px; }
+  .thumb .x { position: absolute; top: -8px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: #e11d48; color: #fff; font-size: 11px; line-height: 20px; padding: 0; }
+  .add { flex: 1; min-width: 78px; border: 2px dashed #117a2a; border-radius: 6px; background: #fff; font-size: 26px; color: #1f2937; }
+  .assess { width: 100%; height: 46px; border: 0; border-radius: 8px; background: #117a2a; color: #fff; font-size: 17px; font-weight: 600; }
+  .assess:disabled { background: #8bbd96; cursor: default; }
+
+  .extra { margin-top: 20px; padding: 18px 20px; border-radius: 16px; }
+  .extra .nat { font-size: 12px; font-weight: 700; color: #0b6a2a; margin: 0 0 18px; }
+  .extra label { display: block; font-size: 12px; font-weight: 700; margin: 0 0 8px; }
+  .extra .dd { width: 100%; height: 44px; border: 1px solid #d9dcd9; border-radius: 10px; background: #fff; padding: 0 20px; font-size: 12px; color: #6b7280; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+
+  @media (max-width: 1250px) {
+    .cols { grid-template-columns: 1fr; }
+    .steps { max-width: none; } .step:nth-child(3) { margin-right: 0; }
+  }
+  @media (max-width: 800px) {
+    .app { grid-template-columns: 72px 1fr; }
+    .sidebar { padding: 20px 10px; }
+    .brand-name, .group-label, .nav a span { display: none; }
+    .brand { margin-left: 0; justify-content: center; }
+    .nav a { justify-content: center; padding: 0; }
+    main { padding: 16px; } .topbar { padding: 0 16px; }
+    .daterow { grid-template-columns: 1fr; } .tiles { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="#077a3c"><path d="M12 3C7 5 4 10 5 17c7 1 13-3 14-12-2-1-5-2-7-2z"/></svg></div>
+      <span class="brand-name">Toka AI</span>
+    </div>
+    <p class="group-label" style="margin-left:0">Workspace</p>
+    <ul class="nav">
+      <li><a href="#"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 2 12h3v8h5v-6h4v6h5v-8h3z"/></svg><span>Dashboard</span></a></li>
+      <li><a class="active" href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/><circle cx="12" cy="12" r="1.8"/></svg><span>Leaf Scan</span></a></li>
+      <li><a href="#"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5zM8 13h8v1.6H8zm0 3.4h8V18H8z"/></svg><span>Diagnosis History</span></a></li>
+      <li><a href="#"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zM5 9h14v11H5zM7 11h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 15h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg><span>Treatment Schedule</span></a></li>
+    </ul>
+    <p class="group-label" style="margin-left:0">Account</p>
+    <ul class="nav">
+      <li><a href="#"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3h-4l-.4 3a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 3h4l.4-3a7 7 0 0 0 1.7-1l2.4 1 2-3.4zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg><span>Profile</span></a></li>
+      <li><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5M15 8l4 4-4 4M19 12H9"/></svg><span>Sign out</span></a></li>
+    </ul>
+  </aside>
+
+  <div>
+    <header class="topbar">
+      <h1>Leaf Scan</h1>
+      <button class="icon-btn" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4"/></svg></button>
+    </header>
+
+    <main>
+      <p class="lead">Scan or select banana leaves to check for signs of Black Sigatoka</p>
+      <div class="steps" aria-label="Progress">
+        <div class="step on"><i>1</i> Select Leaves</div>
+        <div class="step"><i>2</i> Bulk Assess</div>
+        <div class="step"><i>3</i> Results</div>
+      </div>
+
+      <div class="cols">
+        <!-- Left: line context -->
+        <section class="card" aria-label="Line context">
+          <label class="f" for="line">Line</label>
+          <select class="select" id="line">
+            <option>L01</option><option>L02</option><option>L03</option><option selected>L04</option><option>L05</option><option>L06</option>
+          </select>
+
+          <label class="f" for="date" style="margin-top:16px">Date</label>
+          <div class="daterow">
+            <input class="field" id="date" value="06/08/2026">
+            <button class="btn-o" type="button">Previous week</button>
+            <button class="btn-o" type="button" disabled>Next week</button>
+          </div>
+          <p class="week">Week 2026-W24 (2026-06-08 to 2026-06-14)</p>
+
+          <div class="tiles">
+            <div class="tile"><i>YLS</i><b>8</b><small>W23, latest recorded</small></div>
+            <div class="tile"><i>YLI</i><b>5</b><small>W23, latest recorded</small></div>
+            <div class="tile"><i>Functional leaves</i><b>9</b><small>Provisional threshold</small></div>
+            <div class="tile risk"><i>Infection risk</i><b>High</b><small>Rain 42 mm in 7 days</small></div>
+            <div class="tile prog"><i>Progression</i><b>Worsening</b><small>since last visit</small></div>
+          </div>
+          <div class="last"><span>Last treatment</span><b>Propiconazole · FRAC 3 · Oct 14</b></div>
+
+          <h2 class="sec">Line L04: last 3 weeks</h2>
+          <p class="sub">Leaf-spot stage (YLS) by week — lower = disease on a younger leaf, so worsening goes down</p>
+          <svg viewBox="0 0 600 150" width="100%" role="img" aria-label="YLS by week as a line, rainfall as bars" style="margin:8px 0 0">
+            <g stroke="#e5e7eb"><line x1="40" y1="12" x2="590" y2="12"/><line x1="40" y1="66" x2="590" y2="66"/><line x1="40" y1="120" x2="590" y2="120"/></g>
+            <g fill="#1b9c8a"><rect x="68" y="46" width="64" height="74"/><rect x="270" y="57" width="64" height="63"/><rect x="472" y="93" width="64" height="27"/></g>
+            <polyline points="107,12 310,12" fill="none" stroke="#117a2a" stroke-width="2"/>
+            <circle cx="107" cy="12" r="4.5" fill="#117a2a"/><circle cx="310" cy="12" r="4.5" fill="#117a2a"/>
+            <circle cx="310" cy="52" r="3.5" fill="#b9d6bf"/>
+            <g font-size="11" fill="#4b5563"><text x="14" y="16">8</text><text x="14" y="70">4</text><text x="14" y="124">0</text>
+              <text x="100" y="142">W22</text><text x="302" y="142">W23</text><text x="504" y="142">W24</text></g>
+          </svg>
+          <p class="note">YLI (lighter line) is shown for context.</p>
+          <p class="note" style="margin-top:2px">Missing weeks — YLS: 2026-W24; YLI: 2026-W22, 2026-W24.</p>
+
+          <details open>
+            <summary>Show the numbers</summary>
+            <table>
+              <thead><tr><th>Week</th><th>YLS</th><th>YLI</th><th>Rain (mm)</th></tr></thead>
+              <tbody>
+                <tr><td>2026-W22</td><td>8</td><td>—</td><td>30</td></tr>
+                <tr><td>2026-W23</td><td>8</td><td>5</td><td>26</td></tr>
+                <tr><td>2026-W24</td><td>—</td><td>—</td><td>12</td></tr>
+              </tbody>
+            </table>
+          </details>
+
+          <div class="canopy-h"><h3>Canopy check</h3><span class="chip warn">Provisional</span></div>
+          <div class="bar" role="img" aria-label="9 functional leaves, critical level 8, target 10">
+            <div class="fill"></div>
+            <i class="tick" style="left:68%;background:#9b1c1c"></i>
+            <i class="tick" style="left:85%;background:#117a2a"></i>
+          </div>
+          <div class="ticks"><span style="left:60%;color:#9b1c1c;transform:translateX(-30%)">8 critical</span><span style="left:87%;color:#117a2a">10 target</span></div>
+          <div class="canopy-t"><b>9 leaves.</b><span>Below the target, above the critical level</span><span>(R3: watch).</span></div>
+
+          <details open>
+            <summary>Why management is needed</summary>
+            <div class="why">
+              <div class="row"><div><b>Disease stage (Fouré)</b><p>Stage 4 on 1 leaf, stage 3 on 1, stage 1 on 2. 1 leaf could not be rated.</p></div><div class="badges"><span class="bd gy">Noted</span><span class="bd pv">Provisional</span></div></div>
+              <div class="row"><div><b>Youngest leaf spotted (YLS)</b><p>Leaf 8 to leaf 6 over 3 weeks. Spots are reaching younger leaves.</p></div><div class="badges"><span class="bd bad">Concerning · R2</span><span class="bd pv">Provisional</span></div></div>
+              <div class="row"><div><b>Youngest leaf infected (YLI)</b><p>Leaf 5 to leaf 4. A lower number means a younger leaf.</p></div><div class="badges"><span class="bd bad">Concerning · R1</span><span class="bd pv">Provisional</span></div></div>
+              <div class="row"><div><b>Functional leaves</b><p>9 counted. Target 10, critical 8.</p></div><div class="badges"><span class="bd wt">Watch · R3</span><span class="bd pv">Provisional</span></div></div>
+              <div class="one">One reading never decides this alone. Several indicators and the weather point the same way.</div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Right: capture and selection -->
+        <div>
+          <div class="cam" role="img" aria-label="Camera viewfinder">
+            <i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i>
+            <svg class="focus" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.2"/></svg>
+            <div class="cap">Position the banana leaf inside the frame</div>
+          </div>
+          <p class="hint">Good lighting • Clear leaf • Symptoms visible</p>
+          <div class="shots">
+            <div class="gal"><span class="tile2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d98a1a" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg></span>Gallery</div>
+            <button class="shutter" type="button" aria-label="Capture leaf"><i></i></button>
+          </div>
+
+          <section class="card sel" aria-label="Selected leaves">
+            <div class="sel-h"><b id="count">3 leaves selected</b><button type="button" id="clear">Clear all</button></div>
+            <div class="thumbs" id="thumbs">
+              <div class="thumb">Leaf 1<button class="x" type="button" aria-label="Remove Leaf 1">✕</button></div>
+              <div class="thumb">Leaf 2<button class="x" type="button" aria-label="Remove Leaf 2">✕</button></div>
+              <div class="thumb">Leaf 3<button class="x" type="button" aria-label="Remove Leaf 3">✕</button></div>
+              <button class="add" type="button" id="add" aria-label="Add leaf">+</button>
+            </div>
+            <button class="assess" type="button" id="assess">Assess All Leaves (3)</button>
+          </section>
+
+          <section class="card extra" aria-label="Optional inputs">
+            <p class="nat">Not available yet</p>
+            <label>Stage override</label>
+            <div class="dd">Use QA’s stage <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+            <label>Treatment history</label>
+            <div class="dd" style="margin-bottom:0">Not available yet <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var thumbs = document.getElementById('thumbs');
+    var add = document.getElementById('add');
+    var countEl = document.getElementById('count');
+    var assess = document.getElementById('assess');
+    var next = 4;
+
+    function update() {
+      var n = thumbs.querySelectorAll('.thumb').length;
+      countEl.textContent = n + (n === 1 ? ' leaf selected' : ' leaves selected');
+      assess.textContent = 'Assess All Leaves (' + n + ')';
+      assess.disabled = n === 0;
+    }
+    function makeThumb(n) {
+      var d = document.createElement('div');
+      d.className = 'thumb';
+      d.appendChild(document.createTextNode('Leaf ' + n));
+      var b = document.createElement('button');
+      b.className = 'x'; b.type = 'button'; b.setAttribute('aria-label', 'Remove Leaf ' + n); b.textContent = '✕';
+      d.appendChild(b);
+      return d;
+    }
+    thumbs.addEventListener('click', function (e) {
+      var x = e.target.closest('.x');
+      if (x) { x.parentNode.remove(); update(); }
+    });
+    add.addEventListener('click', function () { thumbs.insertBefore(makeThumb(next++), add); update(); });
+    document.getElementById('clear').addEventListener('click', function () {
+      thumbs.querySelectorAll('.thumb').forEach(function (t) { t.remove(); });
+      update();
+    });
+    update();
+  })();
+</script>
+</body>
+</html>
