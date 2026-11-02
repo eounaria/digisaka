@@ -2,9 +2,9 @@
 // `proposals` (summary fields, plus `reason` and `constraints` for the detail view); decisions are kept
 // apart so the line status stays the scheduler's summary shape.
 import { BASE, fail, ok, authed, nextWeekKey } from './common.js';
+import { productForOption } from './prototype.js';
 
 export const DEFAULT_REASON = 'The disease is getting worse and rainfall is favourable for it.';
-const TREATMENTS = { 'opt-protectant': { id: 'opt-protectant', name: 'Protectant fungicide spray' } };
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 const allProposals = (data) => Object.entries(data.lines).flatMap(([lineId, l]) => l.proposals.map((p) => ({ lineId, line: l, proposal: p })));
@@ -31,9 +31,16 @@ export function proposalRoutes(store, { settleAll }) {
         if (!hit) return unknown(params.id);
         const { proposal: p } = hit;
         const decision = store.data.decisions[p.proposal_id];
+        const product = productForOption(p.option_id);
         return ok({
           proposal_id: p.proposal_id,
-          treatment: TREATMENTS[p.option_id],
+          treatment: product ? {
+            id: product.id,
+            name: product.name,
+            active_ingredient: product.active_ingredient,
+            formulation: product.formulation,
+            frac_code: product.frac_code,
+          } : { id: p.option_id, name: 'Treatment details unavailable' },
           window: { start: p.window_start, end: p.window_end },
           reason: p.reason ?? DEFAULT_REASON,
           constraints: p.constraints ?? [],

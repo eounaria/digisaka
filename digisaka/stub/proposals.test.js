@@ -24,7 +24,8 @@ const statusOf = async (line, id) => (await call('GET', `/lines/${line}`)).body.
 test('a proposal carries treatment, window, reason, constraints and next assessment', async () => {
   const p = (await call('GET', '/cycles/c-L03-24/proposal')).body;
   assert.deepEqual(p.window, { start: '2026-06-10', end: '2026-06-12' });
-  assert.equal(p.treatment.name, 'Protectant fungicide spray');
+  assert.equal(p.treatment.name, 'Mancozeb 80 WP');
+  assert.equal(p.treatment.frac_code, 'M03');
   assert.equal(p.next_assessment, '2026-W25');
   assert.deepEqual(p.constraints, []);
   assert.equal(p.decision, undefined);

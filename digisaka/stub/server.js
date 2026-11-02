@@ -5,6 +5,7 @@ import http from 'node:http';
 import { supabaseRoutes } from './supabase.js';
 import { createSeedStore } from './seed.js';
 import { schedulerRoutes } from './scheduler.js';
+import { prototypeRoutes } from './prototype.js';
 import { createKmStore, kmRoutes } from './km.js';
 
 const notFound = (path) => ({ status: 404, body: { error: 'not_found', detail: `No stub route for ${path}` } });
@@ -42,7 +43,7 @@ const CORS = {
 export function createStub({ routes, onReset = [], now = Date.now, cycleMs, stepMs } = {}) {
   const store = createSeedStore();
   const km = createKmStore();
-  routes ??= [...supabaseRoutes, ...schedulerRoutes(store, { now, cycleMs }), ...kmRoutes(km, { now, stepMs })];
+  routes ??= [...supabaseRoutes, ...schedulerRoutes(store, { now, cycleMs }), ...prototypeRoutes(store), ...kmRoutes(km, { now, stepMs })];
   onReset = [store.reset, km.reset, ...onReset];
   const all = [
     { method: 'GET', path: '/__stub/health', handle: () => ({ status: 200, body: { ok: true } }) },

@@ -249,7 +249,7 @@ const canContinue = computed(() => allDone.value && !scan.assessing);
 h2 { font: 800 14px var(--font-display); color: var(--forest); letter-spacing: .04em; }
 .page > * { max-width: 720px; }
 .page > .scan-columns { max-width: 1180px; }
-.page { padding-bottom: var(--tabbar-h); }
+.page { padding-bottom: calc(24px + var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
 .page.bulk-assess, .page.bulk-results, .page.treatment-review { max-width: none; }
 .page.bulk-assess > *, .page.bulk-results > *, .page.treatment-review > * { width: 100%; max-width: none; }
 .scan-columns { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .92fr); gap: 24px; align-items: start; }

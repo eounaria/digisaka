@@ -7,8 +7,10 @@ import { useProposalStore } from '../stores/proposal.js';
 import { outcomeReasonText } from '../helpers/messages.js';
 import { isValidWeek, weekStart } from '../helpers/week.js';
 import { todayIso, today as nowDate } from '../helpers/today.js';
+import { samplesEnabled } from '../helpers/stubSamples.js';
 
 const route = useRoute(), store = useProposalStore();
+const prototypeSamples = samplesEnabled();
 const lineId = computed(() => String(route.params.lineId));
 const week = computed(() => String(route.params.week));
 const load = () => store.load(lineId.value, week.value);
@@ -114,6 +116,7 @@ async function confirmDate() {
     <p v-else-if="store.phase === 'notfound'" class="empty">This week's treatment couldn't be found.</p>
     <template v-else-if="store.phase === 'ready' && p">
       <p v-if="store.error" class="error">{{ store.error }}</p>
+      <p v-if="prototypeSamples" class="prototype-note">Stub prototype data only. Product, resistance, and schedule details are not validated guidance or label information.</p>
       <div class="banner" :class="BANNER.cls"><span class="tick">{{ BANNER.icon }}</span>{{ BANNER.text }}</div>
 
       <section class="prop-card">
@@ -216,6 +219,7 @@ async function confirmDate() {
 <style scoped>
 .narrow { max-width: 760px; }
 .error { color: var(--danger); font-weight: 700; }
+.prototype-note { padding: 12px 16px; border-radius: 12px; background: #e5e7eb; color: #374151; font-size: .85rem; font-weight: 700; line-height: 1.45; }
 .empty { padding: 30px; text-align: center; color: var(--ink-soft); border: 1.5px dashed var(--line); border-radius: var(--radius-md); background: var(--card); }
 .banner { display: flex; align-items: center; gap: 10px; padding: 12px 18px; margin-bottom: 14px; border-radius: 999px; background: #D5E9DB; color: var(--forest); font: 800 15px var(--font-display); }
 .banner .tick { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--forest); color: #fff; font-size: 14px; }

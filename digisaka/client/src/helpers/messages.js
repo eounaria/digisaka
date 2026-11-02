@@ -5,6 +5,7 @@ const MESSAGES = {
   unknown_line: 'That line does not exist.',
   unknown_cycle: 'That cycle does not exist.',
   unknown_proposal: 'There is no proposal for this cycle.',
+  invalid_option: 'Choose a product from the prototype catalog.',
   unknown_session: 'That scan does not belong to this line-week.',
   week_not_verified: 'Finish at least one scan, including its symptom confirmation, before closing the week.',
   proposal_already_decided: 'This proposal was already decided.',
