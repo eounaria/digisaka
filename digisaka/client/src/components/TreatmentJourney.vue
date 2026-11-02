@@ -240,39 +240,101 @@ async function decide(decision) {
     </template>
 
     <template v-else-if="page === 3">
-      <section class="card">
-        <h2>Product details</h2>
+      <section class="card product-detail-page">
+        <div class="heading-row product-page-heading">
+          <div>
+            <span class="eyebrow">Fungicide details</span>
+            <h2>Product information</h2>
+          </div>
+          <span class="badge" :class="detailProduct?.eligibility === 'Eligible in prototype data' ? 'selected' : detailProduct ? 'rejected' : 'proposed'">
+            {{ detailProduct ? (detailProduct.eligibility === 'Eligible in prototype data' ? 'Sample catalog' : 'Excluded sample') : 'Scheduler proposal' }}
+          </span>
+        </div>
         <template v-if="proposal || (prototypeStore.enabled && detailProduct)">
-          <div class="product-title">
-            <span class="eyebrow">{{ prototypeStore.enabled && detailProduct ? (detailProduct.eligibility === 'Eligible in prototype data' ? 'Eligible sample · details' : 'Excluded sample · details') : 'Scheduler proposal' }}</span>
-            <h3>{{ detailProduct?.name ?? treatment?.name ?? 'Treatment details unavailable' }}</h3>
-            <p v-if="detailProduct">{{ detailProduct.group }} · FRAC {{ detailProduct.frac_code }}</p>
-            <p v-else-if="treatment?.id">Product ID: {{ treatment.id }}</p>
+          <div class="product-detail-layout">
+            <div class="product-detail-main">
+              <section class="detail-section product-identity">
+                <div class="product-name-row">
+                  <h3>{{ detailProduct?.name ?? treatment?.name ?? 'Treatment details unavailable' }}</h3>
+                  <span v-if="detailProduct" class="badge muted">Sample data</span>
+                </div>
+                <p v-if="detailProduct" class="product-category">{{ detailProduct.group }} <span>·</span> FRAC {{ detailProduct.frac_code }}</p>
+                <p v-else-if="treatment?.id" class="product-category">Product ID: {{ treatment.id }}</p>
+                <div class="detail-rows">
+                  <div class="detail-row"><span>Manufacturer</span><strong>{{ detailProduct?.manufacturer ?? 'Not recorded' }}</strong></div>
+                  <div class="detail-row"><span>Formulation</span><strong>{{ detailProduct?.formulation ?? treatment?.formulation ?? 'Not provided' }}</strong></div>
+                  <div class="detail-row"><span>Price</span><strong>{{ detailProduct?.price ?? 'Not provided' }}</strong></div>
+                </div>
+              </section>
+
+              <section v-if="detailProduct" class="detail-section resistance-card" :class="{ 'is-excluded': detailProduct.eligibility !== 'Eligible in prototype data' }">
+                <p class="section-kicker">{{ detailProduct.eligibility !== 'Eligible in prototype data' ? 'Eligibility caution' : 'Resistance caution' }}</p>
+                <p>{{ detailProduct.eligibility !== 'Eligible in prototype data' ? `This product is excluded in the prototype catalog and is not recommended. Insisting records only a local preview selection; it does not make the product eligible or safe to use. ${detailProduct.resistance_note}` : detailProduct.resistance_note }}</p>
+              </section>
+              <p v-else-if="proposal?.reason" class="detail-section proposal-reason">{{ proposal.reason }}</p>
+
+              <section class="detail-section">
+                <h3 class="detail-section-title">Identity and classification</h3>
+                <div class="detail-rows">
+                  <div class="detail-row"><span>Active ingredient</span><strong>{{ detailProduct?.active_ingredient ?? treatment?.active_ingredient ?? 'Not provided' }}</strong></div>
+                  <div class="detail-row"><span>Chemical group</span><strong>{{ detailProduct?.chemical_group ?? 'Not provided' }}</strong></div>
+                  <div class="detail-row"><span>FRAC code</span><strong>{{ detailProduct ? detailProduct.frac_code : treatment?.frac_code ?? 'Not provided' }}</strong></div>
+                  <div class="detail-row"><span>Mode of action</span><strong>{{ detailProduct?.mode_of_action ?? treatment?.mode_of_action ?? 'Not provided' }}</strong></div>
+                </div>
+                <p class="mobility-label">Plant mobility</p>
+                <div class="mobility-pills">
+                  <span class="mobility-pill" :class="{ active: detailProduct?.mobility === 'Contact' }">Contact</span>
+                  <span class="mobility-pill" :class="{ active: detailProduct?.mobility === 'Translaminar' }">Translaminar</span>
+                  <span class="mobility-pill" :class="{ active: detailProduct?.mobility === 'Locally systemic' }">Locally systemic</span>
+                  <span class="mobility-pill" :class="{ active: detailProduct?.mobility === 'Systemic' }">Systemic</span>
+                </div>
+              </section>
+
+              <section class="detail-section usage-section">
+                <h3 class="detail-section-title">Use information</h3>
+                <div class="detail-rows">
+                  <div class="detail-row"><span>Rate</span><strong>{{ detailProduct?.rate ?? 'Not provided' }}</strong></div>
+                  <div class="detail-row"><span>Rainfast period</span><strong>{{ detailProduct?.rainfast ?? 'Not provided' }}</strong></div>
+                  <div class="detail-row"><span>Application interval</span><strong>{{ detailProduct?.interval ?? 'Not provided' }}</strong></div>
+                  <div class="detail-row"><span>Application window</span><strong>{{ proposal?.window ? `${proposal.window.start} to ${proposal.window.end}` : 'Not provided' }}</strong></div>
+                  <div class="detail-row"><span>Next assessment</span><strong>{{ proposal?.next_assessment ?? 'Not provided' }}</strong></div>
+                </div>
+              </section>
+            </div>
+
+            <aside class="product-detail-aside" aria-label="Eligibility and product actions">
+              <section class="detail-section eligibility-card">
+                <h3 class="detail-section-title">Eligibility checks</h3>
+                <div class="eligibility-row">
+                  <span>Label and registration</span>
+                  <span class="badge rejected">Unverified</span>
+                </div>
+                <div class="eligibility-row">
+                  <span>Application constraints</span>
+                  <span class="badge proposed">Pending</span>
+                </div>
+                <div class="eligibility-row">
+                  <span>FRAC history</span>
+                  <span class="badge" :class="detailProduct?.eligibility === 'Eligible in prototype data' ? 'selected' : 'rejected'">
+                    {{ detailProduct ? (detailProduct.eligibility === 'Eligible in prototype data' ? 'Sample check passed' : 'Excluded') : 'Not assessed' }}
+                  </span>
+                </div>
+              </section>
+
+              <div v-if="detailProduct" class="detail-actions">
+                <p class="sample-note">{{ prototypeStore.data.label }}</p>
+                <p v-if="!proposal" class="sample-note">Confirmations stay local to this prototype preview; they do not update a proposal or schedule.</p>
+                <button type="button" class="journey-cta sample-confirm" :class="{ 'insist-button': detailProduct.eligibility !== 'Eligible in prototype data' }" @click="confirmSampleProduct">
+                  {{ detailProduct.eligibility === 'Eligible in prototype data' ? 'Confirm sample selection' : 'Insist on excluded option' }}
+                </button>
+                <p v-if="isConfirmed(detailProduct.id)" class="confirmed-message" role="status">This product is in your sample selection.</p>
+              </div>
+              <p v-else class="sample-note">Verify the registered label and consult an agricultural specialist before making treatment decisions.</p>
+            </aside>
           </div>
-          <div class="detail-grid">
-            <div><span>Application window</span><strong>{{ proposal?.window?.start ?? '—' }} to {{ proposal?.window?.end ?? '—' }}</strong></div>
-            <div><span>Next assessment</span><strong>{{ proposal?.next_assessment ?? 'Not provided' }}</strong></div>
-            <div><span>Active ingredient</span><strong>{{ detailProduct?.active_ingredient ?? treatment?.active_ingredient ?? 'Not provided' }}</strong></div>
-            <div><span>Formulation / mobility</span><strong>{{ detailProduct ? `${detailProduct.formulation} · ${detailProduct.mobility}` : 'Not provided' }}</strong></div>
-            <div><span>FRAC code / mode</span><strong>{{ detailProduct ? `FRAC ${detailProduct.frac_code} · ${detailProduct.mode_of_action}` : treatment?.frac_code ? `FRAC ${treatment.frac_code}` : 'Not provided' }}</strong></div>
-            <div><span>Rate / price</span><strong>{{ detailProduct ? `${detailProduct.rate} · ${detailProduct.price}` : 'Not provided' }}</strong></div>
-            <div><span>Rainfast / interval</span><strong>{{ detailProduct ? `${detailProduct.rainfast} · ${detailProduct.interval}` : 'Not provided' }}</strong></div>
-            <div><span>Label and registration</span><strong>{{ detailProduct ? 'Not verified · sample only' : 'Not verified' }}</strong></div>
-          </div>
-          <p v-if="detailProduct" class="reason">Resistance note: {{ detailProduct.resistance_note }}</p>
-          <p v-if="detailProduct && detailProduct.eligibility !== 'Eligible in prototype data'" class="excluded-warning">
-            This product is excluded and not recommended in the prototype. Insisting here records only a local UI selection; it does not make the product eligible or safe to use.
-          </p>
-          <p v-if="proposal?.reason" class="reason">{{ proposal.reason }}</p>
           <ul v-if="proposal?.constraints?.length" class="constraints">
             <li v-for="constraint in proposal.constraints" :key="constraint">{{ constraint }}</li>
           </ul>
-          <p class="disclaimer">{{ detailProduct ? prototypeStore.data.label : 'Do not infer a rate or product eligibility from missing information. Check the registered label and consult an agricultural specialist.' }}</p>
-          <p v-if="!proposal" class="hint">Sample product details are for layout preview only. Confirmations remain local and do not update a proposal.</p>
-          <button v-if="prototypeStore.enabled && detailProduct" type="button" class="journey-cta sample-confirm" :class="{ 'insist-button': detailProduct.eligibility !== 'Eligible in prototype data' }" @click="confirmSampleProduct">
-            {{ detailProduct.eligibility === 'Eligible in prototype data' ? 'Confirm for sample preview' : 'Insist on excluded sample option' }}
-          </button>
-          <p v-if="detailProduct && isConfirmed(detailProduct.id)" class="confirmed-message" role="status">This product is already in your sample selection.</p>
         </template>
         <div v-else class="empty"><p>No product details are available because this cycle returned no treatment proposal.</p></div>
       </section>
@@ -441,15 +503,44 @@ async function decide(decision) {
 .hint, .reason { color: var(--ink-soft); }
 .empty { padding: 20px; border: 1px dashed var(--line); border-radius: 12px; color: var(--ink-soft); }
 .empty h3 { color: var(--ink); }
-.product-title { margin: 8px 0 16px; }
-.product-title p { color: var(--ink-soft); }
-.detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.detail-grid > div { display: grid; gap: 5px; padding: 12px; border-radius: 10px; background: var(--tint); }
-.detail-grid span { color: var(--ink-soft); font-size: .78rem; }
-.detail-grid strong { font-size: .9rem; }
+.product-detail-page { display: grid; gap: 16px; }
+.product-page-heading { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.product-page-heading h2 { margin: 3px 0 0; }
+.product-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: 20px; align-items: start; }
+.product-detail-main, .product-detail-aside { display: grid; gap: 16px; min-width: 0; }
+.detail-section { padding: 16px; border: 1px solid #cbd2cb; border-radius: 16px; background: #fff; }
+.product-identity { padding: 18px; }
+.product-name-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.product-name-row h3 { margin: 0; color: var(--ink); font-size: 1.35rem; line-height: 1.3; }
+.badge.muted { flex: 0 0 auto; background: #e5e7eb; color: #374151; }
+.product-category { margin: 5px 0 8px; color: var(--ink-soft); font-size: .84rem !important; }
+.product-category span { padding: 0 3px; }
+.detail-rows { display: grid; }
+.detail-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; min-height: 42px; padding: 9px 0; border-top: 1px solid #e5e7e5; font-size: .87rem; }
+.detail-row span { color: var(--ink-soft); }
+.detail-row strong { color: var(--ink); font-weight: 700; text-align: right; overflow-wrap: anywhere; }
+.detail-section-title { margin: 0 0 8px; color: var(--forest); font-size: 1rem; }
+.resistance-card { border-color: #e5b923; background: #fdebca; }
+.resistance-card.is-excluded { border-color: #e8b8b8; background: #fff0f0; }
+.section-kicker { margin-bottom: 5px; color: #6b4000; font-size: .74rem !important; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.resistance-card.is-excluded .section-kicker, .resistance-card.is-excluded > p:last-child { color: #7a1515; }
+.resistance-card > p:last-child, .proposal-reason { color: #4b2e00; font-size: .88rem !important; line-height: 1.55; }
+.mobility-label { margin: 14px 0 8px; color: var(--ink-soft); font-size: .8rem !important; font-weight: 700; }
+.mobility-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.mobility-pill { display: inline-flex; min-height: 34px; align-items: center; padding: 0 13px; border: 1px solid #9ca3af; border-radius: 999px; background: #fff; color: #374151; font-size: .8rem; font-weight: 700; }
+.mobility-pill.active { border-color: var(--forest); background: var(--forest); color: #fff; }
+.usage-section .detail-row { min-height: 38px; }
+.eligibility-card .detail-section-title { margin-bottom: 10px; }
+.eligibility-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; padding: 8px 0; border-top: 1px solid #e5e7e5; font-size: .8rem; }
+.eligibility-row > span:first-child { color: var(--ink-soft); }
+.eligibility-row .badge { flex: 0 0 auto; padding: 4px 8px; font-size: .66rem; }
+.detail-actions { display: grid; gap: 10px; }
+.sample-note { color: var(--ink-soft); font-size: .8rem !important; line-height: 1.5; }
+.sample-confirm { width: 100%; }
+.detail-actions .confirmed-message { margin: 0; }
+.product-detail-page .constraints { margin: 0; padding: 10px 12px 10px 30px; border-radius: 12px; background: var(--beige); color: var(--ink-soft); font-size: .84rem; }
 .constraints { padding-left: 20px; }
 .disclaimer { padding: 12px; border-radius: 10px; background: var(--beige); color: var(--ink-soft); font-size: .82rem; line-height: 1.45; }
-.excluded-warning { padding: 12px; border-radius: 10px; background: #fbdada; color: #7a1515; font-size: .84rem !important; line-height: 1.5; }
 .confirmed-message { color: var(--forest); font-size: .85rem !important; font-weight: 800; }
 .note-label { display: block; margin: 14px 0 6px; font-size: .85rem; font-weight: 700; }
 textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); font: inherit; resize: vertical; }
@@ -478,7 +569,7 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
 @keyframes button-spin { to { transform: rotate(360deg); } }
 @media (max-width: 760px) {
   .journey-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 12px; }
-  .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .product-detail-layout { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 520px) {
   .heading-row, .option { flex-direction: column; }
@@ -487,7 +578,10 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
   .excluded-option { align-items: center; }
   .combo-heading, .excluded-heading { align-items: flex-start; }
   .journey-cta { width: 100%; }
-  .detail-grid { grid-template-columns: minmax(0, 1fr); }
+  .product-name-row { align-items: flex-start; flex-direction: column; }
+  .detail-row { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .detail-row strong { text-align: left; }
+  .eligibility-row { align-items: flex-start; }
   .decision-actions { flex-direction: column; }
   .decision-actions button { width: 100%; min-height: 42px; }
 }
