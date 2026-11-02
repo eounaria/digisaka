@@ -7,7 +7,7 @@ import { diseaseCaption, rainfallCaption, missingWeeks, linePath, niceMax } from
 const props = defineProps({ weeks: { type: Array, required: true }, disease: { type: Object, default: null }, rainfall: { type: Object, default: null } });
 
 const W = 320, H = 150, L = 34, R = 10, T = 10, B = 28, RAIN_L = 46;
-const hoveredPoint = ref(null), focusedPoint = ref(null);
+const hoveredPoint = ref(null);
 const diseaseTooltipText = ref(null), rainfallTooltipText = ref(null);
 const tooltipWidth = ref(0);
 const weeks = computed(() => props.weeks);
@@ -16,14 +16,10 @@ const x = (i) => (weeks.value.length < 2 ? (L + W - R) / 2 : L + (i * (W - L - R
 const pointDetails = (chart, w, seriesName, value, pointX, pointY) => ({
   chart, key: `${chart}-${w.week}-${seriesName}`, week: w.week, seriesName, value, x: pointX, y: pointY,
 });
-const activePoint = computed(() => focusedPoint.value ?? hoveredPoint.value);
+const activePoint = computed(() => hoveredPoint.value);
 const hoverPoint = (...args) => { hoveredPoint.value = pointDetails(...args); };
-const focusPoint = (...args) => { focusedPoint.value = pointDetails(...args); };
 const clearHover = (chart, key) => {
   if (hoveredPoint.value?.chart === chart && (!key || hoveredPoint.value.key === key)) hoveredPoint.value = null;
-};
-const clearPoint = (chart) => {
-  if (focusedPoint.value?.chart === chart) focusedPoint.value = null;
 };
 const clearChartHover = (chart) => clearHover(chart);
 const tooltipX = computed(() => {
@@ -89,17 +85,13 @@ const cell = (v) => (v == null ? '—' : v);</script>
       <path class="yls" :d="linePath(ylsPts)" />
       <template v-for="(w, i) in weeks" :key="w.week">
         <circle v-if="ylsPts[i]" :cx="ylsPts[i].x" :cy="ylsPts[i].y" :r="compared.has(w.week) ? 5 : 3" :class="['dot', 'yls-dot', { hi: compared.has(w.week) }]"
-                tabindex="0" role="img" :aria-label="`${w.week}, YLS: ${w.yls}`"
                 @pointerenter="hoverPoint('disease', w, 'YLS', w.yls, ylsPts[i].x, ylsPts[i].y)"
-                @pointerleave="clearHover('disease', `disease-${w.week}-YLS`)"
-                @focus="focusPoint('disease', w, 'YLS', w.yls, ylsPts[i].x, ylsPts[i].y)" @blur="clearPoint('disease')">
+                @pointerleave="clearHover('disease', `disease-${w.week}-YLS`)">
           <title>{{ w.week }} · YLS: {{ w.yls }}</title>
         </circle>
         <circle v-if="yliPts[i]" :cx="yliPts[i].x" :cy="yliPts[i].y" r="3" class="dot yli-dot"
-                tabindex="0" role="img" :aria-label="`${w.week}, YLI: ${w.yli}`"
                 @pointerenter="hoverPoint('disease', w, 'YLI', w.yli, yliPts[i].x, yliPts[i].y)"
-                @pointerleave="clearHover('disease', `disease-${w.week}-YLI`)"
-                @focus="focusPoint('disease', w, 'YLI', w.yli, yliPts[i].x, yliPts[i].y)" @blur="clearPoint('disease')">
+                @pointerleave="clearHover('disease', `disease-${w.week}-YLI`)">
           <title>{{ w.week }} · YLI: {{ w.yli }}</title>
         </circle>
       </template>
@@ -122,10 +114,8 @@ const cell = (v) => (v == null ? '—' : v);</script>
       </g>
       <template v-for="(w, i) in weeks" :key="w.week">
         <rect v-if="w.rainfall_mm != null" :class="['bar', group(w.week)]" :x="rainX(i) - barW / 2" :y="yR(w.rainfall_mm)" :width="barW" :height="yR(0) - yR(w.rainfall_mm)"
-              tabindex="0" role="img" :aria-label="`${w.week}, rainfall: ${w.rainfall_mm} mm`"
               @pointerenter="hoverPoint('rainfall', w, 'Rainfall', w.rainfall_mm, rainX(i), yR(w.rainfall_mm))"
-              @pointerleave="clearHover('rainfall', `rainfall-${w.week}-Rainfall`)"
-              @focus="focusPoint('rainfall', w, 'Rainfall', w.rainfall_mm, rainX(i), yR(w.rainfall_mm))" @blur="clearPoint('rainfall')">
+              @pointerleave="clearHover('rainfall', `rainfall-${w.week}-Rainfall`)">
           <title>{{ w.week }} · Rainfall: {{ w.rainfall_mm }} mm</title>
         </rect>
       </template>
@@ -162,15 +152,13 @@ path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
 .yls { stroke: var(--forest); stroke-width: 2.5; }
 .yli { stroke: var(--leaf-soft); stroke-width: 2; }
 .dot { fill: var(--forest); }
-.dot { cursor: pointer; }
+.dot { cursor: crosshair; }
 .yli-dot { fill: var(--leaf-soft); stroke: var(--forest-deep); stroke-width: .75; }
-.dot:focus, .bar:focus { outline: none; stroke: var(--warn); stroke-width: 3; }
 .dot.hi { fill: var(--warn); stroke: var(--card); stroke-width: 1.5; }
 .bar.recent { fill: var(--teal); }
 .bar.previous { fill: var(--leaf-soft); }
 .bar.other { fill: var(--line); }
-.bar { cursor: pointer; }
-.bar:focus { fill: var(--warn); }
+.bar { cursor: crosshair; }
 .tooltip rect { fill: var(--ink); }
 .tooltip text { fill: #fff; font-size: 7px; text-anchor: middle; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

@@ -156,41 +156,50 @@ async function decide(decision) {
             <section class="combo-option" aria-label="Recommended prototype combination">
               <div class="combo-heading">
                 <div>
-                  <span class="eyebrow">Recommended option · prototype only</span>
-                  <h3>Two-product sample combination</h3>
+                  <span class="eyebrow">Featured sample · prototype only</span>
+                  <h3>Two products to explore</h3>
                 </div>
                 <span class="badge selected">Sample pick</span>
               </div>
               <p class="combo-warning">These are two separate sample options grouped for the UI preview. Compatibility has not been assessed; this is not an instruction to mix or apply them.</p>
-              <article v-for="product in eligibleProducts" :key="product.id" class="product-option" :class="{ chosen: isConfirmed(product.id) }">
-                <div class="product-copy">
-                  <span class="eyebrow">{{ product.group }}</span>
-                  <h4>{{ product.name }}</h4>
-                  <p>{{ product.efficacy }} · {{ product.price }}</p>
-                  <p class="product-meta">FRAC {{ product.frac_code }} · {{ product.mobility }}</p>
-                </div>
-                <div class="option-actions">
-                  <span v-if="isConfirmed(product.id)" class="badge selected">In sample selection</span>
-                  <button type="button" class="details-button" @click="showProductDetails(product.id)">View details</button>
-                </div>
-              </article>
+              <div class="combination-products">
+                <button v-for="(product, index) in eligibleProducts" :key="product.id" type="button" class="product-option" :class="{ chosen: isConfirmed(product.id) }" :aria-label="`View details for ${product.name}`" @click="showProductDetails(product.id)">
+                  <span class="product-number">0{{ index + 1 }}</span>
+                  <span class="product-copy">
+                    <span class="eyebrow">{{ product.group }}</span>
+                    <span class="product-name">{{ product.name }}</span>
+                    <span class="product-description">{{ product.efficacy }}</span>
+                    <span class="product-meta">FRAC {{ product.frac_code }} · {{ product.mobility }}</span>
+                  </span>
+                  <span class="product-action">
+                    <span v-if="isConfirmed(product.id)" class="selection-state">Selected</span>
+                    <span aria-hidden="true">View details <b>→</b></span>
+                  </span>
+                </button>
+              </div>
             </section>
             <section class="excluded-list" aria-label="Excluded prototype products">
               <div class="excluded-heading">
                 <div>
-                  <h3>Excluded sample fungicides</h3>
-                  <p>These are excluded in the prototype catalog and are not recommended.</p>
+                  <span class="eyebrow">Use caution</span>
+                  <h3>Excluded from the sample</h3>
+                  <p>Not recommended. Select an item to inspect the reason and details.</p>
                 </div>
                 <span class="badge rejected">{{ excludedProducts.length }} excluded</span>
               </div>
-              <article v-for="product in excludedProducts" :key="product.id" class="excluded-option">
-                <div>
-                  <h4>{{ product.name }}</h4>
-                  <p>FRAC {{ product.frac_code }} · {{ product.resistance_note }}</p>
-                </div>
-                <span v-if="isConfirmed(product.id)" class="badge rejected">Insisted for preview</span>
-                <button type="button" class="details-button" @click="showProductDetails(product.id)">View details</button>
-              </article>
+              <div class="excluded-products">
+                <button v-for="product in excludedProducts" :key="product.id" type="button" class="excluded-option" :aria-label="`View excluded product details for ${product.name}`" @click="showProductDetails(product.id)">
+                  <span class="excluded-mark" aria-hidden="true">!</span>
+                  <span class="excluded-copy">
+                    <span class="product-name">{{ product.name }}</span>
+                    <span class="product-meta">FRAC {{ product.frac_code }} · {{ product.resistance_note }}</span>
+                  </span>
+                  <span class="product-action">
+                    <span v-if="isConfirmed(product.id)" class="selection-state insisted">Insisted</span>
+                    <span aria-hidden="true">Details <b>→</b></span>
+                  </span>
+                </button>
+              </div>
             </section>
             <section v-if="confirmedProducts.length" class="confirmed-list" aria-label="Confirmed sample products">
               <h3>Your sample selections <span>{{ confirmedProducts.length }}</span></h3>
@@ -375,20 +384,34 @@ async function decide(decision) {
 .badge.rejected { background: #fbdada; color: var(--danger); }
 .option { display: flex; justify-content: space-between; align-items: start; gap: 14px; margin: 16px 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 .option.chosen { border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); }
-.combo-option, .excluded-list, .confirmed-list { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
-.combo-option { border: 2px solid var(--forest); }
+.combo-option, .excluded-list, .confirmed-list { display: grid; gap: 12px; }
+.combo-option { padding: 4px 0 16px; }
+.excluded-list { padding-top: 16px; border-top: 1px solid var(--line); }
 .combo-heading, .excluded-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
 .combo-heading h3, .excluded-heading h3, .confirmed-list h3 { margin: 3px 0 0; color: var(--ink); font-size: 1rem; }
 .combo-warning, .excluded-heading p, .confirmed-list > p { color: var(--ink-soft); font-size: .82rem !important; line-height: 1.45; }
-.product-option, .excluded-option { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; transition: border-color .15s, box-shadow .15s, transform .15s; }
-.product-option:hover, .excluded-option:hover { border-color: var(--leaf); box-shadow: 0 4px 12px rgba(16, 24, 40, .1); transform: translateY(-1px); }
-.product-option.chosen { border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); }
-.product-copy { min-width: 0; }
-.product-option h4, .excluded-option h4 { margin: 4px 0; color: var(--ink); font-size: .95rem; }
-.product-option p, .excluded-option p { margin: 0; font-size: .84rem; line-height: 1.45; }
-.excluded-list { border-color: #efc7c7; background: #fffdfd; }
-.excluded-option { border-color: #f0dddd; }
-.confirmed-list { background: #f6fbf7; }
+.combo-warning { max-width: 68ch; padding-left: 11px; border-left: 3px solid var(--warn); }
+.combination-products { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.product-option, .excluded-option { position: relative; display: flex; width: 100%; min-width: 0; align-items: center; gap: 12px; padding: 15px; border: 0; border-radius: 12px; color: var(--ink); text-align: left; transition: background .15s, box-shadow .15s, transform .15s; }
+.product-option { background: #f0f6f1; }
+.product-option:hover { background: #e5f1e7; box-shadow: 0 5px 14px rgba(16, 64, 37, .1); transform: translateY(-1px); }
+.product-option.chosen { background: #e0efe2; box-shadow: inset 3px 0 var(--forest); }
+.product-number { display: grid; flex: 0 0 32px; width: 32px; height: 32px; place-items: center; border-radius: 50%; background: #fff; color: var(--forest); font-size: .72rem; font-weight: 900; }
+.product-copy, .excluded-copy { display: grid; min-width: 0; gap: 3px; }
+.product-name { display: block; color: var(--ink); font-size: .95rem; font-weight: 800; line-height: 1.35; }
+.product-description, .product-meta { display: block; color: var(--ink-soft); font-size: .79rem; line-height: 1.4; }
+.product-action { display: grid; flex: 0 0 auto; justify-items: end; gap: 4px; margin-left: auto; color: var(--forest); font-size: .76rem; font-weight: 800; white-space: nowrap; }
+.product-action b { margin-left: 3px; font-size: 1rem; }
+.selection-state { color: var(--forest); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+.excluded-products { display: grid; gap: 2px; }
+.excluded-option { min-height: 58px; padding: 10px 12px; border-radius: 8px; background: transparent; }
+.excluded-option:hover { background: #fff1f1; transform: none; }
+.excluded-mark { display: grid; flex: 0 0 23px; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: #fbe4e4; color: #962626; font-size: .78rem; font-weight: 900; }
+.excluded-option .product-name { font-size: .88rem; }
+.excluded-option .product-meta { font-size: .75rem; }
+.excluded-option .product-action { color: #8d3434; }
+.selection-state.insisted { color: #8d3434; }
+.confirmed-list { padding: 14px; border-radius: 12px; background: #f6fbf7; }
 .confirmed-list h3 span { display: inline-grid; place-items: center; min-width: 23px; height: 23px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--tint); color: var(--forest); font-size: .78rem; }
 .confirmed-list ul { display: grid; gap: 6px; }
 .confirmed-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
@@ -409,9 +432,6 @@ async function decide(decision) {
 .catalog-heading span { color: var(--ink-soft); font-size: .8rem; }
 .sample-disclaimer { padding: 10px 12px; border-radius: 10px; background: #e5e7eb; color: #374151; font-size: .82rem; font-weight: 700; }
 .product-meta { color: var(--ink-soft); font-size: .82rem !important; }
-.option-actions { display: grid; justify-items: end; gap: 8px; }
-.option-actions button { min-height: 38px; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff; color: var(--ink); font-weight: 700; cursor: pointer; }
-.option-actions .details-button { border: 0; color: var(--forest); text-decoration: underline; }
 .excluded { padding: 12px; border-radius: 10px; background: var(--beige); font-size: .85rem; }
 .excluded summary { cursor: pointer; font-weight: 700; }
 .excluded ul { padding-left: 20px; color: var(--ink-soft); line-height: 1.6; }
@@ -462,8 +482,10 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
 }
 @media (max-width: 520px) {
   .heading-row, .option { flex-direction: column; }
-  .product-option, .excluded-option, .combo-heading, .excluded-heading { align-items: stretch; flex-direction: column; }
-  .option-actions { justify-items: stretch; }
+  .combination-products { grid-template-columns: minmax(0, 1fr); }
+  .product-option { align-items: flex-start; }
+  .excluded-option { align-items: center; }
+  .combo-heading, .excluded-heading { align-items: flex-start; }
   .journey-cta { width: 100%; }
   .detail-grid { grid-template-columns: minmax(0, 1fr); }
   .decision-actions { flex-direction: column; }
