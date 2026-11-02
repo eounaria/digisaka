@@ -4,10 +4,12 @@ import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import Icon from './Icon.vue';
 import { useAccountMenu } from './useAccountMenu.js';
+import bananaLeaf from '../assets/bananaleaf1.png';
+import sidebarBananaLeaf from '../assets/bananaleaf2.png';
 
 const scroller = ref(null);
 const route = useRoute(), router = useRouter(), auth = useAuthStore();
-const title = computed(() => route.meta.title || 'Digisaka');
+const title = computed(() => route.meta.title || 'Toka AI');
 
 const MENU = [
   { to: '/', label: 'Dashboard', icon: 'home' },
@@ -24,7 +26,7 @@ function signOut() { closeMenu(); auth.signOut(); router.push('/login'); }
 <template>
   <div class="shell">
     <aside class="sidebar">
-      <div class="brand"><span class="mark">🍌</span>Digisaka</div>
+      <div class="brand"><img class="brand-icon" :src="sidebarBananaLeaf" alt="" />Toka AI</div>
       <p class="group">Menu</p>
       <nav>
         <RouterLink v-for="m in MENU" :key="m.to" :to="m.to" class="link" :active-class="m.to === '/' ? '' : 'active'" exact-active-class="active">
@@ -45,7 +47,7 @@ function signOut() { closeMenu(); auth.signOut(); router.push('/login'); }
 
     <div class="main">
       <header class="topbar">
-        <div class="where"><span class="mark small">🍌</span><h2>{{ title }}</h2></div>
+        <div class="where"><img class="brand-icon small" :src="bananaLeaf" alt="" /><h2>{{ title }}</h2></div>
         <div class="tools">
           <RouterLink to="/scan" class="pill"><Icon name="scan" :size="15" />New Scan</RouterLink>
           <div ref="account" class="account">
@@ -73,8 +75,8 @@ function signOut() { closeMenu(); auth.signOut(); router.push('/login'); }
 .shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; height: 100dvh; }
 .sidebar { display: flex; flex-direction: column; padding: 24px 16px 20px; color: #fff; background: linear-gradient(180deg, #087E42, var(--forest-deep)); overflow-y: auto; }
 .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px 22px; font: 800 24px var(--font-display); }
-.mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: rgba(255, 255, 255, .14); font-size: 20px; }
-.mark.small { width: 32px; height: 32px; font-size: 17px; background: linear-gradient(135deg, var(--leaf), var(--forest)); box-shadow: 0 4px 10px rgba(8, 120, 63, .25); }
+.brand-icon { display: block; flex: none; width: 42px; height: 42px; object-fit: contain; }
+.brand-icon.small { width: 38px; height: 38px; }
 .who { padding: 4px 14px 8px; font-size: 13px; color: rgba(255, 255, 255, .6); overflow: hidden; text-overflow: ellipsis; }
 .group { padding: 14px 12px 8px; font: 800 12px var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .55); }
 nav { display: grid; gap: 4px; }

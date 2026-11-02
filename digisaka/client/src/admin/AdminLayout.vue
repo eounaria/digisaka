@@ -35,9 +35,9 @@ onMounted(() => uc.load().catch(() => {}));
 
     <div class="main">
       <header class="top">
-        <div class="where"><span class="mark small">🌾</span><span>Digisaka AI</span></div>
+        <div class="where"><span class="mark small">🌾</span><span>Toka AI</span></div>
         <div class="tools">
-          <button v-if="auth.practitioner" type="button" class="exit" @click="router.push('/scan')">&#8617; Digisaka app</button>
+          <button v-if="auth.practitioner" type="button" class="exit" @click="router.push('/scan')">&#8617; Toka AI app</button>
           <button type="button" class="exit" @click="leave">Sign out</button>
           <label class="uc"><span>Use Case</span>
             <select :value="uc.slug" @change="uc.select($event.target.value)"><option v-for="c in uc.cases" :key="c.slug" :value="c.slug">{{ c.label }}</option></select>
@@ -47,7 +47,7 @@ onMounted(() => uc.load().catch(() => {}));
                     :aria-expanded="narrow ? menuOpen : undefined" :aria-controls="narrow ? 'admin-account-menu' : undefined" @click="toggleMenu">{{ initial }}</button>
             <div v-if="menuOpen" id="admin-account-menu" class="menu">
               <p class="menu-who">{{ auth.email }}</p>
-              <button v-if="auth.practitioner" type="button" class="menu-item" @click="toApp">&#8617; Digisaka app</button>
+              <button v-if="auth.practitioner" type="button" class="menu-item" @click="toApp">&#8617; Toka AI app</button>
               <button type="button" class="menu-item" @click="leave">Sign out</button>
             </div>
           </div>

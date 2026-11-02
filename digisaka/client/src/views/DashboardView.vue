@@ -88,7 +88,7 @@ const open = (r) => router.push(`/treatment/${encodeURIComponent(r.lineId)}/${en
         </button>
       </div>
       <div>
-        <h2>Welcome back to <em>Digisaka</em></h2>
+        <h2>Welcome back to <em>Toka AI</em></h2>
         <p>Monitor banana crop health and review Black Sigatoka scans, proposals and treatments across your lines.</p>
         <p class="updated">Last updated: <b>{{ updatedText }}</b></p>
       </div>
