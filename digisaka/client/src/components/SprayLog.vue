@@ -2,6 +2,7 @@
 import { computed, watch, onBeforeUnmount } from 'vue';
 import { useLineHistoryStore } from '../stores/lineHistory.js';
 import { usePrototypeStore } from '../stores/prototype.js';
+import { verdictText } from '../helpers/evidence.js';
 
 const props = defineProps({
   line: { type: String, required: true },
@@ -26,11 +27,14 @@ const applications = computed(() => {
     .map((proposal) => ({ ...proposal, appliedOn: appliedOn.get(proposal.proposal_id) }))
     .sort((a, b) => b.appliedOn.localeCompare(a.appliedOn));
 });
+const selectedWeek = computed(() => store.weeks.find((item) => item.week === props.week) ?? null);
+const risk = computed(() => store.evidence?.week === props.week ? verdictText(store.evidence.rainfall?.favourable) : 'Not assessed');
 </script>
 
 <template>
   <div class="history-layout">
-    <section class="card" aria-label="Spray history">
+    <div class="history-main">
+      <section class="card" aria-label="Spray history">
       <header>
         <div>
           <h2>Spray history</h2>
@@ -78,9 +82,8 @@ const applications = computed(() => {
           </li>
         </ul>
       </template>
-    </section>
+      </section>
 
-    <div class="history-sidebar">
       <section class="card frac-card" :class="{ restricted: prototypeStore.data?.frac_history?.some((entry) => entry.status === 'Restricted') }" aria-label="FRAC history">
         <header>
           <div>
@@ -107,29 +110,44 @@ const applications = computed(() => {
           FRAC codes and season-use limits are not provided by the scheduler, so rotation eligibility cannot be assessed here.
         </p>
       </section>
-      <section v-if="prototypeStore.phase === 'ready'" class="card action-card" aria-label="Prototype recommended action">
-        <header><h2>Recommended action</h2><span class="sample-badge">Sample</span></header>
-        <div class="action-chips">
-          <span class="action-chip preventive" :class="{ active: prototypeStore.data.recommended_action.preventive }">{{ prototypeStore.data.recommended_action.preventive ? '✓ ' : '' }}Preventive</span>
-          <span class="action-chip mechanical" :class="{ active: prototypeStore.data.recommended_action.mechanical }">{{ prototypeStore.data.recommended_action.mechanical ? '✓ ' : '' }}Mechanical</span>
-          <span class="action-chip treatment" :class="{ active: prototypeStore.data.recommended_action.treatment }">{{ prototypeStore.data.recommended_action.treatment ? '✓ ' : '' }}Treatment</span>
-          <span class="action-chip monitor" :class="{ active: prototypeStore.data.recommended_action.monitor }">{{ prototypeStore.data.recommended_action.monitor ? '✓ ' : '' }}Monitor</span>
-          <span class="action-chip provisional">{{ prototypeStore.data.recommended_action.provisional_label }}</span>
-        </div>
-        <p>{{ prototypeStore.data.recommended_action.summary }}</p>
-        <small>Not validated guidance.</small>
-      </section>
+      </div>
+
+      <aside class="card line-summary" aria-label="Selected line summary">
+        <p class="eyebrow">Line {{ line }} · {{ week }}</p>
+        <div class="summary-row"><span>Infection risk</span><strong>{{ risk }}</strong></div>
+        <div class="summary-row"><span>YLS / YLI</span><strong>{{ selectedWeek ? `${selectedWeek.yls ?? '—'} / ${selectedWeek.yli ?? '—'}` : '— / —' }}</strong></div>
+        <div class="summary-row"><span>Functional leaves</span><strong>Not recorded</strong></div>
+        <div class="summary-row"><span>Last treatment</span><strong>{{ store.appliedProposal ? (store.treatment?.name ?? 'Recorded application') : 'None recorded' }}</strong></div>
+        <section v-if="prototypeStore.phase === 'ready'" class="action-card" aria-label="Prototype recommended action">
+          <header><h2>Recommended action</h2><span class="sample-badge">Sample</span></header>
+          <div class="action-chips">
+            <span class="action-chip preventive" :class="{ active: prototypeStore.data.recommended_action.preventive }">{{ prototypeStore.data.recommended_action.preventive ? '✓ ' : '' }}Preventive</span>
+            <span class="action-chip mechanical" :class="{ active: prototypeStore.data.recommended_action.mechanical }">{{ prototypeStore.data.recommended_action.mechanical ? '✓ ' : '' }}Mechanical</span>
+            <span class="action-chip treatment" :class="{ active: prototypeStore.data.recommended_action.treatment }">{{ prototypeStore.data.recommended_action.treatment ? '✓ ' : '' }}Treatment</span>
+            <span class="action-chip monitor" :class="{ active: prototypeStore.data.recommended_action.monitor }">{{ prototypeStore.data.recommended_action.monitor ? '✓ ' : '' }}Monitor</span>
+            <span class="action-chip provisional">{{ prototypeStore.data.recommended_action.provisional_label }}</span>
+          </div>
+          <p>{{ prototypeStore.data.recommended_action.summary }}</p>
+          <small>Sample action · not validated guidance.</small>
+        </section>
+        <p class="summary-note">This information is context for review, not a confirmed diagnosis or treatment recommendation.</p>
+      </aside>
     </div>
-  </div>
 </template>
 
 <style scoped>
-.history-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .85fr); gap: 16px; align-items: start; }
-.history-sidebar { display: grid; gap: 16px; min-width: 0; }
+.history-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 20px; align-items: start; }
+.history-main { display: grid; gap: 16px; min-width: 0; }
 .card { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--card); box-shadow: var(--shadow); }
 header { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
 h2 { margin: 0 0 5px; color: var(--forest); font: 800 17px var(--font-display); }
 header p, .hint, .empty { color: var(--ink-soft); font-size: .88rem; line-height: 1.5; }
+.line-summary { position: sticky; top: 16px; }
+.eyebrow { margin-bottom: 10px; color: var(--ink-soft); font-size: .76rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.summary-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: .86rem; }
+.summary-row span { color: var(--ink-soft); }
+.summary-row strong { text-align: right; }
+.summary-note { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: .76rem; line-height: 1.45; }
 .count, .badge { flex: none; padding: 5px 10px; border-radius: 999px; background: var(--tint); color: var(--forest); font-size: .75rem; font-weight: 700; }
 .timeline { position: relative; list-style: none; margin: 14px 0 0 8px; padding: 0 0 0 20px; border-left: 2px dotted #aab8af; }
 .timeline li { position: relative; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 0; border-bottom: 1px solid var(--line); }
@@ -157,7 +175,7 @@ header p, .hint, .empty { color: var(--ink-soft); font-size: .88rem; line-height
 .frac-status { flex: none; padding: 3px 9px; border-radius: 999px; background: #dff3e4; color: #0b5a1f; font-size: .68rem; font-weight: 800; white-space: nowrap; }
 .frac-status.restricted { background: #fbdada; color: #9b1c1c; }
 .frac-footnote { margin-top: 5px; color: var(--ink-soft); font-size: .74rem; line-height: 1.4; }
-.action-card { display: grid; gap: 12px; }
+.action-card { display: grid; gap: 12px; margin-top: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
 .action-card header { align-items: center; }
 .action-card header h2 { margin: 0; }
 .action-card > p { font-size: .85rem; line-height: 1.45; }
@@ -174,6 +192,7 @@ header p, .hint, .empty { color: var(--ink-soft); font-size: .88rem; line-height
 .error button { margin-left: 8px; }
 @media (max-width: 760px) {
   .history-layout { grid-template-columns: minmax(0, 1fr); }
+  .line-summary { position: static; }
 }
 @media (max-width: 540px) {
   header { flex-direction: column; }

@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, watch } from 'vue';
 import { useLineHistoryStore } from '../stores/lineHistory.js';
 import { usePrototypeStore } from '../stores/prototype.js';
 import { diseaseCaption, rainfallCaption } from '../helpers/evidence.js';
-import WeekCharts from './WeekCharts.vue';
 
 const props = defineProps({
   line: { type: String, default: '' },
@@ -63,6 +62,11 @@ const diseaseContext = computed(() => evidence.value
             <strong>{{ prototype.weather.rainfall_7d_mm }} mm</strong>
             <small>Past 7 days · illustrative value</small>
           </article>
+          <article v-else class="metric">
+            <span>Recorded rainfall</span>
+            <strong>{{ selectedWeek?.rainfall_mm == null ? '—' : `${selectedWeek.rainfall_mm} mm` }}</strong>
+            <small>{{ selectedWeek ? `${week} · weekly total` : 'No rainfall value recorded for this week' }}</small>
+          </article>
           <article v-if="prototype" class="metric sample-metric">
             <span>Humidity · sample</span>
             <strong>{{ prototype.weather.humidity_average_pct }}%</strong>
@@ -72,11 +76,6 @@ const diseaseContext = computed(() => evidence.value
             <span>Leaf wetness · sample</span>
             <strong>{{ prototype.weather.leaf_wetness_hours_daily }} hours</strong>
             <small>Per day · illustrative value</small>
-          </article>
-          <article class="metric">
-            <span>Recorded rainfall</span>
-            <strong>{{ selectedWeek?.rainfall_mm == null ? '—' : `${selectedWeek.rainfall_mm} mm` }}</strong>
-            <small>{{ selectedWeek ? `${week} · weekly total` : 'No rainfall value recorded for this week' }}</small>
           </article>
           <article v-if="!prototype" class="metric unavailable">
             <span>Humidity</span><strong>Unavailable</strong>
@@ -96,6 +95,10 @@ const diseaseContext = computed(() => evidence.value
             </div>
             <strong class="risk-value" :class="{ favourable: rainfall?.favourable === true, unfavourable: rainfall?.favourable === false }">{{ risk }}</strong>
             <p>{{ rainContext }}</p>
+            <div class="recorded-rainfall">
+              <span>Recorded rainfall · {{ week }}</span>
+              <strong>{{ selectedWeek?.rainfall_mm == null ? '—' : `${selectedWeek.rainfall_mm} mm` }}</strong>
+            </div>
             <p class="fine">This indicates whether recorded rainfall favours disease spread; it is not a forecast or probability of infection.</p>
             <template v-if="prototype">
               <div class="sample-risk"><span>Prototype infection risk</span><strong>{{ prototype.weather.infection_risk }}</strong></div>
@@ -116,8 +119,6 @@ const diseaseContext = computed(() => evidence.value
         </div>
 
         <p v-if="store.evidenceError" class="error" role="alert">Assessment evidence could not be loaded: {{ store.evidenceError }}</p>
-        <WeekCharts v-if="store.weeks.length && !evidence" :weeks="store.weeks" />
-        <p v-else class="hint">No weekly history is available to chart for this line.</p>
       </template>
     </div>
 
@@ -178,6 +179,8 @@ const diseaseContext = computed(() => evidence.value
 .risk-value.favourable { color: var(--warn); }
 .risk-value.unfavourable { color: var(--forest); }
 .risk-card p { margin: 8px 0; }
+.recorded-rainfall { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: .82rem; }
+.recorded-rainfall strong { color: var(--ink); font-size: .9rem; }
 .line-summary { position: sticky; top: 16px; }
 .eyebrow { margin: 0 0 6px; }
 .line-summary h2 { margin-bottom: 12px; }

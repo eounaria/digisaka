@@ -71,7 +71,7 @@ const canContinue = computed(() => allDone.value && !scan.assessing);
     <PageHeader :title="step === 2 ? 'Black Sigatoka Validation' : step === 3 ? 'Bulk Assessment Result' : step === 4 ? 'Treatment Review' : 'Leaf Scan'"
                 :subtitle="step === 1 ? 'Scan or select banana leaves to check for signs of Black Sigatoka' : ''" />
 
-    <ol class="stepper" aria-label="Progress">
+    <ol v-if="step !== 4" class="stepper" aria-label="Progress">
       <template v-for="(label, i) in STEPS" :key="label">
         <li v-if="i" class="conn" aria-hidden="true"></li>
         <li :class="['dot', { active: step === i + 1 }]" :aria-current="step === i + 1 ? 'step' : undefined">

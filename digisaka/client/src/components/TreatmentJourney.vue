@@ -20,7 +20,16 @@ const prototypeStore = usePrototypeStore();
 const page = ref(0);
 const note = ref('');
 const sampleDecision = ref('');
-const PAGES = ['Weather risk', 'Spray log', 'Fungicide options', 'Product details', 'Decision', 'Schedule'];
+const PAGES = ['Weather', 'Spray log', 'Fungicides', 'Decision', 'Schedule'];
+const activeStep = computed(() => page.value <= 1 ? page.value : page.value <= 3 ? 2 : page.value - 1);
+const pageTitle = computed(() => {
+  if (page.value === 0) return 'Weather risk';
+  if (page.value === 1) return 'Spray log';
+  if (page.value === 2) return 'Fungicide options';
+  if (page.value === 3) return 'Fungicide details';
+  if (page.value === 4) return 'Decision';
+  return sampleDecision.value ? 'Decision status' : 'Treatment schedule';
+});
 const proposal = computed(() => proposalStore.proposal);
 const treatment = computed(() => proposal.value?.treatment ?? null);
 const selectedProduct = computed(() => prototypeStore.data?.products?.find((item) => item.id === prototypeStore.data.selected_option_id) ?? null);
@@ -97,9 +106,21 @@ async function decide(decision) {
 
 <template>
   <section class="journey" aria-label="Treatment review">
+    <header class="journey-page-header">
+      <div>
+        <h1>{{ pageTitle }}</h1>
+        <p>Line {{ line }} · {{ week }}</p>
+      </div>
+      <span v-if="page === 5 && sampleDecision" class="journey-status" :class="sampleDecision">
+        {{ sampleDecision === 'approved' ? 'Sample approved' : 'Sample rejected' }}
+      </span>
+      <span v-else-if="page === 5 && proposal" class="journey-status" :class="status">
+        {{ status === 'proposed' ? 'Awaiting your decision' : status }}
+      </span>
+    </header>
     <ol class="journey-steps" aria-label="Treatment review progress">
-      <li v-for="(label, index) in PAGES" :key="label" :class="{ active: page === index, done: page > index }">
-        <span>{{ page > index ? '✓' : index + 1 }}</span><small>{{ label }}</small>
+      <li v-for="(label, index) in PAGES" :key="label" :class="{ active: activeStep === index, done: activeStep > index }">
+        <span>{{ activeStep > index ? '✓' : index + 1 }}</span><small>{{ label }}</small>
       </li>
     </ol>
 
@@ -170,22 +191,20 @@ async function decide(decision) {
             <section class="combo-option" aria-label="Recommended prototype combination">
               <div class="combo-heading">
                 <div>
-                  <span class="eyebrow">Featured sample · prototype only</span>
-                  <h3>Two products to explore</h3>
+                  <h3>Group A: contact, multi-site protectants</h3>
+                  <p>Two separate products in this sample group · prototype only</p>
                 </div>
-                <span class="badge selected">Sample pick</span>
+                <span class="badge selected">Recommended</span>
               </div>
-              <p class="combo-warning">These are two separate sample options grouped for the UI preview. Compatibility has not been assessed; this is not an instruction to mix or apply them.</p>
+              <p class="combo-warning">These are separate product choices, not a combination to mix. Compatibility has not been assessed, and this is not application guidance.</p>
               <div class="combination-products">
-                <button v-for="(product, index) in eligibleProducts" :key="product.id" type="button" class="product-option" :class="{ chosen: isConfirmed(product.id) }" :aria-label="`View details for ${product.name}`" @click="showProductDetails(product.id)">
-                  <span class="product-number">0{{ index + 1 }}</span>
+                <button v-for="product in eligibleProducts" :key="product.id" type="button" class="product-option" :class="{ chosen: isConfirmed(product.id) }" :aria-label="`View details for ${product.name}`" @click="showProductDetails(product.id)">
                   <span class="product-copy">
-                    <span class="eyebrow">{{ product.group }}</span>
                     <span class="product-name">{{ product.name }}</span>
-                    <span class="product-description">{{ product.efficacy }}</span>
                     <span class="product-meta">FRAC {{ product.frac_code }} · {{ product.mobility }}</span>
                   </span>
                   <span class="product-action">
+                    <span>{{ product.price }}</span>
                     <span v-if="isConfirmed(product.id)" class="selection-state">Selected</span>
                     <span class="product-link" aria-hidden="true">View details <b>→</b></span>
                   </span>
@@ -196,8 +215,8 @@ async function decide(decision) {
               <div class="excluded-heading">
                 <div>
                   <span class="eyebrow">Use caution</span>
-                  <h3>Excluded from the sample</h3>
-                  <p>Not recommended. Select an item to inspect the reason and details.</p>
+                  <h3>Excluded FRAC groups</h3>
+                  <p>Restricted in this sample history and not recommended.</p>
                 </div>
                 <span class="badge rejected">{{ excludedProducts.length }} excluded</span>
               </div>
@@ -206,7 +225,7 @@ async function decide(decision) {
                   <span class="excluded-mark" aria-hidden="true">!</span>
                   <span class="excluded-copy">
                     <span class="product-name">{{ product.name }}</span>
-                    <span class="product-meta">FRAC {{ product.frac_code }} · {{ product.resistance_note }}</span>
+                    <span class="product-meta"><span class="frac-label">FRAC {{ product.frac_code }}</span> · {{ product.resistance_note }}</span>
                   </span>
                   <span class="product-action">
                     <span v-if="isConfirmed(product.id)" class="selection-state insisted">Insisted</span>
@@ -363,7 +382,7 @@ async function decide(decision) {
     </template>
 
     <template v-else-if="page === 4">
-      <section class="card decision-card">
+      <section class="decision-page">
         <template v-if="prototypeStore.enabled && confirmedProducts.length">
           <div class="heading-row">
             <div>
@@ -372,34 +391,38 @@ async function decide(decision) {
             </div>
             <span class="badge proposed">Not a scheduler decision</span>
           </div>
-            <div class="decision-layout">
+          <div class="decision-layout">
             <div class="decision-main">
-              <section class="detail-section decision-recommendation">
-                <p class="section-kicker">Recommended action · sample</p>
-                <div class="action-chips">
-                  <span class="action-chip preventive" :class="{ active: prototypeStore.data?.recommended_action?.preventive }">Preventive</span>
-                  <span class="action-chip mechanical" :class="{ active: prototypeStore.data?.recommended_action?.mechanical }">Mechanical</span>
-                  <span class="action-chip provisional">{{ prototypeStore.data?.recommended_action?.provisional_label ?? 'Provisional' }}</span>
-                </div>
-                <div class="detail-rows">
-                  <div class="detail-row"><span>Apply</span><strong>Not provided</strong></div>
-                  <div class="detail-row"><span>Reassess</span><strong>{{ week }}</strong></div>
-                </div>
-              </section>
-              <section class="detail-section decision-selection">
-                <p class="section-kicker">Selected products · sample only</p>
-                <div v-for="product in confirmedProducts" :key="product.id" class="decision-product">
-                  <div>
-                    <strong>{{ product.name }}</strong>
-                    <span>FRAC {{ product.frac_code }} · {{ product.mobility }}</span>
+              <div class="decision-details-grid">
+                <section class="detail-section decision-recommendation">
+                  <p class="section-kicker">Recommended action · sample</p>
+                  <div class="action-chips">
+                    <span class="action-chip preventive" :class="{ active: prototypeStore.data?.recommended_action?.preventive }">Preventive</span>
+                    <span class="action-chip mechanical" :class="{ active: prototypeStore.data?.recommended_action?.mechanical }">Mechanical</span>
+                    <span class="action-chip treatment" :class="{ active: prototypeStore.data?.recommended_action?.treatment }">Treatment</span>
+                    <span class="action-chip monitor" :class="{ active: prototypeStore.data?.recommended_action?.monitor }">Monitor</span>
+                    <span class="action-chip provisional">{{ prototypeStore.data?.recommended_action?.provisional_label ?? 'Provisional' }}</span>
                   </div>
-                  <span class="badge" :class="product.eligibility === 'Eligible in prototype data' ? 'selected' : 'rejected'">
-                    {{ product.eligibility === 'Eligible in prototype data' ? 'Sample eligible' : 'Excluded' }}
-                  </span>
-                  <p v-if="product.eligibility !== 'Eligible in prototype data'" class="decision-product-warning">{{ product.resistance_note }} Not recommended.</p>
-                </div>
-                <p class="sample-note">Compatibility, label eligibility, rates, and timing are not verified. These selections are not an application recommendation.</p>
-              </section>
+                  <div class="detail-rows">
+                    <div class="detail-row"><span>Apply</span><strong>Not provided</strong></div>
+                    <div class="detail-row"><span>Reassess</span><strong>{{ week }}</strong></div>
+                  </div>
+                </section>
+                <section class="detail-section decision-selection">
+                  <p class="section-kicker">Selected products · sample only</p>
+                  <div v-for="product in confirmedProducts" :key="product.id" class="decision-product">
+                    <div>
+                      <strong>{{ product.name }}</strong>
+                      <span>FRAC {{ product.frac_code }} · {{ product.mobility }}</span>
+                    </div>
+                    <span class="badge" :class="product.eligibility === 'Eligible in prototype data' ? 'selected' : 'rejected'">
+                      {{ product.eligibility === 'Eligible in prototype data' ? 'Sample eligible' : 'Excluded' }}
+                    </span>
+                    <p v-if="product.eligibility !== 'Eligible in prototype data'" class="decision-product-warning">{{ product.resistance_note }} Not recommended.</p>
+                  </div>
+                  <p class="sample-note">Compatibility, label eligibility, rates, and timing are not verified. These selections are not an application recommendation.</p>
+                </section>
+              </div>
               <section class="detail-section decision-why">
                 <p class="section-kicker">Why</p>
                 <p>{{ prototypeStore.data?.recommended_action?.summary ?? 'No sample rationale is available.' }}</p>
@@ -421,21 +444,40 @@ async function decide(decision) {
         </template>
         <template v-else>
           <div class="heading-row"><h2>Your decision</h2><span class="badge" :class="status">{{ status }}</span></div>
-          <template v-if="proposal">
-          <h3>{{ selectedProduct?.name ?? treatment?.name ?? 'Treatment details unavailable' }}</h3>
-          <p>Line {{ line }} · {{ week }}</p>
-          <p v-if="proposal.window">Proposed application window: {{ proposal.window.start }} to {{ proposal.window.end }}</p>
-          <p>{{ proposal.reason }}</p>
-          <label v-if="status === 'proposed'" class="note-label" for="decision-note">Decision note (optional)</label>
-          <textarea v-if="status === 'proposed'" id="decision-note" v-model="note" rows="3" placeholder="Add a note for this decision"></textarea>
-          <p v-if="proposalStore.error" class="error" role="alert">{{ proposalStore.error }}</p>
-          <p v-if="proposal.decision?.note" class="hint">Saved note: {{ proposal.decision.note }}</p>
-          <div v-if="status === 'proposed'" class="decision-actions">
-            <button type="button" class="reject" :disabled="proposalStore.busy" @click="decide('rejected')">Reject</button>
-            <button type="button" class="primary" :disabled="proposalStore.busy" @click="decide('approved')">Approve</button>
+          <div v-if="proposal" class="decision-layout">
+            <div class="decision-main">
+              <div class="decision-details-grid">
+                <section class="detail-section decision-recommendation">
+                  <p class="section-kicker">Proposed treatment</p>
+                  <h3>{{ selectedProduct?.name ?? treatment?.name ?? 'Treatment details unavailable' }}</h3>
+                  <div class="detail-rows">
+                    <div class="detail-row"><span>Line</span><strong>{{ line }}</strong></div>
+                    <div class="detail-row"><span>Assessment week</span><strong>{{ week }}</strong></div>
+                    <div v-if="proposal.window" class="detail-row"><span>Apply</span><strong>{{ proposal.window.start }} to {{ proposal.window.end }}</strong></div>
+                  </div>
+                </section>
+                <section class="detail-section decision-why">
+                  <p class="section-kicker">Why</p>
+                  <p>{{ proposal.reason }}</p>
+                </section>
+              </div>
+              <p v-if="proposal.decision?.note" class="hint">Saved note: {{ proposal.decision.note }}</p>
+            </div>
+            <aside class="detail-section decision-choice">
+              <p class="section-kicker">Your decision</p>
+              <template v-if="status === 'proposed'">
+                <label class="note-label" for="decision-note">Decision note (optional)</label>
+                <textarea id="decision-note" v-model="note" rows="3" placeholder="Add a note for this decision"></textarea>
+                <p v-if="proposalStore.error" class="error" role="alert">{{ proposalStore.error }}</p>
+                <div class="decision-actions">
+                  <button type="button" class="reject" :disabled="proposalStore.busy" @click="decide('rejected')">Reject</button>
+                  <button type="button" class="primary" :disabled="proposalStore.busy" @click="decide('approved')">Approve</button>
+                </div>
+              </template>
+              <p v-else class="hint">This proposal has already been {{ status }}. Its decision cannot be changed here.</p>
+              <p class="decision-disclaimer">Verify registered product labels and treatment details with an agricultural specialist before acting.</p>
+            </aside>
           </div>
-          <p v-else class="hint">This proposal has already been {{ status }}. Its decision cannot be changed here.</p>
-          </template>
           <div v-else class="empty">
             <h3>No treatment decision is available</h3>
             <p>The scheduler did not return a proposal. Review the scheduler outcome before making treatment decisions.</p>
@@ -450,51 +492,76 @@ async function decide(decision) {
     </template>
 
     <template v-else>
-      <section class="card schedule-card" aria-live="polite">
+      <section class="schedule-page" aria-live="polite">
         <template v-if="sampleDecision">
-          <span class="schedule-icon" :class="sampleDecision === 'approved' ? 'approved' : 'review'">{{ sampleDecision === 'approved' ? '✓' : '!' }}</span>
-          <h2>{{ sampleDecision === 'approved' ? 'Sample decision approved' : 'Sample decision rejected' }}</h2>
-          <p>{{ confirmedProducts.map((product) => product.name).join(' · ') }} · Line {{ line }} · {{ week }}</p>
-          <p>This prototype-only decision does not approve or create a real treatment schedule.</p>
-          <button type="button" @click="page = 4">Review your decision</button>
-        </template>
-        <template v-else-if="proposal && status === 'proposed'">
-          <span class="schedule-icon waiting">…</span>
-          <h2>Treatment schedule awaiting decision</h2>
-          <p>{{ treatment?.name ?? 'Proposed treatment' }} · Line {{ line }} · {{ week }}</p>
-          <p v-if="proposal.window">Apply {{ proposal.window.start }} to {{ proposal.window.end }}.</p>
-          <button type="button" class="primary" @click="page = 4">Review proposal decision</button>
-        </template>
-        <template v-else-if="proposal && status === 'approved'">
-          <span class="schedule-icon approved">✓</span>
-          <h2>Treatment schedule approved</h2>
-          <p>{{ treatment?.name ?? 'Approved treatment' }} · Line {{ line }} · {{ week }}</p>
-          <p v-if="proposal.window">Apply {{ proposal.window.start }} to {{ proposal.window.end }}.</p>
-          <p v-if="proposal.next_assessment">Next assessment: {{ proposal.next_assessment }}</p>
-          <RouterLink class="link-button" :to="`/treatment/${encodeURIComponent(line)}/${encodeURIComponent(week)}`">Open full treatment schedule</RouterLink>
-        </template>
-        <template v-else-if="proposal && status === 'applied'">
-          <span class="schedule-icon approved">✓</span>
-          <h2>Treatment application recorded</h2>
-          <p>{{ treatment?.name ?? 'Recorded treatment' }} · Line {{ line }} · {{ week }}</p>
-          <p>Applied on {{ proposalStore.appliedOn }}.</p>
-          <RouterLink class="link-button" :to="`/treatment/${encodeURIComponent(line)}/${encodeURIComponent(week)}`">Open full treatment schedule</RouterLink>
-        </template>
-        <template v-else-if="proposal && status === 'rejected'">
-          <span class="schedule-icon review">!</span>
-          <h2>Human review required</h2>
-          <p>This proposal was rejected. No treatment schedule was approved.</p>
-          <p v-if="proposalStore.cycle?.outcome_reason">Reason: {{ proposalStore.cycle.outcome_reason }}</p>
-        </template>
-        <template v-else-if="cycle.phase === 'review'">
-          <span class="schedule-icon review">!</span>
-          <h2>Human review required</h2>
-          <p>The scheduler did not return a treatment proposal or approved schedule.</p>
+          <div class="schedule-status-banner prototype-status">
+            <span class="schedule-icon" aria-hidden="true">!</span>
+            <div><strong>{{ sampleDecision === 'approved' ? 'Sample decision approved' : 'Sample decision rejected' }}</strong><span>Prototype preview only · No treatment schedule was created</span></div>
+          </div>
+          <div class="schedule-layout">
+            <div class="schedule-main">
+              <section class="detail-section schedule-overview">
+                <p class="section-kicker">Prototype selection · {{ week }}</p>
+                <h2>{{ confirmedProducts.map((product) => product.name).join(' · ') || 'No sample products selected' }}</h2>
+                <div class="detail-rows">
+                  <div class="detail-row"><span>Line</span><strong>{{ line }}</strong></div>
+                  <div class="detail-row"><span>Decision</span><strong>{{ sampleDecision === 'approved' ? 'Sample approved' : 'Sample rejected' }}</strong></div>
+                  <div class="detail-row"><span>Schedule</span><strong>Not generated</strong></div>
+                </div>
+              </section>
+              <section class="detail-section schedule-timeline">
+                <div class="schedule-section-heading"><h2>Schedule timeline</h2><span class="badge muted">No steps generated</span></div>
+                <div class="timeline-empty"><span aria-hidden="true">i</span><p>This prototype-only decision does not approve or create a real treatment schedule. Application timing and follow-up steps are unavailable.</p></div>
+              </section>
+            </div>
+            <aside class="detail-section schedule-aside">
+              <p class="section-kicker">Prototype status</p>
+              <p>Selections and decisions stay in this preview and are not sent to the scheduler.</p>
+              <button type="button" class="journey-cta" @click="page = 4">Review your decision</button>
+            </aside>
+          </div>
         </template>
         <template v-else>
-          <span class="schedule-icon waiting">i</span>
-          <h2>No treatment schedule was generated</h2>
-          <p>The scheduler recommends continued monitoring for this line-week.</p>
+          <div class="schedule-status-banner" :class="status">
+            <span class="schedule-icon" :class="status === 'approved' || status === 'applied' ? 'approved' : status === 'proposed' ? 'waiting' : 'review'" aria-hidden="true">
+              {{ status === 'approved' || status === 'applied' ? '✓' : status === 'proposed' ? '…' : '!' }}
+            </span>
+            <div>
+              <strong>{{ status === 'proposed' ? 'Proposed — awaiting your decision' : status === 'approved' ? 'Approved — apply during the treatment window' : status === 'applied' ? 'Treatment application recorded' : status === 'rejected' ? 'Proposal rejected — human review required' : cycle.phase === 'review' ? 'Human review required' : 'No treatment schedule was generated' }}</strong>
+              <span>Line {{ line }} · {{ week }}</span>
+            </div>
+          </div>
+          <div class="schedule-layout">
+            <div class="schedule-main">
+              <section v-if="proposal" class="detail-section schedule-overview">
+                <p class="section-kicker">Treatment proposal</p>
+                <h2>{{ treatment?.name ?? 'Proposed treatment' }}</h2>
+                <p class="schedule-subtitle" v-if="proposal.window">Apply {{ proposal.window.start }} to {{ proposal.window.end }}<span v-if="proposal.next_assessment"> · next assessment {{ proposal.next_assessment }}</span></p>
+                <p class="schedule-reason">{{ proposal.reason }}</p>
+                <div class="schedule-actions">
+                  <button v-if="status === 'proposed'" type="button" class="reject" @click="page = 4">Reject</button>
+                  <button v-if="status === 'proposed'" type="button" class="journey-cta" @click="page = 4">Review and decide</button>
+                  <RouterLink v-else-if="status === 'approved' || status === 'applied'" class="journey-cta link-button" :to="`/treatment/${encodeURIComponent(line)}/${encodeURIComponent(week)}`">Open full treatment schedule</RouterLink>
+                </div>
+                <p v-if="status === 'applied'" class="hint">Applied on {{ proposalStore.appliedOn }}.</p>
+                <p v-if="proposalStore.cycle?.outcome_reason && status === 'rejected'" class="hint">Reason: {{ proposalStore.cycle.outcome_reason }}</p>
+              </section>
+              <section class="detail-section schedule-timeline">
+                <div class="schedule-section-heading"><h2>{{ proposal && (status === 'approved' || status === 'applied') ? 'Treatment timeline' : 'Schedule timeline' }}</h2><span class="badge muted">{{ proposal && (status === 'approved' || status === 'applied') ? '0 / 2 done' : 'No approved steps' }}</span></div>
+                <div class="timeline-empty"><span aria-hidden="true">i</span><p>{{ proposal && (status === 'approved' || status === 'applied') ? 'Open the full treatment schedule to view application and reassessment steps.' : proposal && status === 'proposed' ? 'A schedule will be available after the proposal is approved.' : proposal && status === 'rejected' ? 'This proposal was rejected. No treatment schedule was approved.' : cycle.phase === 'review' ? 'The scheduler requires human review; no treatment schedule is available.' : 'The scheduler recommends continued monitoring for this line-week.' }}</p></div>
+              </section>
+            </div>
+            <aside class="detail-section schedule-aside">
+              <p class="section-kicker">Schedule summary</p>
+              <div class="detail-rows">
+                <div class="detail-row"><span>Status</span><strong>{{ status === 'proposed' ? 'Awaiting decision' : status }}</strong></div>
+                <div class="detail-row"><span>Line</span><strong>{{ line }}</strong></div>
+                <div class="detail-row"><span>Assessment week</span><strong>{{ week }}</strong></div>
+                <div v-if="proposal?.window" class="detail-row"><span>Application window</span><strong>{{ proposal.window.start }} – {{ proposal.window.end }}</strong></div>
+              </div>
+              <p class="schedule-disclaimer">Verify all treatment details and registered product labels with an agricultural specialist.</p>
+            </aside>
+          </div>
         </template>
       </section>
       <EvidenceCharts v-if="cycle.cycle?.cycle_id" :cycle-id="cycle.cycle.cycle_id" />
@@ -508,12 +575,22 @@ async function decide(decision) {
 
 <style scoped>
 .journey { display: grid; gap: 16px; }
+.journey-page-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.journey-page-header h1 { margin: 0; color: var(--forest); font: 800 1.4rem var(--font-display); }
+.journey-page-header p { margin: 2px 0 0; color: var(--ink-soft); font-size: .82rem; }
+.journey-status { padding: 10px 14px; border-radius: 12px; background: #d6efe6; color: #0b5d4a; font-size: .85rem; font-weight: 800; }
+.journey-status.approved { background: #d3efd9; color: #0b5a1f; }
+.journey-status.rejected { background: #fbdada; color: #9b1c1c; }
+.journey-status.proposed { background: #d6efe6; color: #0b5d4a; }
 .cycle-card { display: grid; gap: 12px; }
 .cycle-card h2 { margin-bottom: 0; }
 .cycle-card .cycle-description { margin: 0; }
-.journey-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; list-style: none; margin: 0 0 6px; padding: 0; }
-.journey-steps li { min-width: 0; display: grid; justify-items: center; gap: 5px; text-align: center; color: var(--ink-soft); }
+.journey-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; list-style: none; margin: 0 0 6px; padding: 0; }
+.journey-steps li { position: relative; min-width: 0; display: grid; justify-items: center; gap: 5px; text-align: center; color: var(--ink-soft); }
+.journey-steps li:not(:last-child)::after { position: absolute; z-index: 0; top: 14px; left: calc(50% + 17px); right: calc(-50% + 17px); height: 3px; background: #cbd2cb; content: ""; }
+.journey-steps li.done:not(:last-child)::after { background: #117a2a; }
 .journey-steps li span { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%; background: var(--card); font-weight: 800; }
+.journey-steps li span { position: relative; z-index: 1; }
 .journey-steps li small { font-size: .72rem; }
 .journey-steps li.active { color: var(--forest); font-weight: 800; }
 .journey-steps li.active span, .journey-steps li.done span { border-color: var(--forest); background: var(--forest); color: #fff; }
@@ -530,22 +607,23 @@ async function decide(decision) {
 .option { display: flex; justify-content: space-between; align-items: start; gap: 14px; margin: 16px 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 .option.chosen { border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); }
 .combo-option, .excluded-list, .confirmed-list { display: grid; gap: 12px; }
-.combo-option { padding: 4px 0 16px; }
-.excluded-list { padding-top: 16px; border-top: 1px solid var(--line); }
+.combo-option, .excluded-list { padding: 16px; border: 1px solid #cbd2cb; border-radius: 16px; background: #fff; }
+.combo-option { border: 2px solid #117a2a; }
+.excluded-list { border: 1.5px solid #d6455a; }
 .combo-heading, .excluded-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
 .combo-heading h3, .excluded-heading h3, .confirmed-list h3 { margin: 3px 0 0; color: var(--ink); font-size: 1rem; }
+.combo-heading p { margin-top: 4px; color: var(--ink-soft); font-size: .79rem !important; }
 .combo-warning, .excluded-heading p, .confirmed-list > p { color: var(--ink-soft); font-size: .82rem !important; line-height: 1.45; }
-.combo-warning { max-width: 68ch; padding-left: 11px; border-left: 3px solid var(--warn); }
-.combination-products { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.product-option, .excluded-option { position: relative; display: flex; width: 100%; min-width: 0; align-items: center; gap: 12px; padding: 15px; border: 0; border-radius: 12px; color: var(--ink); text-align: left; transition: background .15s, box-shadow .15s, transform .15s; }
-.product-option { background: #f0f6f1; }
-.product-option:hover { background: #e5f1e7; box-shadow: 0 5px 14px rgba(16, 64, 37, .1); transform: translateY(-1px); }
-.product-option.chosen { background: #e0efe2; box-shadow: inset 3px 0 var(--forest); }
-.product-number { display: grid; flex: 0 0 32px; width: 32px; height: 32px; place-items: center; border-radius: 50%; background: #fff; color: var(--forest); font-size: .72rem; font-weight: 900; }
+.combo-warning { max-width: 68ch; padding-left: 11px; border-left: 3px solid var(--warn); color: var(--ink-soft); }
+.combination-products { display: grid; }
+.product-option, .excluded-option { position: relative; display: flex; width: 100%; min-width: 0; align-items: center; gap: 12px; padding: 11px 0; border: 0; border-top: 1px solid #e5e7e5; border-radius: 0; color: var(--ink); text-align: left; transition: background .15s, box-shadow .15s, transform .15s; }
+.product-option { background: transparent; }
+.product-option:hover { background: #f5faf6; transform: none; }
+.product-option.chosen { background: #f5faf6; box-shadow: inset 3px 0 var(--forest); padding-left: 8px; }
 .product-copy, .excluded-copy { display: grid; min-width: 0; gap: 3px; }
 .product-name { display: block; color: var(--ink); font-size: .95rem; font-weight: 800; line-height: 1.35; }
 .product-description, .product-meta { display: block; color: var(--ink-soft); font-size: .79rem; line-height: 1.4; }
-.product-action { display: grid; flex: 0 0 auto; justify-items: end; gap: 4px; margin-left: auto; color: var(--forest); font-size: .76rem; font-weight: 800; white-space: nowrap; }
+.product-action { display: grid; flex: 0 0 auto; justify-items: end; gap: 4px; margin-left: auto; color: var(--ink-soft); font-size: .78rem; font-weight: 600; white-space: nowrap; }
 .product-action b { margin-left: 3px; font-size: 1rem; }
 .product-link, .text-action { color: var(--forest); font-size: .8rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
 .text-action { border: 0; background: transparent; padding: 3px 6px; }
@@ -554,15 +632,16 @@ async function decide(decision) {
 .options-continue p { color: var(--ink-soft); font-size: .84rem; }
 .options-continue .journey-cta { flex: 0 0 auto; }
 .selection-state { color: var(--forest); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
-.excluded-products { display: grid; gap: 2px; }
-.excluded-option { min-height: 58px; padding: 10px 12px; border-radius: 8px; background: transparent; }
-.excluded-option:hover { background: #fff1f1; transform: none; }
+.excluded-products { display: grid; }
+.excluded-option { min-height: 58px; padding: 10px 0; background: transparent; }
+.excluded-option:hover { background: #fff8f8; transform: none; }
 .excluded-mark { display: grid; flex: 0 0 23px; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: #fbe4e4; color: #962626; font-size: .78rem; font-weight: 900; }
 .excluded-option .product-name { font-size: .88rem; }
 .excluded-option .product-meta { font-size: .75rem; }
 .excluded-option .product-action { color: #8d3434; }
+.frac-label { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #e5e7eb; color: #374151; font-size: .68rem; font-weight: 800; white-space: nowrap; }
 .selection-state.insisted { color: #8d3434; }
-.confirmed-list { padding: 14px; border-radius: 12px; background: #f6fbf7; }
+.confirmed-list { padding: 16px; border: 1px solid #cbd2cb; border-radius: 16px; background: #fff; }
 .confirmed-list h3 span { display: inline-grid; place-items: center; min-width: 23px; height: 23px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--tint); color: var(--forest); font-size: .78rem; }
 .confirmed-list ul { display: grid; gap: 6px; }
 .confirmed-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
@@ -634,10 +713,13 @@ async function decide(decision) {
 .note-label { display: block; margin: 14px 0 6px; font-size: .85rem; font-weight: 700; }
 textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); font: inherit; resize: vertical; }
 .decision-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
-.decision-actions button { min-width: 120px; }
-.reject { background: #fff; border: 1px solid var(--danger); color: var(--danger); }
+.decision-actions button { min-width: 120px; min-height: 42px; padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff; color: var(--ink); font: 700 14px var(--font-body); transition: background .15s, box-shadow .15s, transform .15s; }
+.reject { border-color: var(--danger) !important; background: #fff !important; color: var(--danger) !important; }
+.decision-actions .reject:hover:not(:disabled) { background: #fff5f5 !important; box-shadow: 0 4px 10px rgba(180, 35, 24, .12); transform: translateY(-1px); }
+.decision-page { display: grid; gap: 16px; }
 .decision-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: 20px; align-items: start; }
 .decision-main { display: grid; gap: 14px; min-width: 0; }
+.decision-details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
 .decision-recommendation .detail-rows { margin-top: 12px; }
 .decision-selection { display: grid; gap: 10px; }
 .decision-product { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 0; border-top: 1px solid #e5e7e5; }
@@ -651,17 +733,43 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
 .decision-choice .decision-actions { margin: 0; }
 .decision-choice .decision-actions button { flex: 1; }
 .decision-choice .decision-actions .primary { border: 1px solid var(--forest); background: var(--forest); color: #fff; }
+.decision-choice .decision-actions .primary:hover:not(:disabled) { background: var(--forest-deep); box-shadow: 0 4px 12px rgba(6, 85, 44, .2); transform: translateY(-1px); }
 .decision-disclaimer { color: var(--ink-soft); font-size: .78rem !important; line-height: 1.5; }
 .decision-saved { display: grid; gap: 6px; padding: 12px; border-radius: 12px; background: var(--tint); color: var(--forest-deep); }
 .decision-saved span { font-size: .82rem; line-height: 1.45; }
 .error { color: var(--danger); }
 .outcome { color: var(--ink-soft); }
-.schedule-card { display: grid; justify-items: start; gap: 8px; padding: 24px; }
-.schedule-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; font-weight: 800; font-size: 1.25rem; }
+.schedule-page { display: grid; gap: 16px; }
+.schedule-status-banner { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-radius: 16px; background: #d6efe6; color: #0b5d4a; }
+.schedule-status-banner.approved, .schedule-status-banner.applied { background: #d3efd9; color: #0b5a1f; }
+.schedule-status-banner.rejected, .schedule-status-banner.review { background: #fbdada; color: #9b1c1c; }
+.schedule-status-banner.proposed { background: #d6efe6; color: #0b5d4a; }
+.schedule-status-banner.prototype-status { background: #fdebc8; color: #6b4000; }
+.schedule-status-banner > div { display: grid; gap: 3px; }
+.schedule-status-banner strong { font-size: .95rem; }
+.schedule-status-banner > div > span { font-size: .8rem; }
+.schedule-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: 20px; align-items: start; }
+.schedule-main { display: grid; gap: 16px; min-width: 0; }
+.schedule-overview h2 { margin: 0 0 8px; color: var(--forest); font: 800 1.15rem var(--font-display); overflow-wrap: anywhere; }
+.schedule-subtitle, .schedule-reason { color: var(--ink-soft); font-size: .88rem !important; line-height: 1.5; }
+.schedule-subtitle { margin: 0 0 10px; }
+.schedule-reason { margin: 0; }
+.schedule-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.schedule-actions .reject { min-height: 44px; padding: 0 18px; border-radius: var(--radius-sm); font: 800 14px var(--font-body); }
+.schedule-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.schedule-section-heading h2 { margin: 0; color: var(--forest); font: 800 1.05rem var(--font-display); }
+.timeline-empty { display: flex; align-items: flex-start; gap: 12px; margin-top: 14px; padding: 12px; border-radius: 12px; background: #f3f4f3; color: var(--ink-soft); }
+.timeline-empty > span { display: grid; flex: 0 0 24px; width: 24px; height: 24px; place-items: center; border-radius: 50%; background: #e5e7eb; color: #374151; font-size: .78rem; font-weight: 800; }
+.timeline-empty p { margin: 0; font-size: .84rem; line-height: 1.5; }
+.schedule-aside { display: grid; gap: 8px; }
+.schedule-aside > p { color: var(--ink-soft); font-size: .84rem; line-height: 1.5; }
+.schedule-aside .schedule-disclaimer { margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: .77rem; }
+.schedule-icon { display: grid; flex: 0 0 40px; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-weight: 800; font-size: 1.15rem; }
 .schedule-icon.waiting { background: var(--warn-tint); color: var(--warn); }
 .schedule-icon.approved { background: var(--tint); color: var(--forest); }
 .schedule-icon.review { background: #fbdada; color: var(--danger); }
 .link-button { display: inline-flex; align-items: center; min-height: 42px; padding: 0 16px; border-radius: var(--radius-sm); background: var(--forest); color: #fff; font-weight: 800; text-decoration: none; }
+.journey :is(button, a):focus-visible { outline: 3px solid #e59a0f; outline-offset: 3px; }
 .nav { display: flex; justify-content: space-between; gap: 10px; }
 .nav button { min-height: 42px; padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff; color: var(--ink); font: 700 14px var(--font-body); }
 .nav button.primary, .cycle-card button.primary, .decision-actions button.primary { border-color: var(--forest); background: var(--forest); color: #fff; }
@@ -675,9 +783,11 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
 .button-spinner { width: 17px; height: 17px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: button-spin .8s linear infinite; }
 @keyframes button-spin { to { transform: rotate(360deg); } }
 @media (max-width: 760px) {
-  .journey-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 12px; }
+  .journey-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); row-gap: 12px; }
   .product-detail-layout { grid-template-columns: minmax(0, 1fr); }
   .decision-layout { grid-template-columns: minmax(0, 1fr); }
+  .decision-details-grid { grid-template-columns: minmax(0, 1fr); }
+  .schedule-layout { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 520px) {
   .heading-row, .option { flex-direction: column; }
@@ -687,6 +797,8 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
   .combo-heading, .excluded-heading { align-items: flex-start; }
   .options-continue { align-items: stretch; flex-direction: column; }
   .journey-cta { width: 100%; }
+  .journey-page-header { align-items: flex-start; }
+  .journey-page-header h1 { font-size: 1.2rem; }
   .product-name-row { align-items: flex-start; flex-direction: column; }
   .detail-row { align-items: flex-start; flex-direction: column; gap: 3px; }
   .detail-row strong { text-align: left; }
@@ -695,5 +807,9 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
   .decision-choice .decision-actions { flex-direction: column; }
   .decision-actions { flex-direction: column; }
   .decision-actions button { width: 100%; min-height: 42px; }
+  .schedule-status-banner { align-items: flex-start; }
+  .schedule-section-heading { align-items: flex-start; flex-direction: column; }
+  .schedule-actions { flex-direction: column; }
+  .schedule-actions > * { width: 100%; justify-content: center; }
 }
 </style>
