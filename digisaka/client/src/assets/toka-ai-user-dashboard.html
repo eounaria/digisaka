@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Toka AI – Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #077a3c;
+    --green-dark: #0b6a32;
+    --sidebar: #0e6b30;
+    --sidebar-active: #0a5a28;
+    --ink: #111827;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --bg: #f9fafb;
+    --yellow: #ffd43b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+  }
+  svg { display: block; flex: none; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+
+  .app { display: grid; grid-template-columns: 256px 1fr; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { background: var(--sidebar); color: #fff; padding: 26px 24px; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 38px; }
+  .brand-logo { width: 40px; height: 40px; border-radius: 10px; background: #fff; display: grid; place-items: center; }
+  .brand-name { font-size: 24px; font-weight: 500; }
+  .group-label { font-size: 12px; font-weight: 500; opacity: .85; margin: 0 0 14px; }
+  .nav { list-style: none; margin: 0 0 40px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .nav a {
+    display: flex; align-items: center; gap: 14px;
+    min-height: 48px; padding: 0 12px; margin: 0 -12px; border-radius: 8px;
+    font-size: 16px;
+  }
+  .nav a.active { background: var(--sidebar-active); font-weight: 500; }
+  .nav a:hover:not(.active) { background: rgba(255, 255, 255, .08); }
+  .nav svg { width: 18px; height: 18px; }
+
+  /* Main */
+  main { padding: 28px 32px 48px; min-width: 0; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { margin: 0; font-size: 24px; font-weight: 700; }
+  .actions { display: flex; align-items: center; gap: 12px; }
+  .pill-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px;
+    background: #fff; font-size: 14px; font-weight: 500; color: var(--ink);
+  }
+  .pill-btn svg { width: 16px; height: 16px; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line);
+    background: #fff; display: grid; place-items: center; color: var(--ink);
+  }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--green); color: #fff;
+    display: grid; place-items: center; font-size: 14px; font-weight: 700;
+  }
+
+  .greeting { margin: 22px 0 16px 25px; font-size: 34px; font-weight: 700; color: var(--green); }
+
+  .hero {
+    background: var(--green); color: #fff; border-radius: 24px;
+    padding: 40px 58px; display: flex; align-items: center; gap: 100px; min-height: 196px;
+  }
+  .clock { flex: none; }
+  .time { font-size: 48px; font-weight: 700; line-height: 1.1; letter-spacing: -0.5px; }
+  .date { font-size: 16px; margin: 8px 0 14px; }
+  .refresh { height: 38px; padding: 0 25px; border: 0; border-radius: 6px; background: #fff; color: var(--ink); font-size: 14px; font-weight: 500; }
+  .hero h2 { margin: 0 0 8px; font-size: 30px; font-weight: 700; }
+  .hero h2 em { font-style: normal; color: var(--yellow); }
+  .hero p { margin: 0 0 14px; font-size: 16px; line-height: 1.4; }
+  .hero .updated { margin: 0; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 20px; }
+  .card {
+    display: flex; align-items: center; gap: 16px;
+    background: #fff; border-radius: 12px; padding: 24px;
+    box-shadow: 0 1px 4px rgba(16, 24, 40, .08);
+  }
+  .card .tile { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; background: #e3f3e8; color: var(--green); }
+  .card .tile.gold { background: #fff4d6; color: #d97706; }
+  .card .tile svg { width: 22px; height: 22px; }
+  .card .txt { flex: 1; min-width: 0; }
+  .card b { display: block; font-size: 16px; font-weight: 700; }
+  .card span { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .card .chev { width: 20px; height: 20px; color: #9ca3af; }
+
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 28px 0 14px; }
+  .section-head h3 { margin: 0; font-size: 18px; font-weight: 700; }
+  .section-head a { font-size: 14px; font-weight: 500; color: var(--green); margin-right: 8px; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .stat {
+    background: #fff; border-radius: 12px; height: 126px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 1px 4px rgba(16, 24, 40, .08);
+  }
+  .stat b { font-size: 30px; font-weight: 700; line-height: 1.2; }
+  .stat span { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  .proposals { margin-top: 38px; }
+  .proposals h3 { margin: 0 0 14px; font-size: 18px; font-weight: 700; }
+  .proposal {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff; border-radius: 12px; padding: 24px;
+    box-shadow: 0 1px 4px rgba(16, 24, 40, .08);
+  }
+  .proposal b { display: block; font-size: 16px; font-weight: 700; }
+  .proposal span { display: block; font-size: 14px; color: var(--muted); margin-top: 4px; }
+  .badge { padding: 12px 23px; border-radius: 999px; font-size: 14px; font-weight: 700; background: #f3d9db; color: #a8222b; }
+
+  @media (max-width: 1100px) {
+    .hero { gap: 40px; padding: 32px; flex-wrap: wrap; }
+    .cards, .stats { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 800px) {
+    .app { grid-template-columns: 72px 1fr; }
+    .sidebar { padding: 20px 12px; }
+    .brand-name, .group-label, .nav a span { display: none; }
+    .nav a { justify-content: center; margin: 0; padding: 0; }
+    main { padding: 20px 16px 40px; }
+    .greeting { margin-left: 0; font-size: 28px; }
+    .proposal { flex-direction: column; align-items: flex-start; gap: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#077a3c"><path d="M12 3C7 5 4 10 5 17c7 1 13-3 14-12-2-1-5-2-7-2z"/></svg>
+      </div>
+      <span class="brand-name">Toka AI</span>
+    </div>
+
+    <p class="group-label">Workspace</p>
+    <ul class="nav">
+      <li><a class="active" href="#" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 2 12h3v8h5v-6h4v6h5v-8h3z"/></svg><span>Dashboard</span></a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/><circle cx="12" cy="12" r="1.8"/></svg><span>Leaf Scan</span></a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5zM8 13h8v1.6H8zm0 3.4h8V18H8z"/></svg><span>Diagnosis History</span></a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zM5 9h14v11H5zM7 11h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 15h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg><span>Treatment Schedule</span></a></li>
+    </ul>
+
+    <p class="group-label">Account</p>
+    <ul class="nav">
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3h-4l-.4 3a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 3h4l.4-3a7 7 0 0 0 1.7-1l2.4 1 2-3.4zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg><span>Profile</span></a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5M15 8l4 4-4 4M19 12H9"/></svg><span>Sign out</span></a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <h1>Dashboard</h1>
+      <div class="actions">
+        <button class="pill-btn" type="button">
+          <svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/><circle cx="12" cy="12" r="1.8"/></svg>
+          New Scan
+        </button>
+        <button class="icon-btn" type="button" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 22a2.2 2.2 0 0 0 2.2-2.2H9.8A2.2 2.2 0 0 0 12 22zm7-6V11a7 7 0 0 0-5-6.7V3a2 2 0 0 0-4 0v1.3A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></svg>
+        </button>
+        <div class="avatar" aria-label="Juan Dela Cruz">JD</div>
+      </div>
+    </header>
+
+    <h2 class="greeting" id="greeting">Good Evening, Juan</h2>
+
+    <section class="hero" aria-label="Welcome">
+      <div class="clock">
+        <div class="time" id="time">3:55 PM</div>
+        <div class="date" id="date">Saturday, Oct 17, 2026</div>
+        <button class="refresh" type="button" id="refresh">Refresh</button>
+      </div>
+      <div>
+        <h2>Welcome back to <em>Digisaka</em></h2>
+        <p>Monitor banana crop health and review Black Sigatoka scans, proposals and treatments across your lines.</p>
+        <p class="updated">Last updated: <b id="updated">just now</b></p>
+      </div>
+    </section>
+
+    <section class="cards" aria-label="Shortcuts">
+      <a class="card" href="#">
+        <div class="tile"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/><circle cx="12" cy="12" r="1.8"/></svg></div>
+        <div class="txt"><b>Disease Detection</b><span>Scan banana leaves for Black Sigatoka</span></div>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <a class="card" href="#">
+        <div class="tile"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5zM8 13h8v1.6H8zm0 3.4h8V18H8z"/></svg></div>
+        <div class="txt"><b>Diagnosis History</b><span>Review each line’s weeks and proposals</span></div>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <a class="card" href="#">
+        <div class="tile gold"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zM5 9h14v11H5zM7 11h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 15h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg></div>
+        <div class="txt"><b>Smart Schedule</b><span>Plan and track treatment</span></div>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+    </section>
+
+    <div class="section-head">
+      <h3>Farm Overview</h3>
+      <a href="#">View Bulks →</a>
+    </div>
+    <section class="stats" aria-label="Farm overview">
+      <div class="stat"><b>1</b><span>Leaves Scanned</span></div>
+      <div class="stat"><b>1</b><span>Line Weeks Assessed</span></div>
+      <div class="stat"><b>0</b><span>Awaiting Decision</span></div>
+    </section>
+
+    <section class="proposals" aria-label="Recent proposals">
+      <h3>Recent proposals</h3>
+      <div class="proposal">
+        <div><b>Line L03</b><span>Line L03 · 2026-W24</span></div>
+        <span class="badge" style="margin:0;color:#a8222b">Awaiting Decision</span>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var timeEl = document.getElementById('time');
+    var dateEl = document.getElementById('date');
+    var greetEl = document.getElementById('greeting');
+    var updatedEl = document.getElementById('updated');
+    var lastRefresh = Date.now();
+
+    function render() {
+      var d = new Date();
+      var h = d.getHours();
+      var m = ('0' + d.getMinutes()).slice(-2);
+      timeEl.textContent = ((h % 12) || 12) + ':' + m + ' ' + (h < 12 ? 'AM' : 'PM');
+      dateEl.textContent = days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+      greetEl.textContent = 'Good ' + (h < 12 ? 'Morning' : h < 18 ? 'Afternoon' : 'Evening') + ', Juan';
+      var mins = Math.floor((Date.now() - lastRefresh) / 60000);
+      updatedEl.textContent = mins < 1 ? 'just now' : mins + (mins === 1 ? ' minute ago' : ' minutes ago');
+    }
+    document.getElementById('refresh').addEventListener('click', function () {
+      lastRefresh = Date.now();
+      render();
+    });
+    render();
+    setInterval(render, 30000);
+  })();
+</script>
+</body>
+</html>
