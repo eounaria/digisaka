@@ -1,22 +1,20 @@
 <script setup>
-import { RouterLink } from 'vue-router';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import PageHeader from '../components/PageHeader.vue';
 import Icon from '../components/Icon.vue';
-import EvidenceCharts from '../components/EvidenceCharts.vue';
 import LineHistory from '../components/LineHistory.vue';
+import TreatmentJourney from '../components/TreatmentJourney.vue';
 import { useScanStore, outcomeLabel, MAX_LEAVES } from '../stores/scan.js';
 import { useFarmStore } from '../stores/farm.js';
 import { useCycleStore } from '../stores/cycle.js';
 import { groupLeaves } from '../helpers/groups.js';
 import { previousWeek, nextWeek, isoWeekOf, weekStart, weekEnd } from '../helpers/week.js';
-import { outcomeReasonText } from '../helpers/messages.js';
 import { todayIso, fromIso } from '../helpers/today.js';
 import { samplesEnabled, addDefaultSamples, sampleFile, SAMPLE_SCENARIOS, RETAKE_SAMPLE } from '../helpers/stubSamples.js';
 
 const scan = useScanStore(), farm = useFarmStore(), cycle = useCycleStore();
-const step = ref(1); // 1 Select Leaves, 2 Bulk Assess, 3 Results
-const STEPS = ['Select Leaves', 'Bulk Assess', 'Results'];
+const step = ref(1); // 1 Select Leaves, 2 Bulk Assess, 3 Results, 4 Treatment Review
+const STEPS = ['Select Leaves', 'Bulk Assess', 'Results', 'Treatment Review'];
 const AGENT_STEPS = ['Leaf Images Collected', 'Black Sigatoka Validation', 'Individual Stage Assessment', 'Stage Groups Organized', 'Human Verification', 'Treatment Recommendation', 'Schedule Review'];
 const maxDate = todayIso();                 // scans can't be added to a future week
 const dateInput = ref(maxDate);
@@ -57,7 +55,6 @@ async function assess() {
 }
 function startOver() { cycle.reset(); scan.leaves = []; scan.log = []; step.value = 1; addDefaultSamples(scan); }
 const groups = computed(() => groupLeaves(scan.leaves));
-function confirmSchedule() { cycle.close(scan.line, scan.week); }
 
 const needsAnswer = computed(() => scan.leaves.filter((l) => l.phase === 'confirm' || l.phase === 'rescan'));
 const failed = computed(() => scan.leaves.filter((l) => l.phase === 'failed'));
@@ -70,8 +67,8 @@ const canContinue = computed(() => allDone.value && !scan.assessing);
 </script>
 
 <template>
-  <div class="page" :class="{ 'bulk-assess': step === 2, 'bulk-results': step === 3 }">
-    <PageHeader :title="step === 2 ? 'Black Sigatoka Validation' : step === 3 ? 'Bulk Assessment Result' : 'Leaf Scan'"
+  <div class="page" :class="{ 'bulk-assess': step === 2, 'bulk-results': step === 3, 'treatment-review': step === 4 }">
+    <PageHeader :title="step === 2 ? 'Black Sigatoka Validation' : step === 3 ? 'Bulk Assessment Result' : step === 4 ? 'Treatment Review' : 'Leaf Scan'"
                 :subtitle="step === 1 ? 'Scan or select banana leaves to check for signs of Black Sigatoka' : ''" />
 
     <ol class="stepper" aria-label="Progress">
@@ -215,8 +212,8 @@ const canContinue = computed(() => allDone.value && !scan.assessing);
       </div>
     </template>
 
-    <!-- Step 3: Results, grouped by stage; Confirm & Schedule closes the week and follows the cycle -->
-    <template v-else>
+    <!-- Step 3: Results, grouped by stage -->
+    <template v-else-if="step === 3">
       <section class="card">
         <h2>Leaves in this Bulk</h2>
         <div v-for="g in groups.stages" :key="g.label" class="group">
@@ -234,42 +231,15 @@ const canContinue = computed(() => allDone.value && !scan.assessing);
         <p class="hint">This is an AI-assisted assessment and not a confirmed diagnosis. Results should be verified by an agricultural specialist before treatment decisions.</p>
       </section>
 
-      <section class="card" aria-live="polite">
-        <p v-if="cycle.error" class="err" role="alert">{{ cycle.error }}</p>
-        <template v-if="cycle.phase === 'idle'">
-          <p>Confirm &amp; Schedule closes {{ scan.week }} for line {{ scan.line }} and works out a treatment. No more scans can be added to this week.</p>
-          <button class="primary" :disabled="cycle.busy" @click="confirmSchedule">Confirm &amp; Schedule</button>
-        </template>
-        <template v-else-if="cycle.phase === 'closing' || cycle.phase === 'running'">
-          <h2>Working out a treatment...</h2>
-          <p class="hint">This usually takes under a minute.</p>
-        </template>
-        <template v-else-if="cycle.phase === 'proposal'">
-          <h2>A treatment proposal is ready</h2>
-          <RouterLink class="btn primary" :to="`/treatment/${encodeURIComponent(scan.line)}/${encodeURIComponent(scan.week)}`">Open proposal</RouterLink>
-        </template>
-        <template v-else-if="cycle.phase === 'monitoring'">
-          <h2>No treatment needed yet</h2>
-          <p v-if="cycle.cycle?.outcome_reason">{{ outcomeReasonText(cycle.cycle.outcome_reason) }}</p>
-          <p class="hint">Keep monitoring this line and scan again next week.</p>
-        </template>
-        <template v-else-if="cycle.phase === 'review'">
-          <h2>Human review required</h2>
-          <p>No treatment is proposed for this week. An expert needs to look at this line.</p>
-          <p v-if="cycle.cycle?.outcome_reason">Reason: {{ outcomeReasonText(cycle.cycle.outcome_reason) }}</p>
-        </template>
-        <template v-else-if="cycle.phase === 'failed'">
-          <h2>The cycle failed</h2>
-          <p v-if="cycle.cycle?.failure_reason">Reason: {{ cycle.cycle.failure_reason }}</p>
-          <button class="primary" :disabled="cycle.busy" @click="cycle.retry()">Retry</button>
-        </template>
-        <template v-else>
-          <h2>{{ cycle.phase === 'timeout' ? 'This is taking too long' : 'Could not load the cycle' }}</h2>
-          <button class="primary" @click="cycle.resume()">Check again</button>
-        </template>
-      </section>
-      <EvidenceCharts v-if="['proposal', 'monitoring', 'review'].includes(cycle.phase)" :cycle-id="cycle.cycle?.cycle_id ?? ''" />
-      <div class="nav"><button :disabled="cycle.phase !== 'idle'" @click="step = 2">Back</button><button v-if="cycle.phase !== 'closing' && cycle.phase !== 'running'" @click="startOver">New scan</button></div>
+      <div class="nav">
+        <button @click="step = 2">Back</button>
+        <button class="primary" @click="step = 4">Continue to weather risk</button>
+      </div>
+    </template>
+
+    <!-- Step 4: Weather, spray log, proposal, decision and schedule -->
+    <template v-else>
+      <TreatmentJourney :line="scan.line" :week="scan.week" @back="step = 3" @new-scan="startOver" />
     </template>
   </div>
 </template>
@@ -280,8 +250,8 @@ h2 { font: 800 14px var(--font-display); color: var(--forest); letter-spacing: .
 .page > * { max-width: 720px; }
 .page > .scan-columns { max-width: 1180px; }
 .page { padding-bottom: var(--tabbar-h); }
-.page.bulk-assess, .page.bulk-results { max-width: none; }
-.page.bulk-assess > *, .page.bulk-results > * { width: 100%; max-width: none; }
+.page.bulk-assess, .page.bulk-results, .page.treatment-review { max-width: none; }
+.page.bulk-assess > *, .page.bulk-results > *, .page.treatment-review > * { width: 100%; max-width: none; }
 .scan-columns { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .92fr); gap: 24px; align-items: start; }
 .capture-panel { min-width: 0; }
 .pick { display: grid; gap: 8px; }

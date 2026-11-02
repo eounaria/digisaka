@@ -15,6 +15,10 @@ export const useProposalStore = defineStore('proposal', {
     humanReview: (s) => s.cycle?.outcome === 'human_review_required',
   },
   actions: {
+    reset() {
+      this.run++;
+      Object.assign(this, { phase: 'idle', lineId: '', week: '', proposal: null, cycle: null, appliedOn: null, error: '', busy: false });
+    },
     async load(lineId, week) {
       this.run++; const run = this.run;
       Object.assign(this, { phase: 'loading', lineId, week, proposal: null, cycle: null, appliedOn: null, error: '', busy: false });

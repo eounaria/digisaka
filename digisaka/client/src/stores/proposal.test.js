@@ -33,6 +33,15 @@ const loaded = async (extra = {}) => {
 };
 
 describe('load', () => {
+  it('clears loaded proposal data on reset', async () => {
+    const s = await loaded();
+    s.reset();
+    expect(s).toMatchObject({
+      phase: 'idle', lineId: '', week: '', proposal: null, cycle: null,
+      appliedOn: null, error: '', busy: false,
+    });
+  });
+
   it('loads the week proposal and cycle, status proposed', async () => {
     const s = await loaded();
     expect(s).toMatchObject({ phase: 'ready', status: 'proposed' });
