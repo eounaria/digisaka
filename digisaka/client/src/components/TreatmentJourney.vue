@@ -191,10 +191,13 @@ async function decide(decision) {
                 <button v-for="product in eligibleProducts" :key="product.id" type="button" class="product-option" :class="{ chosen: isConfirmed(product.id) }" :aria-label="`View details for ${product.name}`" @click="showProductDetails(product.id)">
                   <span class="product-copy">
                     <span class="product-name">{{ product.name }}</span>
-                    <span class="product-meta">FRAC {{ product.frac_code }} · {{ product.mobility }}</span>
+                    <span class="product-meta">
+                      <span class="product-price">{{ product.price }}</span>
+                      <span class="frac-label">FRAC {{ product.frac_code }}</span>
+                      <span>{{ product.mobility }}</span>
+                    </span>
                   </span>
                   <span class="product-action">
-                    <span>{{ product.price }}</span>
                     <span v-if="isConfirmed(product.id)" class="selection-state">Selected</span>
                     <span class="product-link" aria-hidden="true">View details <b>→</b></span>
                   </span>
@@ -629,9 +632,9 @@ async function decide(decision) {
 .product-description, .product-meta { display: block; color: var(--ink-soft); font-size: .79rem; line-height: 1.4; }
 .product-action { display: grid; flex: 0 0 auto; justify-items: end; gap: 4px; margin-left: auto; color: var(--ink-soft); font-size: .78rem; font-weight: 600; white-space: nowrap; }
 .product-action b { margin-left: 3px; font-size: 1rem; }
-.product-link, .text-action { color: var(--forest); font-size: .8rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+.product-link, .text-action { color: #6b7280; font-size: .8rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
 .text-action { border: 0; background: transparent; padding: 3px 6px; }
-.product-option:hover .product-link, .excluded-option:hover .product-link, .text-action:hover { color: var(--forest-deep); }
+.product-option:hover .product-link, .excluded-option:hover .product-link, .text-action:hover { color: #374151; }
 .options-continue { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
 .options-continue p { color: var(--ink-soft); font-size: .84rem; }
 .options-continue .journey-cta { flex: 0 0 auto; }
@@ -644,6 +647,7 @@ async function decide(decision) {
 .excluded-option .product-meta { font-size: .75rem; }
 .excluded-option .product-action { color: #8d3434; }
 .frac-label { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #e5e7eb; color: #374151; font-size: .68rem; font-weight: 800; white-space: nowrap; }
+.product-price { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #e5e7eb; color: #374151; font-size: .68rem; font-weight: 800; white-space: nowrap; }
 .selection-state.insisted { color: #8d3434; }
 .confirmed-list { padding: 16px; border: 1px solid #cbd2cb; border-radius: 16px; background: #fff; }
 .confirmed-list h3 span { display: inline-grid; place-items: center; min-width: 23px; height: 23px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--tint); color: var(--forest); font-size: .78rem; }
@@ -670,7 +674,7 @@ async function decide(decision) {
 .catalog-heading h3 { margin: 0; color: var(--forest); font: 800 1rem var(--font-display); }
 .catalog-heading span { color: var(--ink-soft); font-size: .8rem; }
 .sample-disclaimer { margin: 0; padding: 10px 12px; border-radius: 10px; background: #e5e7eb; color: #374151; font-size: .82rem; font-weight: 700; }
-.product-meta { color: var(--ink-soft); font-size: .82rem !important; }
+.product-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 7px; color: var(--ink-soft); font-size: .82rem !important; }
 .excluded { padding: 12px; border-radius: 10px; background: var(--beige); font-size: .85rem; }
 .excluded summary { cursor: pointer; font-weight: 700; }
 .excluded ul { padding-left: 20px; color: var(--ink-soft); line-height: 1.6; }
