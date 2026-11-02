@@ -276,6 +276,7 @@ watch(() => scan.log.length, async () => { await nextTick(); if (logBox.value) l
 h2 { font: 800 14px var(--font-display); color: var(--forest); letter-spacing: .04em; }
 .page > * { max-width: 720px; }
 .page > .scan-columns { max-width: 1180px; }
+.page { padding-bottom: var(--tabbar-h); }
 .scan-columns { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .92fr); gap: 24px; align-items: start; }
 .capture-panel { min-width: 0; }
 .pick { display: grid; gap: 8px; }

@@ -102,7 +102,7 @@ nav { display: grid; gap: 4px; }
 .menu-out { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 10px; background: none; color: var(--forest); font: 800 15px var(--font-body); }
 .menu-out:hover { background: var(--tint); }
 .dot { position: absolute; top: 8px; right: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--warn); border: 2px solid #fff; }
-.content { flex: 1; min-height: 0; overflow-y: auto; }
+.content { flex: 1; min-height: 0; overflow-y: auto; contain: paint; }
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }
   .sidebar { position: fixed; inset: auto 0 0 0; z-index: 30; flex-direction: row; padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); height: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -4px 16px rgba(6, 40, 20, .2); overflow: visible; }
