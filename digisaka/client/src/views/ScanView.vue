@@ -70,7 +70,7 @@ const canContinue = computed(() => allDone.value && !scan.assessing);
 </script>
 
 <template>
-  <div class="page" :class="{ 'bulk-assess': step === 2 }">
+  <div class="page" :class="{ 'bulk-assess': step === 2, 'bulk-results': step === 3 }">
     <PageHeader :title="step === 2 ? 'Black Sigatoka Validation' : step === 3 ? 'Bulk Assessment Result' : 'Leaf Scan'"
                 :subtitle="step === 1 ? 'Scan or select banana leaves to check for signs of Black Sigatoka' : ''" />
 
@@ -280,8 +280,8 @@ h2 { font: 800 14px var(--font-display); color: var(--forest); letter-spacing: .
 .page > * { max-width: 720px; }
 .page > .scan-columns { max-width: 1180px; }
 .page { padding-bottom: var(--tabbar-h); }
-.page.bulk-assess { max-width: none; }
-.page.bulk-assess > * { width: 100%; max-width: none; }
+.page.bulk-assess, .page.bulk-results { max-width: none; }
+.page.bulk-assess > *, .page.bulk-results > * { width: 100%; max-width: none; }
 .scan-columns { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .92fr); gap: 24px; align-items: start; }
 .capture-panel { min-width: 0; }
 .pick { display: grid; gap: 8px; }
