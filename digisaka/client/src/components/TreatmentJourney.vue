@@ -166,29 +166,19 @@ async function decide(decision) {
     </template>
 
     <template v-else-if="page === 2">
-      <section class="card">
+      <section class="fungicide-page">
         <div class="heading-row"><h2>Fungicide options</h2><span class="badge">{{ prototypeStore.enabled ? 'Prototype catalog' : 'Scheduler recommendation' }}</span></div>
         <p v-if="prototypeStore.phase === 'error'" class="error" role="alert">Prototype catalog could not be loaded: {{ prototypeStore.error }}</p>
         <p v-else-if="prototypeStore.phase === 'loading'" class="hint" role="status">Loading prototype catalog…</p>
         <template v-if="prototypeStore.enabled && prototypeStore.data">
-          <section class="recommended-action">
-            <p class="eyebrow">Recommended action · sample</p>
-            <div class="action-chips">
-              <span class="action-chip preventive" :class="{ active: prototypeStore.data.recommended_action.preventive }">{{ prototypeStore.data.recommended_action.preventive ? '✓ ' : '' }}Preventive</span>
-              <span class="action-chip mechanical" :class="{ active: prototypeStore.data.recommended_action.mechanical }">{{ prototypeStore.data.recommended_action.mechanical ? '✓ ' : '' }}Mechanical</span>
-              <span class="action-chip treatment" :class="{ active: prototypeStore.data.recommended_action.treatment }">{{ prototypeStore.data.recommended_action.treatment ? '✓ ' : '' }}Treatment</span>
-              <span class="action-chip monitor" :class="{ active: prototypeStore.data.recommended_action.monitor }">{{ prototypeStore.data.recommended_action.monitor ? '✓ ' : '' }}Monitor</span>
-              <span class="action-chip provisional">{{ prototypeStore.data.recommended_action.provisional_label }}</span>
-            </div>
-            <p>{{ prototypeStore.data.recommended_action.summary }}</p>
-          </section>
-          <div class="catalog-list">
-            <p class="sample-disclaimer">{{ prototypeStore.data.label }}</p>
-            <div class="catalog-heading">
-              <h3>Fungicide options</h3>
-              <span>{{ eligibleProducts.length }} eligible · {{ excludedProducts.length }} excluded</span>
-            </div>
-            <section class="combo-option" aria-label="Recommended prototype combination">
+          <div class="fungicide-layout">
+            <main class="catalog-main">
+              <p class="sample-disclaimer">{{ prototypeStore.data.label }}</p>
+              <div class="catalog-heading">
+                <h3>Fungicide options</h3>
+                <span>{{ eligibleProducts.length }} eligible · {{ excludedProducts.length }} excluded</span>
+              </div>
+              <section class="combo-option" aria-label="Recommended prototype combination">
               <div class="combo-heading">
                 <div>
                   <h3>Group A: contact, multi-site protectants</h3>
@@ -210,8 +200,8 @@ async function decide(decision) {
                   </span>
                 </button>
               </div>
-            </section>
-            <section class="excluded-list" aria-label="Excluded prototype products">
+              </section>
+              <section class="excluded-list" aria-label="Excluded prototype products">
               <div class="excluded-heading">
                 <div>
                   <span class="eyebrow">Use caution</span>
@@ -233,8 +223,21 @@ async function decide(decision) {
                   </span>
                 </button>
               </div>
-            </section>
-            <section v-if="confirmedProducts.length" class="confirmed-list" aria-label="Confirmed sample products">
+              </section>
+            </main>
+            <aside class="fungicide-sidebar">
+              <section class="recommended-action">
+                <p class="eyebrow">Recommended action · sample</p>
+                <div class="action-chips">
+                  <span class="action-chip preventive" :class="{ active: prototypeStore.data.recommended_action.preventive }">{{ prototypeStore.data.recommended_action.preventive ? '✓ ' : '' }}Preventive</span>
+                  <span class="action-chip mechanical" :class="{ active: prototypeStore.data.recommended_action.mechanical }">{{ prototypeStore.data.recommended_action.mechanical ? '✓ ' : '' }}Mechanical</span>
+                  <span class="action-chip treatment" :class="{ active: prototypeStore.data.recommended_action.treatment }">{{ prototypeStore.data.recommended_action.treatment ? '✓ ' : '' }}Treatment</span>
+                  <span class="action-chip monitor" :class="{ active: prototypeStore.data.recommended_action.monitor }">{{ prototypeStore.data.recommended_action.monitor ? '✓ ' : '' }}Monitor</span>
+                  <span class="action-chip provisional">{{ prototypeStore.data.recommended_action.provisional_label }}</span>
+                </div>
+                <p>{{ prototypeStore.data.recommended_action.summary }}</p>
+              </section>
+              <section v-if="confirmedProducts.length" class="confirmed-list" aria-label="Confirmed sample products">
               <h3>Your sample selections <span>{{ confirmedProducts.length }}</span></h3>
               <p>Selections are for UI preview only; they are not sent to or used by the scheduler.</p>
               <ul>
@@ -243,11 +246,12 @@ async function decide(decision) {
                   <button type="button" class="text-action" @click="removeSampleProduct(product.id)">Remove</button>
                 </li>
               </ul>
-            </section>
-            <div v-if="confirmedProducts.length" class="options-continue">
-              <p>Review your sample selections and record a prototype-only decision.</p>
-              <button type="button" class="journey-cta" @click="page = 4">Continue to decision</button>
-            </div>
+              </section>
+              <div v-if="confirmedProducts.length" class="options-continue">
+                <p>Review your sample selections and record a prototype-only decision.</p>
+                <button type="button" class="journey-cta" @click="page = 4">Continue to decision</button>
+              </div>
+            </aside>
           </div>
         </template>
         <template v-else-if="cycle.phase === 'proposal' && proposalStore.phase === 'ready' && proposal">
@@ -647,8 +651,13 @@ async function decide(decision) {
 .confirmed-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
 .confirmed-list li small { color: var(--danger); }
 .confirmed-list li button { border: 0; background: transparent; color: var(--forest); font-weight: 800; text-decoration: underline; }
+.fungicide-page { display: grid; gap: 16px; }
+.fungicide-page > .heading-row h2 { margin: 0; color: var(--forest); font: 800 17px var(--font-display); }
+.fungicide-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 20px; align-items: start; }
+.catalog-main, .fungicide-sidebar { display: grid; align-content: start; gap: 14px; min-width: 0; }
+.fungicide-sidebar { position: sticky; top: 16px; }
 .catalog-list { display: grid; gap: 10px; }
-.recommended-action { display: grid; gap: 10px; margin: 14px 0 18px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #f8faf8; }
+.recommended-action { display: grid; gap: 10px; margin: 0; padding: 16px; border: 1px solid #cbd2cb; border-radius: 16px; background: #fff; }
 .recommended-action > p:last-child { margin: 0; }
 .action-chips { display: flex; flex-wrap: wrap; gap: 7px; }
 .action-chip { padding: 5px 10px; border: 1px solid #aeb8b1; border-radius: 999px; color: var(--ink-soft); font-size: .75rem; font-weight: 800; }
@@ -660,7 +669,7 @@ async function decide(decision) {
 .catalog-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .catalog-heading h3 { margin: 0; color: var(--forest); font: 800 1rem var(--font-display); }
 .catalog-heading span { color: var(--ink-soft); font-size: .8rem; }
-.sample-disclaimer { padding: 10px 12px; border-radius: 10px; background: #e5e7eb; color: #374151; font-size: .82rem; font-weight: 700; }
+.sample-disclaimer { margin: 0; padding: 10px 12px; border-radius: 10px; background: #e5e7eb; color: #374151; font-size: .82rem; font-weight: 700; }
 .product-meta { color: var(--ink-soft); font-size: .82rem !important; }
 .excluded { padding: 12px; border-radius: 10px; background: var(--beige); font-size: .85rem; }
 .excluded summary { cursor: pointer; font-weight: 700; }
@@ -784,6 +793,8 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
 @keyframes button-spin { to { transform: rotate(360deg); } }
 @media (max-width: 760px) {
   .journey-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); row-gap: 12px; }
+  .fungicide-layout { grid-template-columns: minmax(0, 1fr); }
+  .fungicide-sidebar { position: static; }
   .product-detail-layout { grid-template-columns: minmax(0, 1fr); }
   .decision-layout { grid-template-columns: minmax(0, 1fr); }
   .decision-details-grid { grid-template-columns: minmax(0, 1fr); }
@@ -796,6 +807,8 @@ textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid va
   .excluded-option { align-items: center; }
   .combo-heading, .excluded-heading { align-items: flex-start; }
   .options-continue { align-items: stretch; flex-direction: column; }
+  .catalog-main { order: 0; }
+  .fungicide-sidebar { order: 1; }
   .journey-cta { width: 100%; }
   .journey-page-header { align-items: flex-start; }
   .journey-page-header h1 { font-size: 1.2rem; }
