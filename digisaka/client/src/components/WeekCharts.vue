@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { diseaseCaption, rainfallCaption, missingWeeks, linePath, niceMax } from '../helpers/evidence.js';
 
 // Weekly YLS/YLI and rainfall as plain SVG. With `disease` and `rainfall` (a cycle's evidence) the compared
@@ -7,9 +7,40 @@ import { diseaseCaption, rainfallCaption, missingWeeks, linePath, niceMax } from
 const props = defineProps({ weeks: { type: Array, required: true }, disease: { type: Object, default: null }, rainfall: { type: Object, default: null } });
 
 const W = 320, H = 150, L = 34, R = 10, T = 10, B = 28;
+const hoveredPoint = ref(null), focusedPoint = ref(null);
+const diseaseTooltipText = ref(null), rainfallTooltipText = ref(null);
+const tooltipWidth = ref(0);
 const weeks = computed(() => props.weeks);
 const label = (w) => `W${w.slice(-2)}`;
 const x = (i) => (weeks.value.length < 2 ? (L + W - R) / 2 : L + (i * (W - L - R)) / (weeks.value.length - 1));
+const pointDetails = (chart, w, seriesName, value, pointX, pointY) => ({
+  chart, key: `${chart}-${w.week}-${seriesName}`, week: w.week, seriesName, value, x: pointX, y: pointY,
+});
+const activePoint = computed(() => focusedPoint.value ?? hoveredPoint.value);
+const hoverPoint = (...args) => { hoveredPoint.value = pointDetails(...args); };
+const focusPoint = (...args) => { focusedPoint.value = pointDetails(...args); };
+const clearHover = (chart, key) => {
+  if (hoveredPoint.value?.chart === chart && (!key || hoveredPoint.value.key === key)) hoveredPoint.value = null;
+};
+const clearPoint = (chart) => {
+  if (focusedPoint.value?.chart === chart) focusedPoint.value = null;
+};
+const clearChartHover = (chart) => clearHover(chart);
+const tooltipX = computed(() => {
+  const half = tooltipWidth.value / 2;
+  return Math.max(half + 4, Math.min(W - half - 4, activePoint.value?.x ?? 0));
+});
+const tooltipY = computed(() => Math.max(20, (activePoint.value?.y ?? 0) - 13));
+const pointText = computed(() => activePoint.value
+  ? `${activePoint.value.week} · ${activePoint.value.seriesName}: ${activePoint.value.value}${activePoint.value.chart === 'rainfall' ? ' mm' : ''}`
+  : '');
+watch(pointText, async (text) => {
+  await nextTick();
+  const element = activePoint.value?.chart === 'rainfall' ? rainfallTooltipText.value : diseaseTooltipText.value;
+  tooltipWidth.value = text && element
+    ? element.getComputedTextLength() + 12
+    : 0;
+});
 
 // Disease chart: the axis runs so that the worsening direction is always down.
 const lowerIsWorse = computed(() => props.disease?.worsening_direction !== 'higher');
@@ -48,33 +79,62 @@ const cell = (v) => (v == null ? '—' : v);</script>
   <div>
   <figure>
     <figcaption>Leaf-spot stage (YLS) by week <small>— {{ lowerIsWorse ? 'lower = disease on a younger leaf' : 'higher = disease on a younger leaf' }}, so worsening goes down</small></figcaption>
-    <svg :viewBox="`0 0 ${W} ${H}`" role="img" :aria-label="dLabel">
+    <svg :viewBox="`0 0 ${W} ${H}`" role="group" :aria-label="dLabel" @pointerleave="clearChartHover('disease')">
       <g class="axis">
         <template v-for="t in ticks" :key="t"><line :x1="L" :x2="W - R" :y1="yD(t)" :y2="yD(t)" /><text :x="L - 6" :y="yD(t) + 3" text-anchor="end">{{ t }}</text></template>
         <text v-for="(w, i) in weeks" :key="w.week" :x="x(i)" :y="H - 10" text-anchor="middle">{{ label(w.week) }}</text>
       </g>
       <path class="yli" :d="linePath(yliPts)" />
       <path class="yls" :d="linePath(ylsPts)" />
-      <template v-for="(p, i) in ylsPts" :key="weeks[i].week">
-        <circle v-if="p" :cx="p.x" :cy="p.y" :r="compared.has(weeks[i].week) ? 5 : 3" :class="['dot', { hi: compared.has(weeks[i].week) }]" />
+      <template v-for="(w, i) in weeks" :key="w.week">
+        <circle v-if="ylsPts[i]" :cx="ylsPts[i].x" :cy="ylsPts[i].y" :r="compared.has(w.week) ? 5 : 3" :class="['dot', 'yls-dot', { hi: compared.has(w.week) }]"
+                tabindex="0" role="img" :aria-label="`${w.week}, YLS: ${w.yls}`"
+                @pointerenter="hoverPoint('disease', w, 'YLS', w.yls, ylsPts[i].x, ylsPts[i].y)"
+                @pointerleave="clearHover('disease', `disease-${w.week}-YLS`)"
+                @focus="focusPoint('disease', w, 'YLS', w.yls, ylsPts[i].x, ylsPts[i].y)" @blur="clearPoint('disease')">
+          <title>{{ w.week }} · YLS: {{ w.yls }}</title>
+        </circle>
+        <circle v-if="yliPts[i]" :cx="yliPts[i].x" :cy="yliPts[i].y" r="3" class="dot yli-dot"
+                tabindex="0" role="img" :aria-label="`${w.week}, YLI: ${w.yli}`"
+                @pointerenter="hoverPoint('disease', w, 'YLI', w.yli, yliPts[i].x, yliPts[i].y)"
+                @pointerleave="clearHover('disease', `disease-${w.week}-YLI`)"
+                @focus="focusPoint('disease', w, 'YLI', w.yli, yliPts[i].x, yliPts[i].y)" @blur="clearPoint('disease')">
+          <title>{{ w.week }} · YLI: {{ w.yli }}</title>
+        </circle>
       </template>
+      <g v-if="activePoint?.chart === 'disease'" class="tooltip" aria-hidden="true">
+        <rect :x="tooltipX - tooltipWidth / 2" :y="tooltipY - 9" :width="tooltipWidth" height="18" rx="4" />
+        <text ref="diseaseTooltipText" :x="tooltipX" :y="tooltipY + 2.5">{{ pointText }}</text>
+      </g>
     </svg>
+    <p class="sr-only" aria-live="polite">{{ activePoint?.chart === 'disease' ? pointText : '' }}</p>
     <p v-if="dCap" class="cap">{{ dCap }} <span class="soft">YLI (lighter line) is shown for context and is not part of the decision.</span></p>
     <p v-else class="cap soft">YLI (lighter line) is shown for context.</p>
   </figure>
 
   <figure>
     <figcaption>Rainfall by week (mm)</figcaption>
-    <svg :viewBox="`0 0 ${W} ${H}`" role="img" :aria-label="rLabel">
+    <svg :viewBox="`0 0 ${W} ${H}`" role="group" :aria-label="rLabel" @pointerleave="clearChartHover('rainfall')">
       <g class="axis">
         <template v-for="t in [0, rainTop / 2, rainTop]" :key="t"><line :x1="L" :x2="W - R" :y1="yR(t)" :y2="yR(t)" /><text :x="L - 6" :y="yR(t) + 3" text-anchor="end">{{ t }}</text></template>
         <text v-for="(w, i) in weeks" :key="w.week" :x="x(i)" :y="H - 10" text-anchor="middle">{{ label(w.week) }}</text>
       </g>
       <template v-for="(w, i) in weeks" :key="w.week">
-        <rect v-if="w.rainfall_mm != null" :class="['bar', group(w.week)]" :x="x(i) - barW / 2" :y="yR(w.rainfall_mm)" :width="barW" :height="yR(0) - yR(w.rainfall_mm)" />
+        <rect v-if="w.rainfall_mm != null" :class="['bar', group(w.week)]" :x="x(i) - barW / 2" :y="yR(w.rainfall_mm)" :width="barW" :height="yR(0) - yR(w.rainfall_mm)"
+              tabindex="0" role="img" :aria-label="`${w.week}, rainfall: ${w.rainfall_mm} mm`"
+              @pointerenter="hoverPoint('rainfall', w, 'Rainfall', w.rainfall_mm, x(i), yR(w.rainfall_mm))"
+              @pointerleave="clearHover('rainfall', `rainfall-${w.week}-Rainfall`)"
+              @focus="focusPoint('rainfall', w, 'Rainfall', w.rainfall_mm, x(i), yR(w.rainfall_mm))" @blur="clearPoint('rainfall')">
+          <title>{{ w.week }} · Rainfall: {{ w.rainfall_mm }} mm</title>
+        </rect>
       </template>
       <line v-if="minLine" class="min" :x1="L" :x2="W - R" :y1="yR(minLine)" :y2="yR(minLine)" />
+      <g v-if="activePoint?.chart === 'rainfall'" class="tooltip" aria-hidden="true">
+        <rect :x="tooltipX - tooltipWidth / 2" :y="tooltipY - 9" :width="tooltipWidth" height="18" rx="4" />
+        <text ref="rainfallTooltipText" :x="tooltipX" :y="tooltipY + 2.5">{{ pointText }}</text>
+      </g>
     </svg>
+    <p class="sr-only" aria-live="polite">{{ activePoint?.chart === 'rainfall' ? pointText : '' }}</p>
     <p v-if="rainfall" class="legend"><i class="sw recent"></i>Last {{ rainfall.window_weeks }} weeks <i class="sw previous"></i>Weeks before <span v-if="minLine"><i class="sw minsw"></i>Minimum per week</span></p>
     <p v-if="rCap" class="cap">{{ rCap }}</p>
   </figure>
@@ -101,10 +161,18 @@ path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
 .yls { stroke: var(--forest); stroke-width: 2.5; }
 .yli { stroke: var(--leaf-soft); stroke-width: 2; }
 .dot { fill: var(--forest); }
+.dot { cursor: pointer; }
+.yli-dot { fill: var(--leaf-soft); stroke: var(--forest-deep); stroke-width: .75; }
+.dot:focus, .bar:focus { outline: none; stroke: var(--warn); stroke-width: 3; }
 .dot.hi { fill: var(--warn); stroke: var(--card); stroke-width: 1.5; }
 .bar.recent { fill: var(--teal); }
 .bar.previous { fill: var(--leaf-soft); }
 .bar.other { fill: var(--line); }
+.bar { cursor: pointer; }
+.bar:focus { fill: var(--warn); }
+.tooltip rect { fill: var(--ink); }
+.tooltip text { fill: #fff; font-size: 7px; text-anchor: middle; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .min { stroke: var(--danger); stroke-dasharray: 4 3; }
 .cap { margin: 6px 0 0; font-size: .9rem; }
 .soft { color: var(--ink-soft); }
