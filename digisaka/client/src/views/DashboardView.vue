@@ -169,21 +169,23 @@ const open = (r) => router.push(`/treatment/${encodeURIComponent(r.lineId)}/${en
         No proposals yet. Scan a line and close its week to see one here.
         <button type="button" @click="router.push('/scan')">Start a scan</button>
       </div>
-      <button
-        v-for="r in sum.recent"
-        :key="r.lineId + r.week"
-        class="proposal"
-        type="button"
-        @click="open(r)"
-      >
-        <div class="grow">
-          <b>Line {{ r.lineId }}</b>
-          <span>{{ r.week }}</span>
-        </div>
-        <span class="badge" :class="r.status === 'proposed' ? 'warn' : 'ok'">
-          {{ STATUS[r.status] ?? r.status }}
-        </span>
-      </button>
+      <div v-else-if="sum.recent.length" class="proposal-list">
+        <button
+          v-for="r in sum.recent"
+          :key="r.lineId + r.week"
+          class="proposal"
+          type="button"
+          @click="open(r)"
+        >
+          <div class="grow">
+            <b>Line {{ r.lineId }}</b>
+            <span>{{ r.week }}</span>
+          </div>
+          <span class="badge" :class="r.status === 'proposed' ? 'warn' : 'ok'">
+            {{ STATUS[r.status] ?? r.status }}
+          </span>
+        </button>
+      </div>
     </section>
   </div>
 </template>
@@ -295,21 +297,27 @@ const open = (r) => router.push(`/treatment/${encodeURIComponent(r.lineId)}/${en
 /* Proposals */
 .proposals { margin-top: 38px; }
 .proposals h3 { margin: 0 0 14px; font-size: 18px; font-weight: 700; color: var(--forest); }
+.proposal-list {
+  overflow: hidden;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(16, 24, 40, .08);
+}
 .proposal {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border-radius: 12px;
+  background: transparent;
   padding: 24px;
-  box-shadow: 0 1px 4px rgba(16, 24, 40, .08);
   border: none;
+  border-bottom: 1px solid var(--line);
   cursor: pointer;
   width: 100%;
   text-align: left;
-  transition: box-shadow .15s, transform .15s;
+  transition: background-color .15s;
 }
-.proposal:hover { box-shadow: 0 4px 12px rgba(16, 24, 40, .12); transform: translateY(-1px); }
+.proposal:last-child { border-bottom: none; }
+.proposal:hover { background: var(--tint); }
 .proposal:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
 .grow { flex: 1; min-width: 0; display: grid; gap: 4px; }
 .grow b { font-size: 16px; font-weight: 700; color: var(--ink); }
