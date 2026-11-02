@@ -401,20 +401,6 @@ async function decide(decision) {
           <div class="decision-layout">
             <div class="decision-main">
               <div class="decision-details-grid">
-                <section class="detail-section decision-recommendation">
-                  <p class="section-kicker">Recommended action · sample</p>
-                  <div class="action-chips">
-                    <span class="action-chip preventive" :class="{ active: prototypeStore.data?.recommended_action?.preventive }">Preventive</span>
-                    <span class="action-chip mechanical" :class="{ active: prototypeStore.data?.recommended_action?.mechanical }">Mechanical</span>
-                    <span class="action-chip treatment" :class="{ active: prototypeStore.data?.recommended_action?.treatment }">Treatment</span>
-                    <span class="action-chip monitor" :class="{ active: prototypeStore.data?.recommended_action?.monitor }">Monitor</span>
-                    <span class="action-chip provisional">{{ prototypeStore.data?.recommended_action?.provisional_label ?? 'Provisional' }}</span>
-                  </div>
-                  <div class="detail-rows">
-                    <div class="detail-row"><span>Apply</span><strong>Not provided</strong></div>
-                    <div class="detail-row"><span>Reassess</span><strong>{{ week }}</strong></div>
-                  </div>
-                </section>
                 <section class="detail-section decision-selection">
                   <p class="section-kicker">Selected products · sample only</p>
                   <div v-for="product in confirmedProducts" :key="product.id" class="decision-product">
@@ -428,6 +414,20 @@ async function decide(decision) {
                     <p v-if="product.eligibility !== 'Eligible in prototype data'" class="decision-product-warning">{{ product.resistance_note }} Not recommended.</p>
                   </div>
                   <p class="sample-note">Compatibility, label eligibility, rates, and timing are not verified. These selections are not an application recommendation.</p>
+                </section>
+                <section class="detail-section decision-recommendation">
+                  <p class="section-kicker">Recommended action · sample</p>
+                  <div class="action-chips">
+                    <span class="action-chip preventive" :class="{ active: prototypeStore.data?.recommended_action?.preventive }">Preventive</span>
+                    <span class="action-chip mechanical" :class="{ active: prototypeStore.data?.recommended_action?.mechanical }">Mechanical</span>
+                    <span class="action-chip treatment" :class="{ active: prototypeStore.data?.recommended_action?.treatment }">Treatment</span>
+                    <span class="action-chip monitor" :class="{ active: prototypeStore.data?.recommended_action?.monitor }">Monitor</span>
+                    <span class="action-chip provisional">{{ prototypeStore.data?.recommended_action?.provisional_label ?? 'Provisional' }}</span>
+                  </div>
+                  <div class="detail-rows">
+                    <div class="detail-row"><span>Apply</span><strong>Not provided</strong></div>
+                    <div class="detail-row"><span>Reassess</span><strong>{{ week }}</strong></div>
+                  </div>
                 </section>
               </div>
               <section class="detail-section decision-why">
