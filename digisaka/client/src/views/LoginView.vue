@@ -737,6 +737,203 @@ onMounted(() => {
   }
 }
 
+@media (min-width: 768px) and (max-width: 1024px) {
+  .login-page {
+    display: block;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #f6f5f0;
+  }
+  .left-panel {
+    display: none;
+  }
+  .mobile-hero {
+    display: block;
+    position: relative;
+    width: 100%;
+    max-width: 820px;
+    height: clamp(400px, 58vh, 520px);
+    margin: 0 auto;
+    overflow: hidden;
+    color: #fff;
+    text-align: center;
+    background: linear-gradient(135deg, #2fa354 0%, #1f7a3d 55%, #175a2d 100%);
+    border-radius: 0 0 40px 40px;
+  }
+  .mobile-hero::before,
+  .mobile-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 100% 0 100% 0;
+    background: rgba(255, 255, 255, 0.09);
+    pointer-events: none;
+  }
+  .mobile-hero::before {
+    width: 300px;
+    height: 130px;
+    right: -72px;
+    top: 22px;
+    transform: rotate(-35deg);
+  }
+  .mobile-hero::after {
+    width: 270px;
+    height: 124px;
+    left: -126px;
+    top: 58%;
+    transform: rotate(35deg);
+  }
+  .mobile-hero-mark {
+    position: absolute;
+    top: clamp(84px, 12vh, 108px);
+    left: 50%;
+    display: grid;
+    width: 92px;
+    height: 92px;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 50%;
+    background: #fff;
+    transform: translateX(-50%);
+  }
+  .mobile-hero-mark img {
+    width: 58px;
+    height: 58px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  .mobile-hero-copy {
+    position: absolute;
+    top: clamp(190px, 25vh, 228px);
+    right: 24px;
+    left: 24px;
+  }
+  .mobile-hero-copy h1 {
+    margin: 0;
+    font-family: 'Roboto', Helvetica, Arial, sans-serif;
+    font-size: 44px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .mobile-hero-copy p {
+    margin: 8px 0 0;
+    font-size: 17px;
+    opacity: 0.92;
+  }
+  .right-panel {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 820px;
+    min-height: 0;
+    margin: -112px auto 0;
+    padding: 0 24px 48px;
+  }
+  .login-card {
+    width: 100%;
+    max-width: 480px;
+    padding: 36px 40px 32px;
+    border: 1px solid #9ca3af;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(20, 57, 31, 0.1);
+  }
+  .mobile-brand,
+  .desktop-heading,
+  .desktop-subtitle {
+    display: none;
+  }
+  .mobile-heading,
+  .mobile-subtitle {
+    display: inline;
+  }
+  .login-heading {
+    margin: 0;
+    font-family: 'Roboto', Helvetica, Arial, sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #14391f;
+  }
+  .login-subtitle {
+    margin: 6px 0 24px;
+    font-size: 16px;
+    color: #5b645e;
+  }
+  .form-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .form-group {
+    margin-bottom: 14px;
+  }
+  .input-wrapper {
+    height: 56px;
+    padding: 0 16px;
+    border: 1px solid #cbd0d5;
+    border-radius: 10px;
+    background: #fff;
+  }
+  .input-wrapper:focus-within {
+    border-color: #35a95b;
+    box-shadow: 0 0 0 3px rgba(53, 169, 91, 0.18);
+  }
+  .form-input,
+  .form-input:focus {
+    height: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 16px;
+    color: #14391f;
+  }
+  .form-input::placeholder {
+    color: #8a978d;
+  }
+  .password-input {
+    padding-right: 36px;
+  }
+  .toggle-password {
+    right: 0;
+    width: 30px;
+    height: 30px;
+  }
+  .toggle-password svg {
+    stroke: #6f8f78;
+  }
+  .remember-me {
+    justify-content: flex-start;
+    gap: 10px;
+    margin: 20px 0 28px;
+  }
+  .remember-me label,
+  .forgot-link {
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .forgot-link {
+    margin-left: auto;
+  }
+  .signin-button {
+    height: 56px;
+    margin-top: 2px;
+    border-radius: 10px;
+    background: #08783f;
+    box-shadow: none;
+    font-size: 18px;
+  }
+  .signin-button:hover:not(:disabled) {
+    background: #06552c;
+  }
+}
+
 @media (max-width: 767px) {
   .login-page {
     display: block;
