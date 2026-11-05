@@ -113,7 +113,7 @@ onMounted(() => {
         <div class="form-wrapper" :class="{ 'is-visible': reveal.form }">
           <h1 class="login-heading" :class="{ 'is-visible': reveal.heading }">
             <span class="desktop-heading">Sign In</span>
-            <span class="mobile-heading">Welcome back</span>
+            <span class="mobile-heading">Sign In</span>
           </h1>
           <p class="login-subtitle" :class="{ 'is-visible': reveal.heading }">
             <span class="desktop-subtitle">Use your Toka AI account.</span>
@@ -809,8 +809,9 @@ onMounted(() => {
   }
   .mobile-hero-copy h1 {
     margin: 0;
+    font-family: 'Roboto', Helvetica, Arial, sans-serif;
     font-size: 32px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1.2;
   }
   .mobile-hero-copy p {
@@ -846,8 +847,9 @@ onMounted(() => {
   }
   .login-heading {
     margin: 0;
+    font-family: 'Roboto', Helvetica, Arial, sans-serif;
     font-size: 24px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1.3;
     color: #14391f;
   }
