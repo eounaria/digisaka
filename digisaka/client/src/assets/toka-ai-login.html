@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Toka AI – Log in</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f6f5f0;
+    --ink: #14391f;
+    --muted: #5b645e;
+    --green: #1b7a3b;
+    --line: #dce3da;
+    --field: #f6f6f0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--cream); color: var(--ink);
+    font-family: "Plus Jakarta Sans", Inter, "Segoe UI", system-ui, sans-serif;
+  }
+  svg { display: block; flex: none; }
+  button, input { font-family: inherit; }
+  button { cursor: pointer; }
+
+  .screen { position: relative; width: 100%; max-width: 430px; min-height: 100vh; margin: 0 auto; padding-bottom: 24px; display: flex; flex-direction: column; }
+
+  /* Hero */
+  .hero {
+    position: relative; height: 307px; overflow: hidden; color: #fff; text-align: center;
+    background: linear-gradient(135deg, #2fa354 0%, #1f7a3d 55%, #175a2d 100%);
+    border-radius: 0 0 30px 30px;
+  }
+  .blob { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, .09); }
+  .blob.a { width: 176px; height: 176px; right: -33px; top: -43px; }
+  .blob.b { width: 170px; height: 96px; right: -40px; top: 7px; transform: rotate(-38deg); border-radius: 50%; background: rgba(255, 255, 255, .08); }
+  .blob.c { width: 176px; height: 176px; left: -88px; top: 174px; background: rgba(255, 255, 255, .07); }
+  .blob.d { width: 68px; height: 104px; left: -28px; top: 180px; background: rgba(255, 255, 255, .06); }
+  .badge {
+    position: absolute; left: 24px; top: 22px; width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .3); display: grid; place-items: center;
+  }
+  .myqr {
+    position: absolute; right: 24px; top: 24px; height: 37px; padding: 0 16px 0 13px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; font-weight: 700;
+    background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .35);
+  }
+  .logo {
+    position: absolute; left: 50%; top: 94px; transform: translateX(-50%); width: 68px; height: 68px; border-radius: 50%;
+    background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .3); display: grid; place-items: center;
+  }
+  .brand { position: absolute; left: 0; right: 0; top: 165px; }
+  .brand h1 { margin: 0; font-size: 32px; font-weight: 800; line-height: 1.2; }
+  .brand p { margin: 6px 0 0; font-size: 14px; opacity: .92; }
+
+  /* Card */
+  .card {
+    position: relative; margin: -27px 24px 0; padding: 28px 24px 24px; background: #fff; border-radius: 32px;
+    box-shadow: 0 8px 24px rgba(20, 57, 31, .12);
+  }
+  .card h2 { margin: 0; font-size: 24px; font-weight: 800; }
+  .card .sub { margin: 4px 0 18px; font-size: 14px; color: var(--muted); }
+
+  .field {
+    position: relative; display: flex; align-items: center; height: 52px; margin-bottom: 12px;
+    background: var(--field); border: 1px solid var(--line); border-radius: 26px; padding: 0 16px;
+  }
+  .field:focus-within { border-color: #35a95b; box-shadow: 0 0 0 3px rgba(53, 169, 91, .18); }
+  .field > svg { margin-right: 12px; }
+  .field input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font-size: 14.5px; color: var(--ink); }
+  .field input::placeholder { color: #8a978d; }
+  .eye { border: 0; background: none; padding: 4px; display: grid; place-items: center; border-radius: 50%; }
+
+  .row { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 14px; font-size: 14px; }
+  .remember { display: flex; align-items: center; gap: 10px; color: #3c4640; cursor: pointer; }
+  .remember input { appearance: none; width: 18px; height: 18px; margin: 0; border: 1px solid #c5d1c5; border-radius: 5px; background: var(--field); display: grid; place-items: center; }
+  .remember input:checked { background: #1e8a3f; border-color: #1e8a3f; }
+  .remember input:checked::after { content: ""; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-1px, -1px); }
+  .forgot { color: var(--green); font-weight: 700; text-decoration: none; }
+
+  .login {
+    width: 100%; height: 52px; border: 0; border-radius: 26px; color: #fff; font-size: 18px; font-weight: 700;
+    background: linear-gradient(#36a95b, #1f8a3f); box-shadow: 0 6px 14px rgba(31, 138, 63, .3);
+  }
+  .login:active { transform: translateY(1px); }
+
+  .or { display: flex; align-items: center; gap: 16px; margin: 20px 0 14px; color: #8a8f8a; font-size: 12px; }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: #e3e8e1; }
+
+  .qr {
+    width: 100%; height: 46px; border: 0; border-radius: 23px; background: #e8f2e2; color: #1e3a28;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; font-weight: 700;
+  }
+  .qr svg { color: #1e8a3f; }
+
+  .signup { text-align: center; margin: 28px 0 0; font-size: 14.5px; color: var(--muted); }
+  .signup a { color: var(--green); font-weight: 800; text-decoration: none; }
+  .legal { margin: auto 0 0; padding-top: 48px; text-align: center; font-size: 12.5px; color: #8a8f8a; }
+  .legal a { color: inherit; text-decoration: none; }
+  .legal a:hover, .signup a:hover, .forgot:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="leaf" viewBox="0 0 24 24">
+      <path d="M12 3C7 5 4 10 5 17c7 1 13-3 14-12-2-1-5-2-7-2z" fill="#fff"/>
+      <path d="M6.5 18C9 13 13 9 17 7" fill="none" stroke="#2a8a4c" stroke-width="1.4" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="qr" viewBox="0 0 22 22">
+      <g fill="none" stroke="currentColor" stroke-width="2"><rect x="1.5" y="1.5" width="7" height="7" rx="2"/><rect x="13.5" y="1.5" width="7" height="7" rx="2"/><rect x="1.5" y="13.5" width="7" height="7" rx="2"/></g>
+      <g fill="currentColor"><rect x="13" y="14" width="3" height="3" rx=".6"/><rect x="18" y="17" width="3" height="3" rx=".6"/></g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="screen">
+  <header class="hero">
+    <i class="blob a"></i><i class="blob b"></i><i class="blob c"></i><i class="blob d"></i>
+    <div class="badge" aria-hidden="true"><svg width="24" height="24"><use href="#leaf"/></svg></div>
+    <a class="myqr" href="#" aria-label="My QR"><svg width="20" height="20"><use href="#qr"/></svg>My QR</a>
+    <div class="logo" aria-hidden="true"><svg width="28" height="28"><use href="#leaf"/></svg></div>
+    <div class="brand">
+      <h1>Toka AI</h1>
+      <p>Healthy leaves. Better harvests.</p>
+    </div>
+  </header>
+
+  <main class="card">
+    <h2>Welcome back</h2>
+    <p class="sub">Sign in to keep your farm on track.</p>
+
+    <form id="login" novalidate>
+      <div class="field">
+        <svg width="22" height="20" viewBox="0 0 22 20" fill="none" stroke="#1e8a3f" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="2" width="20" height="16" rx="4"/><path d="M3 6l8 5.5L19 6" stroke-linecap="round"/></svg>
+        <input type="text" name="user" placeholder="Email or mobile number" autocomplete="username" aria-label="Email or mobile number">
+      </div>
+
+      <div class="field">
+        <svg width="18" height="22" viewBox="0 0 18 22" fill="none" stroke="#1e8a3f" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="1" y="9" width="16" height="12" rx="4"/><path d="M4 9V6a5 5 0 0 1 10 0v3"/></svg>
+        <input type="password" id="pw" name="password" placeholder="Password" autocomplete="current-password" aria-label="Password">
+        <button class="eye" type="button" id="eye" aria-label="Show password" aria-pressed="false">
+          <svg width="24" height="20" viewBox="0 0 24 20" fill="none" stroke="#6f8f78" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M1 10c3-5 7-7.5 11-7.5S20 5 23 10c-3 5-7 7.500-11 7.500S4 15 1 10z"/><circle cx="12" cy="10" r="3"/><path id="slash" d="M3 18L21 2" stroke-linecap="round" style="display:none"/></svg>
+        </button>
+      </div>
+
+      <div class="row">
+        <label class="remember"><input type="checkbox" name="remember"> Remember me</label>
+        <a class="forgot" href="#">Forgot password?</a>
+      </div>
+
+      <button class="login" type="submit">Log In</button>
+    </form>
+
+    <div class="or" role="separator">or</div>
+    <button class="qr" type="button"><svg width="20" height="20"><use href="#qr"/></svg>Sign in with Farm QR</button>
+  </main>
+
+  <p class="signup">No account yet? <a href="#">Sign up</a></p>
+  <p class="legal"><a href="#">Privacy Policy</a> · <a href="#">Terms &amp; Conditions</a></p>
+</div>
+
+<script>
+  (function () {
+    var pw = document.getElementById('pw');
+    var eye = document.getElementById('eye');
+    var slash = document.getElementById('slash');
+    eye.addEventListener('click', function () {
+      var show = pw.type === 'password';
+      pw.type = show ? 'text' : 'password';
+      slash.style.display = show ? 'block' : 'none';
+      eye.setAttribute('aria-pressed', String(show));
+      eye.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    });
+    document.getElementById('login').addEventListener('submit', function (e) { e.preventDefault(); });
+  })();
+</script>
+</body>
+</html>

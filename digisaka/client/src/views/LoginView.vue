@@ -90,6 +90,16 @@ onMounted(() => {
       </div>
     </section>
 
+    <section class="mobile-hero" aria-hidden="true">
+      <div class="mobile-hero-mark">
+        <img src="../assets/bananaleaf1.png" alt="">
+      </div>
+      <div class="mobile-hero-copy">
+        <h1>Toka AI</h1>
+        <p>Healthy leaves. Better harvests.</p>
+      </div>
+    </section>
+
     <!-- RIGHT PANEL - Login Form -->
     <section class="right-panel">
       <form class="login-card" novalidate @submit.prevent="submit">
@@ -101,8 +111,14 @@ onMounted(() => {
         </div>
 
         <div class="form-wrapper" :class="{ 'is-visible': reveal.form }">
-          <h1 class="login-heading" :class="{ 'is-visible': reveal.heading }">Sign In</h1>
-          <p class="login-subtitle" :class="{ 'is-visible': reveal.heading }">Use your Toka AI account.</p>
+          <h1 class="login-heading" :class="{ 'is-visible': reveal.heading }">
+            <span class="desktop-heading">Sign In</span>
+            <span class="mobile-heading">Welcome back</span>
+          </h1>
+          <p class="login-subtitle" :class="{ 'is-visible': reveal.heading }">
+            <span class="desktop-subtitle">Use your Toka AI account.</span>
+            <span class="mobile-subtitle">Sign in to keep your farm on track.</span>
+          </p>
 
           <div class="form-group">
             <label class="form-label" for="email">Email</label>
@@ -128,7 +144,7 @@ onMounted(() => {
                 id="password"
                 v-model="f.password"
                 class="form-input password-input"
-                placeholder="Email Password"
+                placeholder="Password"
                 autocomplete="current-password"
                 required
                 :disabled="busy"
@@ -663,6 +679,12 @@ onMounted(() => {
   font-weight: 400;
 }
 
+.mobile-hero,
+.mobile-heading,
+.mobile-subtitle {
+  display: none;
+}
+
 /* RESPONSIVE DESIGN */
 @media (max-width: 1439px) {
   .login-page {
@@ -717,58 +739,218 @@ onMounted(() => {
 
 @media (max-width: 767px) {
   .login-page {
-    grid-template-columns: 1fr;
+    display: block;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #f6f5f0;
   }
   .left-panel {
     display: none;
   }
+  .mobile-hero {
+    display: block;
+    position: relative;
+    height: 307px;
+    overflow: hidden;
+    color: #fff;
+    text-align: center;
+    background: linear-gradient(135deg, #2fa354 0%, #1f7a3d 55%, #175a2d 100%);
+    border-radius: 0 0 30px 30px;
+  }
+  .mobile-hero::before,
+  .mobile-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.09);
+    pointer-events: none;
+  }
+  .mobile-hero::before {
+    width: 176px;
+    height: 76px;
+    right: -40px;
+    top: 18px;
+    border-radius: 100% 0 100% 0;
+    transform: rotate(-35deg);
+  }
+  .mobile-hero::after {
+    width: 160px;
+    height: 74px;
+    left: -80px;
+    top: 208px;
+    border-radius: 100% 0 100% 0;
+    transform: rotate(35deg);
+  }
+  .mobile-hero-mark {
+    position: absolute;
+    top: 82px;
+    left: 50%;
+    display: grid;
+    width: 68px;
+    height: 68px;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 50%;
+    background: #fff;
+    transform: translateX(-50%);
+  }
+  .mobile-hero-mark img {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  .mobile-hero-copy {
+    position: absolute;
+    top: 158px;
+    right: 16px;
+    left: 16px;
+  }
+  .mobile-hero-copy h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .mobile-hero-copy p {
+    margin: 6px 0 0;
+    font-size: 14px;
+    opacity: 0.92;
+  }
   .right-panel {
     width: 100%;
-    padding: 24px 16px 40px;
+    position: relative;
+    z-index: 1;
     align-items: flex-start;
+    min-height: 0;
+    margin-top: -27px;
+    padding: 0 16px 32px;
   }
   .login-card {
     width: 100%;
-    max-width: none;
-    padding: 24px 20px;
+    max-width: 430px;
+    padding: 28px 24px 24px;
+    border: 1px solid #9ca3af;
     border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(20, 57, 31, 0.08);
   }
-  .mobile-brand {
-    display: flex;
-    margin-bottom: 24px;
+  .mobile-brand,
+  .desktop-heading,
+  .desktop-subtitle {
+    display: none;
   }
-  .mobile-brand .logo-box {
-    width: 40px;
-    height: 40px;
-  }
-  .mobile-brand .brand-text {
-    font-size: 24px;
+  .mobile-heading,
+  .mobile-subtitle {
+    display: inline;
   }
   .login-heading {
-    font-size: 28px;
-    line-height: 36px;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #14391f;
   }
   .login-subtitle {
-    font-size: 16px;
-    margin-bottom: 28px;
+    margin: 4px 0 18px;
+    font-size: 14px;
+    color: #5b645e;
   }
   .form-label {
-    font-size: 15px;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
-  .form-input {
-    height: 48px;
-    font-size: 16px;
+  .form-group {
+    margin-bottom: 12px;
+  }
+  .input-wrapper {
+    height: 52px;
     padding: 0 16px;
+    border: 1px solid #cbd0d5;
+    border-radius: 10px;
+    background: #fff;
+  }
+  .input-wrapper:focus-within {
+    border-color: #35a95b;
+    box-shadow: 0 0 0 3px rgba(53, 169, 91, 0.18);
+  }
+  .form-input,
+  .form-input:focus {
+    height: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 16px;
+    color: #14391f;
+  }
+  .form-input::placeholder {
+    color: #8a978d;
   }
   .password-input {
-    padding-right: 48px;
+    padding-right: 34px;
+  }
+  .toggle-password {
+    right: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+  }
+  .toggle-password svg {
+    stroke: #6f8f78;
   }
   .remember-me {
+    justify-content: flex-start;
+    gap: 8px;
     margin: 20px 0 28px 0;
   }
+  .remember-me label,
+  .forgot-link {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .forgot-link {
+    margin-left: auto;
+  }
   .signin-button {
-    height: 48px;
-    font-size: 16px;
+    height: 52px;
+    margin-top: 2px;
+    border-radius: 10px;
+    background: #08783f;
+    box-shadow: none;
+    font-size: 18px;
+  }
+  .signin-button:hover:not(:disabled) {
+    background: #06552c;
+  }
+  .err {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 767px) and (max-height: 700px) {
+  .mobile-hero {
+    height: 260px;
+  }
+  .mobile-hero-mark {
+    top: 58px;
+  }
+  .mobile-hero-copy {
+    top: 134px;
+  }
+}
+
+@media (max-width: 359px) {
+  .login-card {
+    padding-right: 20px;
+    padding-left: 20px;
   }
 }
 
